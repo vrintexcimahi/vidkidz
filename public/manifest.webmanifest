@@ -1,0 +1,26 @@
+{
+  "name": "VIDKIDZ",
+  "short_name": "VIDKIDZ",
+  "description": "Platform edukasi video, game, hafalan, dan hadiah untuk anak.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#03112c",
+  "theme_color": "#03112c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/android-icon-192-v23.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-icon-512-v23.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

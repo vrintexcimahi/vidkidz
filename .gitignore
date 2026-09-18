@@ -1,0 +1,15 @@
+node_modules/
+.env
+data/
+*.db
+*.db-shm
+*.db-wal
+.tmp-*
+*.log
+.DS_Store
+desktop.ini
+test-results/
+.cf/
+.codex*
+
+.vercel
