@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#1357ff" />
+  <meta name="description" content="VRINTEX Family Control UI — Super Admin, Orang Tua, dan Mode Anak." />
+  <title>VRINTEX Family Mobile UI</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="preview-toolbar" aria-label="Pemilih mode">
+    <div>
+      <strong>VRINTEX Family UI</strong>
+      <span>Responsive mobile showcase</span>
+    </div>
+    <div class="role-switch" role="tablist" aria-label="Pilih role">
+      <button class="role-switch__btn is-active" data-role="admin" role="tab">Admin</button>
+      <button class="role-switch__btn" data-role="parent" role="tab">Orang Tua</button>
+      <button class="role-switch__btn" data-role="kid" role="tab">Mode Anak</button>
+    </div>
+  </header>
+
+  <main class="showcase" id="showcase">
+    <!-- ADMIN -->
+    <section class="phone role-screen is-visible" data-screen="admin" aria-label="Super Admin dashboard">
+      <div class="phone__camera"></div>
+      <div class="phone__screen admin-theme">
+        <div class="statusbar"><span>9:41</span><span>●●●  Wi‑Fi  ▰</span></div>
+        <header class="appbar">
+          <button class="icon-btn ghost"><img src="./assets/icons/menu.svg" alt="Menu"></button>
+          <div class="appbar__title">
+            <img class="appbar__badge" src="./assets/icons/crown.svg" alt="">
+            <div><strong>Admin · GOD MODE</strong><small>ROLE 1: SUPER ADMIN</small></div>
+          </div>
+          <button class="icon-btn ghost notification"><img src="./assets/icons/bell.svg" alt="Notifikasi"><i></i></button>
+        </header>
+
+        <div class="scroll-area">
+          <section class="hero hero--admin">
+            <div class="hero__copy">
+              <span class="eyebrow"><img src="./assets/icons/bolt.svg" alt=""> SYSTEM CORE ONLINE</span>
+              <h1>Selamat datang,<br>Super Admin 👋</h1>
+              <p>Kelola sistem, pantau aktivitas, dan jaga pengalaman terbaik untuk semua keluarga.</p>
+              <div class="hero__actions">
+                <button class="pill pill--gold js-toast" data-message="GOD MODE diaktifkan"><img src="./assets/icons/bolt.svg" alt=""> GOD MODE</button>
+                <button class="pill pill--white js-toast" data-message="Contoh aksi logout"><img src="./assets/icons/logout.svg" alt=""> Logout</button>
+              </div>
+            </div>
+            <img class="hero__art" src="./assets/illustrations/admin-avatar.svg" alt="Ilustrasi admin">
+          </section>
+
+          <section class="stats-grid">
+            <article class="stat-card"><span class="stat-icon blue"><img src="./assets/icons/users.svg" alt=""></span><div><small>KELUARGA</small><strong>2</strong><p>Total terdaftar</p></div></article>
+            <article class="stat-card"><span class="stat-icon amber"><img src="./assets/icons/crown.svg" alt=""></span><div><small>PREMIUM</small><strong>1</strong><p>Akun premium</p></div></article>
+            <article class="stat-card"><span class="stat-icon purple"><img src="./assets/icons/profile.svg" alt=""></span><div><small>BASIC</small><strong>1</strong><p>Akun basic</p></div></article>
+            <article class="stat-card"><span class="stat-icon green"><img src="./assets/icons/smile.svg" alt=""></span><div><small>ANAK</small><strong>3</strong><p>Total anak</p></div></article>
+          </section>
+
+          <section class="panel activity-panel">
+            <div class="section-title">
+              <span><img src="./assets/icons/activity.svg" alt=""> Aktivitas Terbaru</span>
+              <button class="text-btn js-toast" data-message="Membuka seluruh aktivitas">Lihat Semua →</button>
+            </div>
+            <div class="activity-table">
+              <div class="activity-row activity-head"><span>WAKTU</span><span>USER</span><span>AKSI</span></div>
+              <div class="activity-row"><span><i class="dot green-dot"></i>Hari ini 10:24</span><strong>Andi</strong><span>Bermain Matematika Seru</span></div>
+              <div class="activity-row"><span><i class="dot blue-dot"></i>Hari ini 09:18</span><strong>Budi</strong><span>Menonton Video Islami</span></div>
+              <div class="activity-row"><span><i class="dot amber-dot"></i>Kemarin 20:11</span><strong>Siti</strong><span>Upgrade ke Premium</span></div>
+              <div class="activity-row"><span><i class="dot purple-dot"></i>Kemarin 16:03</span><strong>Admin</strong><span>Menambah keluarga baru</span></div>
+            </div>
+          </section>
+        </div>
+
+        <nav class="bottom-nav">
+          <button class="nav-item active"><span><img src="./assets/icons/home.svg" alt=""></span><small>Beranda</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/users.svg" alt=""></span><small>Pengguna</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/chart.svg" alt=""></span><small>Analitik</small></button>
+          <button class="nav-item"><span class="has-badge"><img src="./assets/icons/bell.svg" alt=""><i></i></span><small>Notifikasi</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/settings.svg" alt=""></span><small>Pengaturan</small></button>
+        </nav>
+      </div>
+    </section>
+
+    <!-- PARENT -->
+    <section class="phone role-screen is-visible" data-screen="parent" aria-label="Family Control dashboard">
+      <div class="phone__camera"></div>
+      <div class="phone__screen parent-theme">
+        <div class="statusbar"><span>9:41</span><span>●●●  Wi‑Fi  ▰</span></div>
+        <header class="appbar">
+          <button class="icon-btn ghost"><img src="./assets/icons/menu.svg" alt="Menu"></button>
+          <div class="appbar__title">
+            <span class="emoji-badge">👨‍👩‍👧</span>
+            <div><strong>Family Control</strong><small>ROLE 2: ORANG TUA</small></div>
+          </div>
+          <button class="icon-btn ghost notification"><img src="./assets/icons/bell.svg" alt="Notifikasi"><i></i></button>
+        </header>
+
+        <div class="scroll-area">
+          <section class="hero hero--parent">
+            <div class="hero__copy">
+              <span class="eyebrow parent-eyebrow"><img src="./assets/icons/shield.svg" alt=""> Proteksi Keluarga Aktif →</span>
+              <h1>Selamat datang,<br>Keluarga 👋</h1>
+              <p>Pantau perkembangan prestasi, ibadah, dan keamanan digital anak.</p>
+            </div>
+            <img class="hero__art family-art" src="./assets/illustrations/family-hero.svg" alt="Ilustrasi keluarga">
+          </section>
+
+          <section class="stats-grid parent-stats">
+            <article class="stat-card compact"><span class="stat-icon blue"><img src="./assets/icons/users.svg" alt=""></span><div><small>TOTAL ANAK</small><strong>2</strong><p>Dalam keluarga</p></div></article>
+            <article class="stat-card compact"><span class="stat-icon amber"><img src="./assets/icons/coin.svg" alt=""></span><div><small>TOTAL KOIN</small><strong>125</strong><p>Koin tersedia</p></div></article>
+            <article class="stat-card compact"><span class="stat-icon green"><img src="./assets/icons/book.svg" alt=""></span><div><small>HAFALAN</small><strong>5</strong><p>Surat & doa</p></div></article>
+            <article class="stat-card compact"><span class="stat-icon pink"><img src="./assets/icons/hourglass.svg" alt=""></span><div><small>PENDING</small><strong>0</strong><p>Perlu perhatian</p></div></article>
+          </section>
+
+          <section class="child-card">
+            <div class="child-head">
+              <img class="andi-avatar" src="./assets/illustrations/andi-avatar.svg" alt="Avatar Andi">
+              <div class="child-info"><div><h2>Andi</h2><span class="status-chip">● Aktif</span></div><p>Usia 7 tahun · Kelas 1 SD</p></div>
+              <span class="score-chip"><img src="./assets/icons/star.svg" alt="">85</span>
+            </div>
+            <div class="encourage">🔥 <span>Terus semangat, Andi!<br><small>Kamu hebat hari ini! 💙</small></span></div>
+            <div class="mini-metrics">
+              <div><b>🔥 3</b><span>Hari Streak</span></div>
+              <div><b>📗 3</b><span>Hafalan</span></div>
+              <div><b>🕘 142</b><span>Mnt Tonton</span></div>
+            </div>
+            <div class="child-actions">
+              <button class="action-lock js-toast" data-message="Kunci layar dikirim"><img src="./assets/icons/lock.svg" alt=""> Kunci Layar</button>
+              <button class="action-kids js-role" data-target="kid"><img src="./assets/icons/play.svg" alt=""> Kids</button>
+              <button class="action-eye js-toast" data-message="Membuka live preview"><img src="./assets/icons/eye.svg" alt=""></button>
+            </div>
+          </section>
+        </div>
+
+        <nav class="bottom-nav">
+          <button class="nav-item active"><span><img src="./assets/icons/home.svg" alt=""></span><small>Beranda</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/users.svg" alt=""></span><small>Anak Saya</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/activity.svg" alt=""></span><small>Aktivitas</small></button>
+          <button class="nav-item"><span class="has-badge"><img src="./assets/icons/message.svg" alt=""><i></i></span><small>Pesan</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/settings.svg" alt=""></span><small>Pengaturan</small></button>
+        </nav>
+      </div>
+    </section>
+
+    <!-- KID -->
+    <section class="phone role-screen is-visible" data-screen="kid" aria-label="Mode Anak dashboard">
+      <div class="phone__camera"></div>
+      <div class="phone__screen kid-theme">
+        <div class="statusbar"><span>9:41</span><span>●●●  Wi‑Fi  ▰</span></div>
+        <header class="appbar kid-appbar">
+          <button class="icon-btn ghost"><img src="./assets/icons/menu.svg" alt="Menu"></button>
+          <div class="appbar__title">
+            <span class="star-badge">⭐</span>
+            <div><strong>Mode Anak</strong><small>ROLE 3: MODE ANAK</small></div>
+          </div>
+          <button class="avatar-btn"><img src="./assets/illustrations/andi-avatar.svg" alt="Profil"></button>
+        </header>
+
+        <div class="scroll-area kid-scroll">
+          <section class="hero hero--kid">
+            <div class="hero__copy">
+              <h1>Halo,<br>Pahlawan Kecil! 👋</h1>
+              <p>Ayo belajar, bermain, dan jadi anak sholeh yang hebat! ✨</p>
+            </div>
+            <img class="hero__art kid-art" src="./assets/illustrations/kid-hero.svg" alt="Ilustrasi anak">
+          </section>
+
+          <section class="kid-grid">
+            <button class="kid-card lilac js-toast" data-message="Membuka Dongeng Santai"><span class="tag violet">SERU ✨</span><div class="kid-icon"><img src="./assets/icons/book.svg" alt=""></div><h3>Dongeng Santai</h3><p>Kisah budi pekerti & audio book</p><i class="card-arrow">›</i></button>
+            <button class="kid-card sky js-toast" data-message="Membuka Main Game Seru"><span class="tag blue-tag">FAVORIT 🚀</span><div class="kid-icon"><img src="./assets/icons/game.svg" alt=""></div><h3>Main Game Seru</h3><p>Matematika, Tebak Hewan & lainnya!</p><i class="card-arrow">›</i></button>
+            <button class="kid-card mint js-toast" data-message="Membuka Hafalan Mengaji"><span class="tag green-tag">BERKAH 🌙</span><div class="kid-icon"><img src="./assets/icons/book.svg" alt=""></div><h3>Hafalan Mengaji</h3><p>Rekam bacaan sholat & surat</p><i class="card-arrow">›</i></button>
+            <button class="kid-card blue-soft js-toast" data-message="Membuka Tonton Video"><span class="tag blue-tag">EDUKATIF 🎬</span><div class="kid-icon"><img src="./assets/icons/video.svg" alt=""></div><h3>Tonton Video</h3><p>Belajar sambil menonton</p><i class="card-arrow">›</i></button>
+            <button class="kid-card amber-soft js-toast" data-message="Membuka Tukar Koin"><span class="tag amber-tag">HADIAH 🎁</span><div class="kid-icon"><img src="./assets/icons/gift.svg" alt=""></div><h3>Tukar Koin</h3><p>Lihat hadiah & klaim koinmu</p><i class="card-arrow">›</i></button>
+            <button class="kid-card pink-soft js-toast" data-message="Membuka Lihat Foto"><span class="tag pink-tag">KENANGAN 📸</span><div class="kid-icon"><img src="./assets/icons/camera.svg" alt=""></div><h3>Lihat Foto</h3><p>Album kenangan keluarga</p><i class="card-arrow">›</i></button>
+          </section>
+        </div>
+
+        <nav class="bottom-nav kid-nav">
+          <button class="nav-item active"><span><img src="./assets/icons/home.svg" alt=""></span><small>Beranda</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/game.svg" alt=""></span><small>Game</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/trophy.svg" alt=""></span><small>Koleksi</small></button>
+          <button class="nav-item"><span><img src="./assets/icons/smile.svg" alt=""></span><small>Profil</small></button>
+        </nav>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

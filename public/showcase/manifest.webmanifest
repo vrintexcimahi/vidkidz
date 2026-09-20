@@ -1,0 +1,12 @@
+{
+  "name": "VRINTEX Family Control UI",
+  "short_name": "VRINTEX Family",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#d7f7ff",
+  "theme_color": "#1357ff",
+  "icons": [
+    {"src":"./assets/icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"./assets/icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}

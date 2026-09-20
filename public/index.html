@@ -4302,6 +4302,108 @@ td {
 }
 
 /* ============================================================
+   VRINTEX FAMILY MOBILE UI - DESIGN TOKENS & 3D COMPONENTS
+   ============================================================ */
+:root {
+  --vrintex-ink: #10254e;
+  --vrintex-muted: #6d80a6;
+  --vrintex-line: rgba(27,64,132,.11);
+  --vrintex-blue: #195bff;
+  --vrintex-cyan: #24c9f3;
+  --vrintex-purple: #6b55ff;
+  --vrintex-pink: #ff4f8d;
+  --vrintex-green: #2acb8d;
+  --vrintex-amber: #ffbd2d;
+}
+.hero { position: relative; min-height: 190px; border-radius: 28px; padding: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 15px 35px rgba(39,103,184,.16); isolation: isolate; }
+.hero:after { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; right: -70px; top: -80px; background: radial-gradient(circle,rgba(255,255,255,.4),transparent 65%); z-index: -1; }
+.hero--admin { background: linear-gradient(135deg,#266cff,#27c7f3 74%,#54e3ff); color: #fff; }
+.hero--admin p { opacity: .9; }
+.hero--parent { background: linear-gradient(135deg,#f0ffff,#b9f2ff 60%,#8fe5d8); color: #143a7a; }
+.hero--kid { min-height: 200px; background: linear-gradient(180deg,#d7ebff,#f7fbff 62%,#def4d8); color: #143a7a; }
+.hero__copy { position: relative; z-index: 2; width: 62%; }
+.hero h1 { font-size: 24px; line-height: 1.1; margin: 8px 0; letter-spacing: -0.5px; font-weight: 900; }
+.hero p { font-size: 11px; line-height: 1.5; margin: 0; opacity: .85; }
+.hero__art { position: absolute; right: -5px; bottom: -3px; width: 48%; max-height: 94%; object-fit: contain; pointer-events: none; }
+.family-art { width: 48%; right: -10px; }
+.kid-art { width: 52%; right: -8px; }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 9px; font-weight: 900; letter-spacing: .4px; color: #fff; }
+.eyebrow img { width: 13px; height: 13px; filter: brightness(0) invert(1); }
+.parent-eyebrow { color: #0b9f69; background: #d6ffec; }
+.parent-eyebrow img { filter: none; }
+
+.hero__actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.pill { border: 0; border-radius: 999px; padding: 8px 12px; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 9px 20px rgba(22,64,141,.12); cursor: pointer; text-decoration: none; transition: transform 0.15s; }
+.pill:hover { transform: translateY(-1px); }
+.pill img { width: 15px; height: 15px; }
+.pill--gold { background: linear-gradient(#ffdf5b,#ffc32c); color: #573600; }
+.pill--white { background: #fff; color: #ec3d77; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-card { background: rgba(255,255,255,.88); border: 1px solid rgba(255,255,255,.9); border-radius: 20px; padding: 12px; display: flex; gap: 10px; align-items: center; box-shadow: 0 9px 24px rgba(51,91,150,.09); backdrop-filter: blur(12px); color: #10254e; }
+.stat-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+.stat-icon img { width: 23px; height: 23px; }
+.stat-icon.blue { background: #dceeff; color: #2672e8; }
+.stat-icon.amber { background: #fff0bd; color: #ed9816; }
+.stat-icon.purple { background: #ece5ff; color: #7556ea; }
+.stat-icon.green { background: #d8faeb; color: #1db67d; }
+.stat-icon.pink { background: #ffe0ec; color: #f04985; }
+.stat-card small { font-size: 9px; font-weight: 900; color: #7790b3; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-card strong { display: block; font-size: 22px; line-height: 1; margin: 3px 0; color: #10254e; font-weight: 900; }
+.stat-card p { font-size: 9px; margin: 0; color: #7385a4; }
+.stat-card.compact { padding: 10px; }
+.stat-card.compact .stat-icon { width: 38px; height: 38px; }
+
+.child-card { background: linear-gradient(160deg,#fff,#effbff 55%,#e5f7ff); border-radius: 26px; padding: 14px; box-shadow: 0 16px 35px rgba(46,104,171,.14); border: 1px solid #fff; }
+.child-head { display: flex; align-items: center; gap: 10px; }
+.andi-avatar { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 5px 12px rgba(25,80,160,.12); object-fit: cover; }
+.child-info { flex: 1; }
+.child-info > div { display: flex; align-items: center; gap: 7px; }
+.child-info h2 { font-size: 19px; margin: 0; color: #10254e; font-weight: 800; }
+.child-info p { font-size: 10px; margin: 3px 0 0; color: #7184a2; }
+.status-chip { font-size: 9px; font-weight: 900; background: #d6f8e9; color: #149661; border-radius: 999px; padding: 4px 8px; }
+.status-chip.locked { background: #ffe2e8; color: #e11d48; }
+.score-chip { display: flex; align-items: center; gap: 5px; background: #fff4c4; color: #8d6505; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+.score-chip img { width: 14px; }
+.encourage { display: flex; gap: 8px; align-items: center; margin: 12px 0 9px; padding: 9px 12px; border-radius: 15px; background: #ecf7ff; font-size: 11px; color: #3270b9; }
+.encourage small { color: #6c91b7; }
+.mini-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.mini-metrics div { background: #fff; border-radius: 15px; text-align: center; padding: 9px 4px; box-shadow: 0 6px 16px rgba(30,92,157,.07); }
+.mini-metrics b { display: block; font-size: 14px; color: #10254e; font-weight: 800; }
+.mini-metrics span { font-size: 9px; color: #7890ad; }
+.child-actions { display: grid; grid-template-columns: 1.65fr 1fr .45fr; gap: 7px; margin-top: 10px; }
+.child-actions button { border: 0; border-radius: 16px; height: 40px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.15s; }
+.child-actions button:hover { transform: translateY(-1px); }
+.child-actions img { width: 16px; height: 16px; }
+.action-lock { background: linear-gradient(90deg,#ff4d88,#ff5b7f); color: #fff; }
+.action-lock img, .action-kids img { filter: brightness(0) invert(1); }
+.action-kids { background: linear-gradient(90deg,#1b82ff,#1ba6ff); color: #fff; }
+.action-eye { background: #fff; color: #2c5a9d; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+.kid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kid-card { position: relative; min-height: 165px; border: 1px solid rgba(255,255,255,.75); border-radius: 24px; padding: 14px; text-align: left; color: #153a71; box-shadow: 0 10px 24px rgba(43,92,157,.1); cursor: pointer; overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+.kid-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(43,92,157,.16); }
+.kid-card:before { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -25px; bottom: -35px; background: rgba(255,255,255,.28); }
+.kid-card.lilac { background: linear-gradient(155deg,#fff2e0,#e9dcff); }
+.kid-card.sky { background: linear-gradient(155deg,#e6f6ff,#d7e3ff); }
+.kid-card.mint { background: linear-gradient(155deg,#dbffe7,#c6f2df); }
+.kid-card.blue-soft { background: linear-gradient(155deg,#dff6ff,#cfe8ff); }
+.kid-card.amber-soft { background: linear-gradient(155deg,#fff3c9,#ffe1c9); }
+.kid-card.pink-soft { background: linear-gradient(155deg,#f1e2ff,#ffd9ed); }
+.kid-icon { height: 50px; display: flex; align-items: center; }
+.kid-icon img { width: 42px; height: 42px; object-fit: contain; }
+.kid-card h3 { font-size: 14px; margin: 4px 0; font-weight: 900; color: #153a71; }
+.kid-card p { font-size: 9px; line-height: 1.35; margin: 0; width: 80%; color: #5d78a0; }
+.tag { position: absolute; right: 9px; top: 9px; font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 999px; }
+.tag.violet { background: #dfcfff; color: #7049dd; }
+.blue-tag { background: #cce8ff; color: #2370ce; }
+.green-tag { background: #c7f5dd; color: #159762; }
+.amber-tag { background: #ffe59c; color: #b47705; }
+.pink-tag { background: #ffcce0; color: #cf3d78; }
+.card-arrow { position: absolute; right: 10px; bottom: 10px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.85); font-size: 20px; font-style: normal; color: #3471ca; box-shadow: 0 5px 12px rgba(31,85,150,.1); line-height: 1; }
+
+/* ============================================================
    ADAPTIVE UI - DEVICE INTELLIGENCE & USER DATA CENTER STYLES
    ============================================================ */
 html[data-ui-profile="mobile-compact"] .family-content {
@@ -7294,36 +7396,67 @@ function AdminDashboard() {
       <div className="admin-main admin-content family-content" style={{flex:1,minWidth:0,width:'100%',overflowY:'auto',padding:'clamp(16px, 1.8vw, 32px)'}}>
         {page==='overview' && (
           <div className="fade-in">
-            <div className="admin-header page-header" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24,flexWrap:'wrap',gap:12}}>
-              <div>
-                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
-                  <span className="badge-live-pulse animate-cyber" style={{background:'rgba(14,165,233,0.12)',border:'1px solid rgba(14,165,233,0.35)',color:'#38bdf8'}}>
-                    <span className="pulse-dot-blue" />
-                    <span>SYSTEM CORE ONLINE • v5.2.21</span>
-                  </span>
-                  <span style={{fontSize:11,color:'var(--t3)',display:'flex',alignItems:'center',gap:4}}>
-                    <UiIcon name="server" size={12} color="var(--t3)" /> Telemetri Realtime
-                  </span>
-                </div>
-                <h2 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8,fontSize:24}}>
-                  Selamat datang, {currentUser.name} <span className="animate-flame" style={{fontSize:22}}>⚡</span>
-                </h2>
-                <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>System overview & live management — {new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
-              </div>
-              <div className="admin-header-actions">
-                <span className="badge badge-admin shimmer-container" style={{display:'inline-flex',alignItems:'center',gap:6,boxShadow:'0 0 16px rgba(242,82,123,0.3)',padding:'6px 12px'}}>
-                  <UiIcon name="zap" size={14} color="currentColor" /> GOD MODE
+            {/* HERO 3D BANNER - SUPER ADMIN */}
+            <div className="hero hero--admin" style={{marginBottom: 20}}>
+              <div className="hero__copy">
+                <span className="eyebrow">
+                  <img src="/assets/icons/bolt.svg" alt="" />
+                  SYSTEM CORE ONLINE • v5.2.21
                 </span>
-                <button className="btn admin-logout-btn card-interactive-lift" onClick={logout} style={{display:'inline-flex',alignItems:'center',gap:6}}>
-                  <UiIcon name="logout" size={14} color="currentColor" /> Logout
-                </button>
+                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 26px)', margin: '10px 0 6px', color: '#fff', fontWeight: 900}}>
+                  Selamat datang, {currentUser.name} 👋
+                </h1>
+                <p style={{fontSize: 12, color: 'rgba(255,255,255,0.92)', margin: 0, maxWidth: 460}}>
+                  Panel kendali pusat manajemen keluarga, konten anak, limit gawai, dan sistem pemantauan.
+                </p>
+                <div className="hero__actions">
+                  <button className="pill pill--gold" onClick={()=>setPage('devmode')}>
+                    <img src="/assets/icons/crown.svg" alt="" />
+                    <span>GOD MODE</span>
+                  </button>
+                  <button className="pill pill--white" onClick={logout}>
+                    <img src="/assets/icons/logout.svg" alt="" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
+              <img className="hero__art" src="/assets/illustrations/admin-avatar.svg" alt="Admin 3D" onError={(e)=>{e.target.style.display='none';}} />
             </div>
-            <div className="dashboard-stats" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(210px,100%),1fr))',gap:16,marginBottom:24}}>
-              <StatCard label="Keluarga" value={families.length} icon="ui:users" color="#0ea5e9" sub={`${families.length} akun aktif`} />
-              <StatCard label="Premium" value={premiumFamilies} icon="ui:star" color="#ec4899" sub="Plan aktif" />
-              <StatCard label="Basic" value={basicFamilies} icon="ui:user" color="#8b5cf6" sub="Plan standar" />
-              <StatCard label="Anak" value={totalFamilyKids} icon="ui:smile" color="#10b981" sub="Dikelola Family" />
+
+            {/* 3D STATS GRID */}
+            <div className="stats-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',gap:12,marginBottom:24}}>
+              <div className="stat-card">
+                <div className="stat-icon blue"><img src="/assets/icons/users.svg" alt="" /></div>
+                <div>
+                  <small>KELUARGA</small>
+                  <strong>{families.length}</strong>
+                  <p>{families.length} akun aktif</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon pink"><img src="/assets/icons/crown.svg" alt="" /></div>
+                <div>
+                  <small>PREMIUM</small>
+                  <strong>{premiumFamilies}</strong>
+                  <p>Plan aktif</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon purple"><img src="/assets/icons/profile.svg" alt="" /></div>
+                <div>
+                  <small>BASIC</small>
+                  <strong>{basicFamilies}</strong>
+                  <p>Plan standar</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon green"><img src="/assets/icons/smile.svg" alt="" /></div>
+                <div>
+                  <small>ANAK</small>
+                  <strong>{totalFamilyKids}</strong>
+                  <p>Dikelola Family</p>
+                </div>
+              </div>
             </div>
             <div className="admin-overview-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(520px, 100%), 1fr))',gap:'clamp(14px, 1.6vw, 24px)',alignItems:'start',marginBottom:24}}>
               <div className="card card-interactive-lift shimmer-container" style={{border:'1px solid var(--border)'}}>
@@ -10918,81 +11051,121 @@ function FamilyDashboard() {
       <div className="family-main family-content" style={{flex:1,minWidth:0,width:'100%',overflow:'auto',padding:'clamp(16px, 1.8vw, 32px)'}}>
         {page==='overview' && (
           <div className="fade-in">
-            <div className="page-header flex items-center justify-between mb-6" style={{gap:12,flexWrap:'wrap'}}>
-              <div>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                  <span className="badge-live-pulse" style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.3)',color:'#10b981'}}>
-                    <span className="pulse-dot-green" />
-                    <span>Proteksi Keluarga Aktif</span>
-                  </span>
-                  <span style={{fontSize:11,color:'var(--t3)'}}>· Realtime Guard</span>
+            {/* HERO 3D BANNER - FAMILY / PARENT */}
+            <div className="hero hero--parent" style={{marginBottom: 20}}>
+              <div className="hero__copy">
+                <span className="eyebrow parent-eyebrow">
+                  <img src="/assets/icons/shield.svg" alt="" />
+                  Proteksi Keluarga Aktif →
+                </span>
+                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 24px)', margin: '8px 0', color: '#143a7a', fontWeight: 900}}>
+                  Selamat datang, {currentUser.name.split(' ')[0]} 👨‍👩‍👧
+                </h1>
+                <p style={{fontSize: 11, color: '#2c5a9d', margin: 0}}>
+                  Keluarga Bahagia • {myKids.length} Anak Terdaftar
+                </p>
+                <div className="hero__actions">
+                  <button className="pill pill--gold" onClick={()=>setPage('control')}>
+                    <img src="/assets/icons/bolt.svg" alt="" />
+                    <span>Kontrol Cepat</span>
+                  </button>
+                  <button className="pill pill--white" onClick={()=>setPage('kids')}>
+                    <img src="/assets/icons/users.svg" alt="" />
+                    <span>Kelola Anak</span>
+                  </button>
                 </div>
-                <h2 style={{color:'var(--t1)',fontSize:24,display:'flex',alignItems:'center',gap:8}}>
-                  Selamat datang, {currentUser.name.split(' ')[0]} <span className="animate-wave" style={{fontSize:20}}>👋</span>
-                </h2>
-                <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>Pantau perkembangan prestasi, ibadah & keamanan digital anak</p>
+              </div>
+              <img className="hero__art family-art" src="/assets/illustrations/family-hero.svg" alt="Family Hero" onError={(e)=>{e.target.style.display='none';}} />
+            </div>
+
+            {/* 3D STATS GRID - COMPACT */}
+            <div className="stats-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(170px, 100%), 1fr))',gap:12,marginBottom:20}}>
+              <div className="stat-card compact">
+                <div className="stat-icon blue"><img src="/assets/icons/users.svg" alt="" /></div>
+                <div>
+                  <small>TOTAL ANAK</small>
+                  <strong>{myKids.length}</strong>
+                  <p>{myKids.length} profil aktif</p>
+                </div>
+              </div>
+              <div className="stat-card compact">
+                <div className="stat-icon amber"><img src="/assets/icons/coin.svg" alt="" /></div>
+                <div>
+                  <small>TOTAL KOIN</small>
+                  <strong>{myKids.reduce((s,k)=>(s+(k.coins||0)),0)}</strong>
+                  <p>Tabungan koin</p>
+                </div>
+              </div>
+              <div className="stat-card compact">
+                <div className="stat-icon green"><img src="/assets/icons/book.svg" alt="" /></div>
+                <div>
+                  <small>HAFALAN</small>
+                  <strong>{myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0)}</strong>
+                  <p>Surah & doa</p>
+                </div>
+              </div>
+              <div className="stat-card compact">
+                <div className="stat-icon pink"><img src="/assets/icons/hourglass.svg" alt="" /></div>
+                <div>
+                  <small>PENDING</small>
+                  <strong>{pendingRedemptions.length}</strong>
+                  <p>{pendingRedemptions.length > 0 ? 'Perlu disetujui' : 'Semua beres'}</p>
+                </div>
               </div>
             </div>
-            <div className="dashboard-stats" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(210px,100%),1fr))',gap:16,marginBottom:24}}>
-              <StatCard label="Total Anak" value={myKids.length} icon="ui:users" color="#0ea5e9" sub={`${myKids.length} profil aktif`} />
-              <StatCard label="Total Koin" value={myKids.reduce((s,k)=>(s+(k.coins||0)),0)} icon="ui:coin" color="#f59e0b" sub="Tabungan koin" />
-              <StatCard label="Hafalan" value={myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0)} icon="ui:book" color="#10b981" sub="Total surah & doa" />
-              <StatCard label="Pending" value={pendingRedemptions.length} icon="ui:hourglass" color="#ec4899" sub={pendingRedemptions.length>0?'Perlu disetujui':'Semua beres'} />
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(280px,100%),1fr))',gap:16}}>
+
+            {/* 3D CHILD CARDS */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(320px,100%),1fr))',gap:16,marginBottom:20}}>
               {myKids.map(kid => (
-                <div key={kid.id} className="card card-interactive-lift shimmer-container" style={{border:`1.5px solid ${kid.isLocked?'rgba(239,68,68,0.35)':kid.isOnline?'rgba(16,185,129,0.35)':'rgba(14,165,233,0.22)'}`,background:'var(--bg-card)',boxShadow:'0 10px 28px rgba(0,0,0,0.12)'}}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="animate-float-slow">
-                      <Avatar name={kid.name} size={46} color={avatarColor(kid.id)} />
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{display:'flex',alignItems:'center',gap:6}}>
-                        <span style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:18,color:'var(--t1)'}}>{kid.name}</span>
-                        {kid.isLocked ? (
-                          <span className="badge-live-pulse" style={{background:'rgba(239,68,68,0.15)',color:'#ef4444',padding:'2px 8px',fontSize:10}}>
-                            <UiIcon name="lock" size={11} /> Terkunci
-                          </span>
-                        ) : (
-                          <span className="badge-live-pulse" style={{background:'rgba(16,185,129,0.15)',color:'#10b981',padding:'2px 8px',fontSize:10}}>
-                            <span className="pulse-dot-green" style={{width:6,height:6}} /> Aktif
-                          </span>
-                        )}
+                <div key={kid.id} className="child-card">
+                  <div className="child-head">
+                    <img className="andi-avatar" src="/assets/illustrations/andi-avatar.svg" alt={kid.name} onError={(e)=>{e.target.style.display='none';}} />
+                    <div className="child-info">
+                      <div>
+                        <h2>{kid.name}</h2>
+                        <span className={`status-chip ${kid.isLocked ? 'locked' : ''}`}>
+                          {kid.isLocked ? 'TERKUNCI' : 'AKTIF'}
+                        </span>
                       </div>
-                      <div style={{fontSize:12,color:'var(--t3)',marginTop:2}}>Usia {kid.age} tahun</div>
-                      <div style={{display:'flex',gap:4,marginTop:4}}>
-                        {(kid.badges||[]).map(b => <span key={b} style={{fontSize:16}} title={BADGES[b]?.name}>{BADGES[b]?.emoji}</span>)}
-                      </div>
+                      <p>Usia {kid.age} tahun • ID: {kid.id}</p>
                     </div>
-                    <div className="coin-badge animate-glow-pulse" style={{boxShadow:'0 0 10px rgba(255,190,26,0.3)',border:'1px solid rgba(255,218,74,0.5)'}}>
-                      🪙 {kid.coins||0}
+                    <div className="score-chip">
+                      <img src="/assets/icons/coin.svg" alt="" />
+                      <span>{kid.coins||0}</span>
                     </div>
                   </div>
-                  <div style={{display:'flex',gap:8,marginBottom:12}}>
-                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:10,padding:'10px 10px',textAlign:'center',border:'1px solid var(--border)'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:'var(--warn)',fontFamily:'var(--font-display)',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
-                        <span className="animate-flame">🔥</span> {kid.streak||0}
-                      </div>
-                      <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>Hari Streak</div>
-                    </div>
-                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:10,padding:'10px 10px',textAlign:'center',border:'1px solid var(--border)'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:'var(--success)',fontFamily:'var(--font-display)'}}>{(kid.hafalanDone||[]).length}</div>
-                      <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>Hafalan</div>
-                    </div>
-                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:10,padding:'10px 10px',textAlign:'center',border:'1px solid var(--border)'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:'#0ea5e9',fontFamily:'var(--font-display)'}}>{kid.watchTime||0}</div>
-                      <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>Mnt Tonton</div>
+                  <div className="encourage">
+                    <span>🌟</span>
+                    <div>
+                      <b>{(kid.streak||0) > 3 ? 'Luar biasa!' : 'Semangat Belajar!'}</b>
+                      <small> • Capai target hafalan & batasi waktu layar</small>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button className={`btn btn-sm flex-1 card-interactive-lift ${kid.isLocked?'btn-family':'btn-danger'}`} style={{justifyContent:'center',display:'inline-flex',alignItems:'center',gap:6}} onClick={()=>toggleLock(kid.id)}>
-                      <UiIcon name={kid.isLocked?'unlock':'lock'} size={14} /> {kid.isLocked?'Buka Layar':'Kunci Layar'}
+                  <div className="mini-metrics">
+                    <div>
+                      <b>🔥 {kid.streak||0}</b>
+                      <span>Hari Streak</span>
+                    </div>
+                    <div>
+                      <b>📖 {(kid.hafalanDone||[]).length}</b>
+                      <span>Hafalan</span>
+                    </div>
+                    <div>
+                      <b>⏱️ {kid.watchTime||0}m</b>
+                      <span>Mnt Tonton</span>
+                    </div>
+                  </div>
+                  <div className="child-actions">
+                    <button className="action-lock" onClick={()=>toggleLock(kid.id)}>
+                      <img src="/assets/icons/lock.svg" alt="" />
+                      <span>{kid.isLocked ? 'Buka Layar' : 'Kunci Layar'}</span>
                     </button>
-                    <button className="btn btn-primary btn-sm card-interactive-lift" style={{display:'inline-flex',alignItems:'center',gap:6}} onClick={()=>launchKidSession(kid.id)}>
-                      <UiIcon name="play" size={13} /> Kids
+                    <button className="action-kids" onClick={()=>launchKidSession(kid.id)}>
+                      <img src="/assets/icons/play.svg" alt="" />
+                      <span>Kids</span>
                     </button>
-                    <button className="btn btn-ghost btn-sm card-interactive-lift" onClick={()=>{setSelectedKidId(kid.id);setPage('monitor');}} title="Monitor">
-                      <UiIcon name="eye" size={14} />
+                    <button className="action-eye" onClick={()=>{setSelectedKidId(kid.id);setPage('monitor');}} title="Monitor">
+                      <img src="/assets/icons/eye.svg" alt="" />
                     </button>
                   </div>
                 </div>
@@ -14268,24 +14441,41 @@ function KidsHomePage({ kid, onNavigate }) {
 
   return (
     <div style={{padding:'20px 20px'}}>
+      {/* 3D HERO BANNER - MODE ANAK */}
+      <div className="hero hero--kid" style={{marginBottom: 20}}>
+        <div className="hero__copy">
+          <span className="eyebrow" style={{background:'rgba(25,91,255,0.12)',color:'#195bff'}}>
+            <img src="/assets/icons/star.svg" alt="" style={{filter:'none'}} />
+            Zona Belajar Ceria
+          </span>
+          <h1 style={{fontSize: 'clamp(20px, 2.4vw, 24px)', margin: '8px 0', color: '#143a7a', fontWeight: 900}}>
+            Halo, {kid?.name || 'Pahlawan Kecil'}! 👋
+          </h1>
+          <p style={{fontSize: 11, color: '#315893', margin: 0, lineHeight: 1.4}}>
+            Ayo belajar, bermain, dan jadi anak sholeh yang hebat! ✨
+          </p>
+        </div>
+        <img className="hero__art kid-art" src="/assets/illustrations/kid-hero.svg" alt="Kid Hero" onError={(e)=>{e.target.style.display='none';}} />
+      </div>
+
       {/* Streak & badges */}
-      <div className="kids-profile-card shimmer-container card-interactive-lift" style={{background:'linear-gradient(135deg, rgba(255,190,26,0.18), rgba(250,204,21,0.06), rgba(31,182,255,0.08))',border:'1.5px solid rgba(255,190,26,0.35)',borderRadius:22,padding:20,marginBottom:20,boxShadow:'0 10px 30px rgba(0,0,0,0.16)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div className="animate-float-gentle" style={{fontSize:52,filter:'drop-shadow(0 6px 16px rgba(0,0,0,0.35))'}}>{kid?.avatar}</div>
+      <div className="kids-profile-card shimmer-container card-interactive-lift" style={{background:'linear-gradient(135deg, rgba(255,190,26,0.18), rgba(250,204,21,0.06), rgba(31,182,255,0.08))',border:'1.5px solid rgba(255,190,26,0.35)',borderRadius:22,padding:16,marginBottom:18,boxShadow:'0 10px 30px rgba(0,0,0,0.16)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <div className="animate-float-gentle" style={{fontSize:46,filter:'drop-shadow(0 6px 16px rgba(0,0,0,0.35))'}}>{kid?.avatar}</div>
           <div style={{flex:1}}>
-            <div style={{fontFamily:'var(--font-kids)',fontSize:23,color:'#fff',display:'flex',alignItems:'center',gap:6}}>
-              {kid?.name} <span className="animate-wave" style={{fontSize:18}}>⭐</span>
+            <div style={{fontFamily:'var(--font-kids)',fontSize:20,color:'#fff',display:'flex',alignItems:'center',gap:6}}>
+              {kid?.name} <span className="animate-wave" style={{fontSize:16}}>⭐</span>
             </div>
-            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
-              <span className="badge-live-pulse" style={{background:'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(239,68,68,0.25))',border:'1px solid rgba(249,115,22,0.5)',borderRadius:20,padding:'4px 12px',fontSize:12,color:'#ffb020',fontFamily:'var(--font-display)',fontWeight:800,boxShadow:'0 0 12px rgba(249,115,22,0.3)'}}>
+            <div style={{display:'flex',gap:8,marginTop:6,flexWrap:'wrap',alignItems:'center'}}>
+              <span className="badge-live-pulse" style={{background:'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(239,68,68,0.25))',border:'1px solid rgba(249,115,22,0.5)',borderRadius:20,padding:'4px 10px',fontSize:11,color:'#ffb020',fontFamily:'var(--font-display)',fontWeight:800}}>
                 <span className="animate-flame">🔥</span> {kid?.streak||0} Hari Streak!
               </span>
-              {(kid?.badges||[]).map(b => (<span key={b} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'4px 10px',fontSize:12,color:'rgba(255,255,255,0.85)',display:'inline-flex',alignItems:'center',gap:4}} title={BADGES[b]?.name}>{BADGES[b]?.emoji} {BADGES[b]?.name}</span>))}
+              {(kid?.badges||[]).map(b => (<span key={b} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'3px 8px',fontSize:11,color:'rgba(255,255,255,0.85)',display:'inline-flex',alignItems:'center',gap:4}} title={BADGES[b]?.name}>{BADGES[b]?.emoji}</span>))}
             </div>
           </div>
           <div style={{textAlign:'center'}}>
-            <div className="coin-badge animate-glow-pulse" style={{fontSize:21,boxShadow:'0 0 16px rgba(255,190,26,0.4)',border:'1.5px solid rgba(255,218,74,0.6)'}}>🪙 {kid?.coins||0}</div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4,fontFamily:'var(--font-display)',fontWeight:600}}>koin kamu</div>
+            <div className="coin-badge animate-glow-pulse" style={{fontSize:18,boxShadow:'0 0 16px rgba(255,190,26,0.4)',border:'1.5px solid rgba(255,218,74,0.6)'}}>🪙 {kid?.coins||0}</div>
+            <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:3,fontFamily:'var(--font-display)',fontWeight:600}}>koin kamu</div>
           </div>
         </div>
       </div>
@@ -14295,48 +14485,91 @@ function KidsHomePage({ kid, onNavigate }) {
 
       {/* Progress bars */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:20}}>
-        <div className="kids-stat-card card-interactive-lift shimmer-container" style={{background:'linear-gradient(135deg, rgba(0,120,255,0.16), rgba(0,120,255,0.06))',border:'1px solid rgba(0,120,255,0.3)',borderRadius:18,padding:16}}>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:8,display:'flex',alignItems:'center',gap:4}}>
+        <div className="kids-stat-card card-interactive-lift shimmer-container" style={{background:'linear-gradient(135deg, rgba(0,120,255,0.16), rgba(0,120,255,0.06))',border:'1px solid rgba(0,120,255,0.3)',borderRadius:18,padding:14}}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
             <span>📖</span> Hafalan
           </div>
-          <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24,color:'#fff'}}>{(kid?.hafalanDone||[]).length}<span style={{fontSize:14,opacity:0.5}}>/{HAFALAN_LIST.length}</span></div>
-          <div style={{background:'rgba(255,255,255,0.12)',borderRadius:10,height:8,overflow:'hidden',marginTop:8}}><div style={{height:'100%',background:'linear-gradient(90deg, #0ea5e9, #0078ff)',borderRadius:10,width:hafalanProgress+'%',transition:'width 0.5s'}}/></div>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4}}>{hafalanProgress}% selesai</div>
+          <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:22,color:'#fff'}}>{(kid?.hafalanDone||[]).length}<span style={{fontSize:14,opacity:0.5}}>/{HAFALAN_LIST.length}</span></div>
+          <div style={{background:'rgba(255,255,255,0.12)',borderRadius:10,height:7,overflow:'hidden',marginTop:6}}><div style={{height:'100%',background:'linear-gradient(90deg, #0ea5e9, #0078ff)',borderRadius:10,width:hafalanProgress+'%',transition:'width 0.5s'}}/></div>
+          <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:4}}>{hafalanProgress}% selesai</div>
         </div>
-        <div className="kids-stat-card card-interactive-lift shimmer-container" style={{background:'linear-gradient(135deg, rgba(123,220,56,0.16), rgba(123,220,56,0.06))',border:'1px solid rgba(123,220,56,0.3)',borderRadius:18,padding:16}}>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:8,display:'flex',alignItems:'center',gap:4}}>
+        <div className="kids-stat-card card-interactive-lift shimmer-container" style={{background:'linear-gradient(135deg, rgba(123,220,56,0.16), rgba(123,220,56,0.06))',border:'1px solid rgba(123,220,56,0.3)',borderRadius:18,padding:14}}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:6,display:'flex',alignItems:'center',gap:4}}>
             <span>🎮</span> Game
           </div>
-          <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24,color:'#fff'}}>{totalGamesCorrect}<span style={{fontSize:14,opacity:0.5}}>/{totalGamesPlayed}</span></div>
-          <div style={{background:'rgba(255,255,255,0.12)',borderRadius:10,height:8,overflow:'hidden',marginTop:8}}><div style={{height:'100%',background:'linear-gradient(90deg, #22c55e, #10b981)',borderRadius:10,width:totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100)+'%':'0%',transition:'width 0.5s'}}/></div>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4}}>{totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100):0}% benar</div>
+          <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:22,color:'#fff'}}>{totalGamesCorrect}<span style={{fontSize:14,opacity:0.5}}>/{totalGamesPlayed}</span></div>
+          <div style={{background:'rgba(255,255,255,0.12)',borderRadius:10,height:7,overflow:'hidden',marginTop:6}}><div style={{height:'100%',background:'linear-gradient(90deg, #22c55e, #10b981)',borderRadius:10,width:totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100)+'%':'0%',transition:'width 0.5s'}}/></div>
+          <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:4}}>{totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100):0}% benar</div>
         </div>
       </div>
 
-      {/* Quick actions */}
+      {/* 3D KID ACTION GRID (6 CARDS AS IN VRINTEX DESIGN) */}
       <h3 style={{fontFamily:'var(--font-kids)',color:'#fff',marginBottom:12,fontSize:18,display:'flex',alignItems:'center',gap:6}}>
         🚀 Mau ngapain hari ini?
       </h3>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
-        {[
-          { id:'duel', emoji:'🥊', title:'Duel Kuis Pintar', desc:'Tantang saudara atau robot AI!', color:'#f59e0b', bg:'rgba(245,158,11,0.15)', tag:'POPULER ⭐', tagColor:'#f59e0b' },
-          { id:'drawing', emoji:'🎨', title:'Studio Mewarnai', desc:'Mewarnai fabel & kanvas kreasi!', color:'#ec4899', bg:'rgba(236,72,153,0.15)', tag:'KREATIF 🎨', tagColor:'#ec4899' },
-          { id:'stories', emoji:'📚', title:'Dongeng Santai', desc:'Kisah budi pekerti & audio book', color:'#8b5cf6', bg:'rgba(139,92,246,0.15)', tag:'SERU ✨', tagColor:'#8b5cf6' },
-          { id:'games', emoji:'🎮', title:'Main Game Seru', desc:'Matematika, Tebak Hewan & lainnya!', color:'#0078ff', bg:'rgba(0,120,255,0.15)', tag:'FAVORIT 🚀', tagColor:'#0078ff' },
-          { id:'hafalan', emoji:'📖', title:'Hafalan Mengaji', desc:'Rekam bacaan sholat & surat', color:'#10b981', bg:'rgba(16,185,129,0.15)', tag:'BERKAH 🌙', tagColor:'#10b981' },
-          { id:'videos', emoji:'🎬', title:'Tonton Video', desc:'Belajar sambil menonton', color:'#0ea5e9', bg:'rgba(14,165,233,0.15)', tag:'EDUKATIF 🎬', tagColor:'#0ea5e9' },
-          { id:'coins', emoji:'🪙', title:'Tukar Koin', desc:'Lihat hadiah & klaim bonus!', color:'#ffbe1a', bg:'rgba(255,190,26,0.15)', tag:'HADIAH 🎁', tagColor:'#ffbe1a' },
-          { id:'photos', emoji:'📷', title:'Lihat Foto', desc:'Album kenangan keluarga', color:'#f43f5e', bg:'rgba(244,63,94,0.15)', tag:'KENANGAN 📸', tagColor:'#f43f5e' },
-        ].map(item => (
-          <div key={item.id} className="kids-action-tile shimmer-container" onClick={()=>onNavigate(item.id)} style={{background:item.bg,borderColor:`${item.color}44`,boxShadow:`0 8px 24px ${item.color}22`}}>
-            <span className="action-badge" style={{background:`${item.tagColor}26`,color:item.tagColor,border:`1px solid ${item.tagColor}44`}}>
-              {item.tag}
-            </span>
-            <div className="animate-float-slow" style={{fontSize:38,marginBottom:8}}>{item.emoji}</div>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:800,color:'#fff',fontSize:14,marginBottom:4}}>{item.title}</div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,0.65)',lineHeight:1.3}}>{item.desc}</div>
-          </div>
-        ))}
+      <div className="kid-grid" style={{marginBottom: 16}}>
+        <div className="kid-card lilac" onClick={()=>onNavigate('stories')}>
+          <span className="tag violet">SERU ✨</span>
+          <div className="kid-icon"><img src="/assets/icons/book.svg" alt="" /></div>
+          <h3>Dongeng Santai</h3>
+          <p>Kisah budi pekerti & audio book</p>
+          <i className="card-arrow">›</i>
+        </div>
+        <div className="kid-card sky" onClick={()=>onNavigate('games')}>
+          <span className="tag blue-tag">FAVORIT 🚀</span>
+          <div className="kid-icon"><img src="/assets/icons/game.svg" alt="" /></div>
+          <h3>Main Game Seru</h3>
+          <p>Matematika, tebak gambar & kuis</p>
+          <i className="card-arrow">›</i>
+        </div>
+        <div className="kid-card mint" onClick={()=>onNavigate('hafalan')}>
+          <span className="tag green-tag">BERKAH 🌙</span>
+          <div className="kid-icon"><img src="/assets/icons/book.svg" alt="" /></div>
+          <h3>Hafalan Mengaji</h3>
+          <p>Setor surat pendek & doa harian</p>
+          <i className="card-arrow">›</i>
+        </div>
+        <div className="kid-card blue-soft" onClick={()=>onNavigate('videos')}>
+          <span className="tag blue-tag">EDUKATIF 🎬</span>
+          <div className="kid-icon"><img src="/assets/icons/video.svg" alt="" /></div>
+          <h3>Tonton Video</h3>
+          <p>Kanal animasi pilihan ramah anak</p>
+          <i className="card-arrow">›</i>
+        </div>
+        <div className="kid-card amber-soft" onClick={()=>onNavigate('coins')}>
+          <span className="tag amber-tag">HADIAH 🎁</span>
+          <div className="kid-icon"><img src="/assets/icons/gift.svg" alt="" /></div>
+          <h3>Tukar Koin</h3>
+          <p>Klaim reward dan wishlist seru</p>
+          <i className="card-arrow">›</i>
+        </div>
+        <div className="kid-card pink-soft" onClick={()=>onNavigate('photos')}>
+          <span className="tag pink-tag">KENANGAN 📸</span>
+          <div className="kid-icon"><img src="/assets/icons/camera.svg" alt="" /></div>
+          <h3>Lihat Foto</h3>
+          <p>Galeri momen indah keluarga</p>
+          <i className="card-arrow">›</i>
+        </div>
+      </div>
+
+      {/* ADDITIONAL CREATIVE APPS (Mewarnai & Duel) */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <div className="kids-action-tile shimmer-container" onClick={()=>onNavigate('duel')} style={{background:'rgba(245,158,11,0.15)',borderColor:'#f59e0b44',boxShadow:'0 8px 24px rgba(245,158,11,0.15)',padding:12}}>
+          <span className="action-badge" style={{background:'rgba(245,158,11,0.2)',color:'#f59e0b',border:'1px solid rgba(245,158,11,0.4)'}}>
+            POPULER ⭐
+          </span>
+          <div style={{fontSize:28,margin:'6px 0 4px'}}>🥊</div>
+          <div style={{fontFamily:'var(--font-display)',fontWeight:800,color:'#fff',fontSize:13}}>Duel Kuis Pintar</div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.65)',marginTop:2}}>Tantang saudara atau AI</div>
+        </div>
+        <div className="kids-action-tile shimmer-container" onClick={()=>onNavigate('drawing')} style={{background:'rgba(236,72,153,0.15)',borderColor:'#ec489944',boxShadow:'0 8px 24px rgba(236,72,153,0.15)',padding:12}}>
+          <span className="action-badge" style={{background:'rgba(236,72,153,0.2)',color:'#ec4899',border:'1px solid rgba(236,72,153,0.4)'}}>
+            KREATIF 🎨
+          </span>
+          <div style={{fontSize:28,margin:'6px 0 4px'}}>🎨</div>
+          <div style={{fontFamily:'var(--font-display)',fontWeight:800,color:'#fff',fontSize:13}}>Studio Mewarnai</div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.65)',marginTop:2}}>Mewarnai fabel & kanvas</div>
+        </div>
       </div>
     </div>
   );
