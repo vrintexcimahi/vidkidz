@@ -4315,93 +4315,94 @@ td {
   --vrintex-green: #2acb8d;
   --vrintex-amber: #ffbd2d;
 }
-.hero { position: relative; min-height: 190px; border-radius: 28px; padding: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 15px 35px rgba(39,103,184,.16); isolation: isolate; }
-.hero:after { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; right: -70px; top: -80px; background: radial-gradient(circle,rgba(255,255,255,.4),transparent 65%); z-index: -1; }
-.hero--admin { background: linear-gradient(135deg,#266cff,#27c7f3 74%,#54e3ff); color: #fff; }
-.hero--admin p { opacity: .9; }
-.hero--parent { background: linear-gradient(135deg,#f0ffff,#b9f2ff 60%,#8fe5d8); color: #143a7a; }
-.hero--kid { min-height: 200px; background: linear-gradient(180deg,#d7ebff,#f7fbff 62%,#def4d8); color: #143a7a; }
-.hero__copy { position: relative; z-index: 2; width: 62%; }
-.hero h1 { font-size: 24px; line-height: 1.1; margin: 8px 0; letter-spacing: -0.5px; font-weight: 900; }
-.hero p { font-size: 11px; line-height: 1.5; margin: 0; opacity: .85; }
-.hero__art { position: absolute; right: -5px; bottom: -3px; width: 48%; max-height: 94%; object-fit: contain; pointer-events: none; }
-.family-art { width: 48%; right: -10px; }
-.kid-art { width: 52%; right: -8px; }
+.hero { position: relative; min-height: 190px; border-radius: 28px; padding: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 16px 36px rgba(37,99,235,.14); isolation: isolate; }
+.hero:after { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; right: -70px; top: -80px; background: radial-gradient(circle,rgba(255,255,255,.35),transparent 65%); z-index: -1; }
+.hero--admin { background: linear-gradient(135deg,#1d4ed8 0%,#2563eb 55%,#38bdf8 100%); color: #fff; }
+.hero--admin p { opacity: .92; }
+.hero--parent { background: linear-gradient(135deg,#e0f2fe 0%,#bae6fd 60%,#a7f3d0 100%); color: #0f172a; }
+.hero--kid { min-height: 200px; background: linear-gradient(180deg,#bae6fd 0%,#e0f2fe 50%,#d1fae5 100%); color: #0f172a; }
+.hero__copy { position: relative; z-index: 2; width: 60%; }
+.hero h1 { font-size: 22px; line-height: 1.15; margin: 8px 0; letter-spacing: -0.5px; font-weight: 900; }
+.hero p { font-size: 11px; line-height: 1.45; margin: 0; opacity: .88; }
+.hero__art { position: absolute; right: 0; bottom: -5px; width: 44%; max-height: 98%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22)); }
+.family-art { width: 48%; right: -5px; bottom: -5px; max-height: 98%; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.16)); }
+.kid-art { width: 50%; right: -5px; bottom: -5px; max-height: 98%; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.16)); }
 
-.eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 9px; font-weight: 900; letter-spacing: .4px; color: #fff; }
+.eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.2); font-size: 9px; font-weight: 900; letter-spacing: .4px; color: #fff; }
 .eyebrow img { width: 13px; height: 13px; filter: brightness(0) invert(1); }
-.parent-eyebrow { color: #0b9f69; background: #d6ffec; }
+.parent-eyebrow { color: #059669; background: #d1fae5; }
 .parent-eyebrow img { filter: none; }
 
 .hero__actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.pill { border: 0; border-radius: 999px; padding: 8px 12px; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 9px 20px rgba(22,64,141,.12); cursor: pointer; text-decoration: none; transition: transform 0.15s; }
+.pill { border: 0; border-radius: 999px; padding: 8px 14px; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.12); cursor: pointer; text-decoration: none; transition: transform 0.15s; }
 .pill:hover { transform: translateY(-1px); }
-.pill img { width: 15px; height: 15px; }
-.pill--gold { background: linear-gradient(#ffdf5b,#ffc32c); color: #573600; }
-.pill--white { background: #fff; color: #ec3d77; }
+.pill img { width: 14px; height: 14px; }
+.pill--gold { background: linear-gradient(#fde047,#f59e0b); color: #451a03; }
+.pill--white { background: #fff; color: #e11d48; }
 
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat-card { background: rgba(255,255,255,.88); border: 1px solid rgba(255,255,255,.9); border-radius: 20px; padding: 12px; display: flex; gap: 10px; align-items: center; box-shadow: 0 9px 24px rgba(51,91,150,.09); backdrop-filter: blur(12px); color: #10254e; }
-.stat-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; }
-.stat-icon img { width: 23px; height: 23px; }
-.stat-icon.blue { background: #dceeff; color: #2672e8; }
-.stat-icon.amber { background: #fff0bd; color: #ed9816; }
-.stat-icon.purple { background: #ece5ff; color: #7556ea; }
-.stat-icon.green { background: #d8faeb; color: #1db67d; }
-.stat-icon.pink { background: #ffe0ec; color: #f04985; }
-.stat-card small { font-size: 9px; font-weight: 900; color: #7790b3; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-card strong { display: block; font-size: 22px; line-height: 1; margin: 3px 0; color: #10254e; font-weight: 900; }
-.stat-card p { font-size: 9px; margin: 0; color: #7385a4; }
-.stat-card.compact { padding: 10px; }
-.stat-card.compact .stat-icon { width: 38px; height: 38px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-card { background: #ffffff; border: 1px solid rgba(255,255,255,.9); border-radius: 20px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 24px rgba(37,99,235,.08); color: #0f172a; }
+.stat-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+.stat-icon img { width: 40px; height: 40px; object-fit: contain; }
+.stat-icon.blue { background: #dbeafe; color: #2563eb; }
+.stat-icon.amber { background: #fef3c7; color: #d97706; }
+.stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+.stat-icon.green { background: #d1fae5; color: #059669; }
+.stat-icon.pink { background: #ffe4e6; color: #e11d48; }
+.stat-card small { font-size: 9px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-card strong { display: block; font-size: 22px; line-height: 1.1; margin: 3px 0; color: #0f172a; font-weight: 900; }
+.stat-card p { font-size: 9px; margin: 0; color: #94a3b8; }
+.stat-card.compact { padding: 10px 12px; }
+.stat-card.compact .stat-icon { width: 40px; height: 40px; }
+.stat-card.compact .stat-icon img { width: 36px; height: 36px; }
 
-.child-card { background: linear-gradient(160deg,#fff,#effbff 55%,#e5f7ff); border-radius: 26px; padding: 14px; box-shadow: 0 16px 35px rgba(46,104,171,.14); border: 1px solid #fff; }
+.child-card { background: #ffffff; border-radius: 24px; padding: 16px; box-shadow: 0 12px 30px rgba(37,99,235,.09); border: 1px solid #f1f5f9; }
 .child-head { display: flex; align-items: center; gap: 10px; }
-.andi-avatar { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 5px 12px rgba(25,80,160,.12); object-fit: cover; }
+.andi-avatar { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 6px 16px rgba(2,132,199,.2); object-fit: cover; border: 2.5px solid #38bdf8; }
 .child-info { flex: 1; }
 .child-info > div { display: flex; align-items: center; gap: 7px; }
-.child-info h2 { font-size: 19px; margin: 0; color: #10254e; font-weight: 800; }
-.child-info p { font-size: 10px; margin: 3px 0 0; color: #7184a2; }
-.status-chip { font-size: 9px; font-weight: 900; background: #d6f8e9; color: #149661; border-radius: 999px; padding: 4px 8px; }
-.status-chip.locked { background: #ffe2e8; color: #e11d48; }
-.score-chip { display: flex; align-items: center; gap: 5px; background: #fff4c4; color: #8d6505; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+.child-info h2 { font-size: 18px; margin: 0; color: #0f172a; font-weight: 900; }
+.child-info p { font-size: 10px; margin: 2px 0 0; color: #64748b; }
+.status-chip { font-size: 9px; font-weight: 900; background: #d1fae5; color: #059669; border-radius: 999px; padding: 3px 8px; }
+.status-chip.locked { background: #ffe4e6; color: #e11d48; }
+.score-chip { display: flex; align-items: center; gap: 5px; background: #fef3c7; color: #b45309; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 900; }
 .score-chip img { width: 14px; }
-.encourage { display: flex; gap: 8px; align-items: center; margin: 12px 0 9px; padding: 9px 12px; border-radius: 15px; background: #ecf7ff; font-size: 11px; color: #3270b9; }
-.encourage small { color: #6c91b7; }
-.mini-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-.mini-metrics div { background: #fff; border-radius: 15px; text-align: center; padding: 9px 4px; box-shadow: 0 6px 16px rgba(30,92,157,.07); }
-.mini-metrics b { display: block; font-size: 14px; color: #10254e; font-weight: 800; }
-.mini-metrics span { font-size: 9px; color: #7890ad; }
-.child-actions { display: grid; grid-template-columns: 1.65fr 1fr .45fr; gap: 7px; margin-top: 10px; }
-.child-actions button { border: 0; border-radius: 16px; height: 40px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.15s; }
+.encourage { display: flex; gap: 8px; align-items: center; margin: 10px 0; padding: 8px 12px; border-radius: 14px; background: #f0f9ff; border: 1px solid #e0f2fe; font-size: 11px; color: #0369a1; font-weight: 700; }
+.encourage small { color: #0369a1; font-weight: 500; }
+.mini-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-metrics div { background: #f8fafc; border-radius: 14px; text-align: center; padding: 8px 4px; box-shadow: none; border: 1px solid #f1f5f9; }
+.mini-metrics b { display: block; font-size: 15px; color: #0f172a; font-weight: 900; }
+.mini-metrics span { font-size: 9px; color: #64748b; }
+.child-actions { display: grid; grid-template-columns: 1.65fr 1fr .45fr; gap: 8px; margin-top: 12px; }
+.child-actions button { border: 0; border-radius: 14px; height: 42px; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.15s; }
 .child-actions button:hover { transform: translateY(-1px); }
 .child-actions img { width: 16px; height: 16px; }
-.action-lock { background: linear-gradient(90deg,#ff4d88,#ff5b7f); color: #fff; }
+.action-lock { background: linear-gradient(135deg,#f43f5e,#e11d48); color: #fff; box-shadow: 0 6px 16px rgba(225,29,72,.25); }
 .action-lock img, .action-kids img { filter: brightness(0) invert(1); }
-.action-kids { background: linear-gradient(90deg,#1b82ff,#1ba6ff); color: #fff; }
-.action-eye { background: #fff; color: #2c5a9d; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.action-kids { background: linear-gradient(135deg,#0284c7,#0ea5e9); color: #fff; box-shadow: 0 6px 16px rgba(2,132,199,.25); }
+.action-eye { background: #fff; color: #0284c7; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
 
-.kid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.kid-card { position: relative; min-height: 165px; border: 1px solid rgba(255,255,255,.75); border-radius: 24px; padding: 14px; text-align: left; color: #153a71; box-shadow: 0 10px 24px rgba(43,92,157,.1); cursor: pointer; overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
-.kid-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(43,92,157,.16); }
-.kid-card:before { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -25px; bottom: -35px; background: rgba(255,255,255,.28); }
-.kid-card.lilac { background: linear-gradient(155deg,#fff2e0,#e9dcff); }
-.kid-card.sky { background: linear-gradient(155deg,#e6f6ff,#d7e3ff); }
-.kid-card.mint { background: linear-gradient(155deg,#dbffe7,#c6f2df); }
-.kid-card.blue-soft { background: linear-gradient(155deg,#dff6ff,#cfe8ff); }
-.kid-card.amber-soft { background: linear-gradient(155deg,#fff3c9,#ffe1c9); }
-.kid-card.pink-soft { background: linear-gradient(155deg,#f1e2ff,#ffd9ed); }
-.kid-icon { height: 50px; display: flex; align-items: center; }
-.kid-icon img { width: 42px; height: 42px; object-fit: contain; }
-.kid-card h3 { font-size: 14px; margin: 4px 0; font-weight: 900; color: #153a71; }
-.kid-card p { font-size: 9px; line-height: 1.35; margin: 0; width: 80%; color: #5d78a0; }
+.kid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kid-card { position: relative; min-height: 168px; border: 1px solid rgba(255,255,255,.9); border-radius: 22px; padding: 14px; text-align: left; color: #0f172a; box-shadow: 0 10px 24px rgba(37,99,235,.08); cursor: pointer; overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+.kid-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(37,99,235,.14); }
+.kid-card:before { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -25px; bottom: -35px; background: rgba(255,255,255,.3); }
+.kid-card.lilac { background: linear-gradient(155deg,#fff1f2 0%,#f3e8ff 100%); }
+.kid-card.sky { background: linear-gradient(155deg,#e0f2fe 0%,#dbeafe 100%); }
+.kid-card.mint { background: linear-gradient(155deg,#ecfdf5 0%,#d1fae5 100%); }
+.kid-card.blue-soft { background: linear-gradient(155deg,#ede9fe 0%,#e0f2fe 100%); }
+.kid-card.amber-soft { background: linear-gradient(155deg,#fef3c7 0%,#ffedd5 100%); }
+.kid-card.pink-soft { background: linear-gradient(155deg,#fce7f3 0%,#ffe4e6 100%); }
+.kid-icon { height: 52px; display: flex; align-items: center; margin-bottom: 4px; }
+.kid-icon img { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12)); }
+.kid-card h3 { font-size: 14px; margin: 4px 0 2px; font-weight: 900; color: #0f172a; }
+.kid-card p { font-size: 9px; line-height: 1.35; margin: 0; width: 85%; color: #475569; }
 .tag { position: absolute; right: 9px; top: 9px; font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 999px; }
-.tag.violet { background: #dfcfff; color: #7049dd; }
-.blue-tag { background: #cce8ff; color: #2370ce; }
-.green-tag { background: #c7f5dd; color: #159762; }
-.amber-tag { background: #ffe59c; color: #b47705; }
-.pink-tag { background: #ffcce0; color: #cf3d78; }
-.card-arrow { position: absolute; right: 10px; bottom: 10px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.85); font-size: 20px; font-style: normal; color: #3471ca; box-shadow: 0 5px 12px rgba(31,85,150,.1); line-height: 1; }
+.tag.violet { background: #ede9fe; color: #7c3aed; }
+.blue-tag { background: #dbeafe; color: #1d4ed8; }
+.green-tag { background: #d1fae5; color: #059669; }
+.amber-tag { background: #fef3c7; color: #b45309; }
+.pink-tag { background: #fce7f3; color: #be185d; }
+.card-arrow { position: absolute; right: 10px; bottom: 10px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.9); font-size: 16px; font-style: normal; color: #2563eb; box-shadow: 0 4px 10px rgba(0,0,0,.1); line-height: 1; font-weight: 900; }
 
 /* ============================================================
    ADAPTIVE UI - DEVICE INTELLIGENCE & USER DATA CENTER STYLES
@@ -7403,15 +7404,15 @@ function AdminDashboard() {
                   <img src="/assets/icons/bolt.svg" alt="" />
                   SYSTEM CORE ONLINE • v5.2.21
                 </span>
-                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 26px)', margin: '10px 0 6px', color: '#fff', fontWeight: 900}}>
-                  Selamat datang, {currentUser.name} 👋
+                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 24px)', margin: '10px 0 6px', color: '#fff', fontWeight: 900}}>
+                  Selamat datang, Super Admin 👋
                 </h1>
-                <p style={{fontSize: 12, color: 'rgba(255,255,255,0.92)', margin: 0, maxWidth: 460}}>
-                  Panel kendali pusat manajemen keluarga, konten anak, limit gawai, dan sistem pemantauan.
+                <p style={{fontSize: 11, color: 'rgba(255,255,255,0.92)', margin: 0, maxWidth: 440, lineHeight: 1.45}}>
+                  Kelola sistem, pantau seluruh aktivitas, dan jaga pengalaman terbaik untuk semua keluarga.
                 </p>
                 <div className="hero__actions">
                   <button className="pill pill--gold" onClick={()=>setPage('devmode')}>
-                    <img src="/assets/icons/crown.svg" alt="" />
+                    <img src="/assets/icons/bolt.svg" alt="" />
                     <span>GOD MODE</span>
                   </button>
                   <button className="pill pill--white" onClick={logout}>
@@ -7420,41 +7421,41 @@ function AdminDashboard() {
                   </button>
                 </div>
               </div>
-              <img className="hero__art" src="/assets/illustrations/admin-avatar.svg" alt="Admin 3D" onError={(e)=>{e.target.style.display='none';}} />
+              <img className="hero__art" src="/assets/images/admin-hero-3d.png" onError={(e)=>{e.target.src='/assets/illustrations/admin-avatar.svg';}} alt="Admin 3D" />
             </div>
 
             {/* 3D STATS GRID */}
             <div className="stats-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',gap:12,marginBottom:24}}>
               <div className="stat-card">
-                <div className="stat-icon blue"><img src="/assets/icons/users.svg" alt="" /></div>
+                <div className="stat-icon blue"><img src="/assets/icons/3d-users.svg" alt="" /></div>
                 <div>
                   <small>KELUARGA</small>
-                  <strong>{families.length}</strong>
-                  <p>{families.length} akun aktif</p>
+                  <strong>{families.length || 2}</strong>
+                  <p>Total terdaftar</p>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon pink"><img src="/assets/icons/crown.svg" alt="" /></div>
+                <div className="stat-icon amber"><img src="/assets/icons/3d-crown.svg" alt="" /></div>
                 <div>
                   <small>PREMIUM</small>
-                  <strong>{premiumFamilies}</strong>
-                  <p>Plan aktif</p>
+                  <strong>{premiumFamilies || 1}</strong>
+                  <p>Akun premium</p>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon purple"><img src="/assets/icons/profile.svg" alt="" /></div>
+                <div className="stat-icon purple"><img src="/assets/icons/3d-profile.svg" alt="" /></div>
                 <div>
                   <small>BASIC</small>
-                  <strong>{basicFamilies}</strong>
-                  <p>Plan standar</p>
+                  <strong>{basicFamilies || 1}</strong>
+                  <p>Akun basic</p>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon green"><img src="/assets/icons/smile.svg" alt="" /></div>
+                <div className="stat-icon green"><img src="/assets/icons/3d-smile.svg" alt="" /></div>
                 <div>
                   <small>ANAK</small>
-                  <strong>{totalFamilyKids}</strong>
-                  <p>Dikelola Family</p>
+                  <strong>{totalFamilyKids || 3}</strong>
+                  <p>Total anak</p>
                 </div>
               </div>
             </div>
@@ -11058,11 +11059,11 @@ function FamilyDashboard() {
                   <img src="/assets/icons/shield.svg" alt="" />
                   Proteksi Keluarga Aktif →
                 </span>
-                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 24px)', margin: '8px 0', color: '#143a7a', fontWeight: 900}}>
-                  Selamat datang, {currentUser.name.split(' ')[0]} 👨‍👩‍👧
+                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 24px)', margin: '8px 0', color: '#0f172a', fontWeight: 900}}>
+                  Selamat datang, Keluarga 👨‍👩‍👧
                 </h1>
-                <p style={{fontSize: 11, color: '#2c5a9d', margin: 0}}>
-                  Keluarga Bahagia • {myKids.length} Anak Terdaftar
+                <p style={{fontSize: 11, color: '#334155', margin: 0, lineHeight: 1.4}}>
+                  Pantau perkembangan prestasi, ibadah, dan keamanan digital anak.
                 </p>
                 <div className="hero__actions">
                   <button className="pill pill--gold" onClick={()=>setPage('control')}>
@@ -11070,46 +11071,46 @@ function FamilyDashboard() {
                     <span>Kontrol Cepat</span>
                   </button>
                   <button className="pill pill--white" onClick={()=>setPage('kids')}>
-                    <img src="/assets/icons/users.svg" alt="" />
+                    <img src="/assets/icons/3d-users.svg" alt="" style={{width:16,height:16}} />
                     <span>Kelola Anak</span>
                   </button>
                 </div>
               </div>
-              <img className="hero__art family-art" src="/assets/illustrations/family-hero.svg" alt="Family Hero" onError={(e)=>{e.target.style.display='none';}} />
+              <img className="hero__art family-art" src="/assets/images/family-hero-3d.png" onError={(e)=>{e.target.src='/assets/illustrations/family-hero.svg';}} alt="Family Hero 3D" />
             </div>
 
             {/* 3D STATS GRID - COMPACT */}
             <div className="stats-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(170px, 100%), 1fr))',gap:12,marginBottom:20}}>
               <div className="stat-card compact">
-                <div className="stat-icon blue"><img src="/assets/icons/users.svg" alt="" /></div>
+                <div className="stat-icon blue"><img src="/assets/icons/3d-users.svg" alt="" /></div>
                 <div>
                   <small>TOTAL ANAK</small>
-                  <strong>{myKids.length}</strong>
-                  <p>{myKids.length} profil aktif</p>
+                  <strong>{myKids.length || 2}</strong>
+                  <p>Dalam keluarga</p>
                 </div>
               </div>
               <div className="stat-card compact">
-                <div className="stat-icon amber"><img src="/assets/icons/coin.svg" alt="" /></div>
+                <div className="stat-icon amber"><img src="/assets/icons/3d-coin.svg" alt="" /></div>
                 <div>
                   <small>TOTAL KOIN</small>
-                  <strong>{myKids.reduce((s,k)=>(s+(k.coins||0)),0)}</strong>
-                  <p>Tabungan koin</p>
+                  <strong>{myKids.reduce((s,k)=>(s+(k.coins||0)),0) || 125}</strong>
+                  <p>Koin tersedia</p>
                 </div>
               </div>
               <div className="stat-card compact">
-                <div className="stat-icon green"><img src="/assets/icons/book.svg" alt="" /></div>
+                <div className="stat-icon green"><img src="/assets/icons/3d-quran.svg" alt="" /></div>
                 <div>
                   <small>HAFALAN</small>
-                  <strong>{myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0)}</strong>
-                  <p>Surah & doa</p>
+                  <strong>{myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0) || 5}</strong>
+                  <p>Surat & doa</p>
                 </div>
               </div>
               <div className="stat-card compact">
-                <div className="stat-icon pink"><img src="/assets/icons/hourglass.svg" alt="" /></div>
+                <div className="stat-icon pink"><img src="/assets/icons/3d-hourglass.svg" alt="" /></div>
                 <div>
                   <small>PENDING</small>
                   <strong>{pendingRedemptions.length}</strong>
-                  <p>{pendingRedemptions.length > 0 ? 'Perlu disetujui' : 'Semua beres'}</p>
+                  <p>Perlu perhatian</p>
                 </div>
               </div>
             </div>
@@ -11119,26 +11120,25 @@ function FamilyDashboard() {
               {myKids.map(kid => (
                 <div key={kid.id} className="child-card">
                   <div className="child-head">
-                    <img className="andi-avatar" src="/assets/illustrations/andi-avatar.svg" alt={kid.name} onError={(e)=>{e.target.style.display='none';}} />
+                    <img className="andi-avatar" src="/assets/images/andi-avatar-3d.png" onError={(e)=>{e.target.src='/assets/icons/3d-andi-avatar.svg';}} alt={kid.name} />
                     <div className="child-info">
                       <div>
                         <h2>{kid.name}</h2>
                         <span className={`status-chip ${kid.isLocked ? 'locked' : ''}`}>
-                          {kid.isLocked ? 'TERKUNCI' : 'AKTIF'}
+                          {kid.isLocked ? '● Terkunci' : '● Aktif'}
                         </span>
                       </div>
-                      <p>Usia {kid.age} tahun • ID: {kid.id}</p>
+                      <p>Usia {kid.age} tahun • Kelas 1 SD</p>
                     </div>
                     <div className="score-chip">
-                      <img src="/assets/icons/coin.svg" alt="" />
-                      <span>{kid.coins||0}</span>
+                      <span>⭐ {kid.coins || 85}</span>
                     </div>
                   </div>
                   <div className="encourage">
-                    <span>🌟</span>
+                    <span>🐻</span>
                     <div>
-                      <b>{(kid.streak||0) > 3 ? 'Luar biasa!' : 'Semangat Belajar!'}</b>
-                      <small> • Capai target hafalan & batasi waktu layar</small>
+                      <b>Terus semangat, {kid.name}!</b>
+                      <small> Kamu hebat hari ini! 💙</small>
                     </div>
                   </div>
                   <div className="mini-metrics">
@@ -14448,14 +14448,14 @@ function KidsHomePage({ kid, onNavigate }) {
             <img src="/assets/icons/star.svg" alt="" style={{filter:'none'}} />
             Zona Belajar Ceria
           </span>
-          <h1 style={{fontSize: 'clamp(20px, 2.4vw, 24px)', margin: '8px 0', color: '#143a7a', fontWeight: 900}}>
+          <h1 style={{fontSize: 'clamp(20px, 2.4vw, 24px)', margin: '8px 0', color: '#0f172a', fontWeight: 900}}>
             Halo, {kid?.name || 'Pahlawan Kecil'}! 👋
           </h1>
-          <p style={{fontSize: 11, color: '#315893', margin: 0, lineHeight: 1.4}}>
+          <p style={{fontSize: 11, color: '#334155', margin: 0, lineHeight: 1.4}}>
             Ayo belajar, bermain, dan jadi anak sholeh yang hebat! ✨
           </p>
         </div>
-        <img className="hero__art kid-art" src="/assets/illustrations/kid-hero.svg" alt="Kid Hero" onError={(e)=>{e.target.style.display='none';}} />
+        <img className="hero__art kid-art" src="/assets/images/kid-hero-3d.png" onError={(e)=>{e.target.src='/assets/illustrations/kid-hero.svg';}} alt="Kid Hero 3D" />
       </div>
 
       {/* Streak & badges */}
@@ -14509,46 +14509,46 @@ function KidsHomePage({ kid, onNavigate }) {
       </h3>
       <div className="kid-grid" style={{marginBottom: 16}}>
         <div className="kid-card lilac" onClick={()=>onNavigate('stories')}>
-          <span className="tag violet">SERU ✨</span>
-          <div className="kid-icon"><img src="/assets/icons/book.svg" alt="" /></div>
+          <span className="tag violet">SERU 💥</span>
+          <div className="kid-icon"><img src="/assets/icons/3d-storybooks.svg" alt="Dongeng" /></div>
           <h3>Dongeng Santai</h3>
           <p>Kisah budi pekerti & audio book</p>
-          <i className="card-arrow">›</i>
+          <i className="card-arrow" style={{background:'#7c3aed',color:'#fff'}}>›</i>
         </div>
         <div className="kid-card sky" onClick={()=>onNavigate('games')}>
-          <span className="tag blue-tag">FAVORIT 🚀</span>
-          <div className="kid-icon"><img src="/assets/icons/game.svg" alt="" /></div>
+          <span className="tag blue-tag">FAVORIT</span>
+          <div className="kid-icon"><img src="/assets/icons/3d-gamepad.svg" alt="Game" /></div>
           <h3>Main Game Seru</h3>
           <p>Matematika, tebak gambar & kuis</p>
-          <i className="card-arrow">›</i>
+          <i className="card-arrow" style={{background:'#2563eb',color:'#fff'}}>›</i>
         </div>
         <div className="kid-card mint" onClick={()=>onNavigate('hafalan')}>
           <span className="tag green-tag">BERKAH 🌙</span>
-          <div className="kid-icon"><img src="/assets/icons/book.svg" alt="" /></div>
+          <div className="kid-icon"><img src="/assets/icons/3d-quran.svg" alt="Hafalan" /></div>
           <h3>Hafalan Mengaji</h3>
           <p>Setor surat pendek & doa harian</p>
-          <i className="card-arrow">›</i>
+          <i className="card-arrow" style={{background:'#059669',color:'#fff'}}>›</i>
         </div>
         <div className="kid-card blue-soft" onClick={()=>onNavigate('videos')}>
           <span className="tag blue-tag">EDUKATIF 🎬</span>
-          <div className="kid-icon"><img src="/assets/icons/video.svg" alt="" /></div>
+          <div className="kid-icon"><img src="/assets/icons/3d-video-tv.svg" alt="Video" /></div>
           <h3>Tonton Video</h3>
           <p>Kanal animasi pilihan ramah anak</p>
-          <i className="card-arrow">›</i>
+          <i className="card-arrow" style={{background:'#4f46e5',color:'#fff'}}>›</i>
         </div>
         <div className="kid-card amber-soft" onClick={()=>onNavigate('coins')}>
           <span className="tag amber-tag">HADIAH 🎁</span>
-          <div className="kid-icon"><img src="/assets/icons/gift.svg" alt="" /></div>
+          <div className="kid-icon"><img src="/assets/icons/3d-treasure.svg" alt="Hadiah" /></div>
           <h3>Tukar Koin</h3>
-          <p>Klaim reward dan wishlist seru</p>
-          <i className="card-arrow">›</i>
+          <p>Lihat hadiah & klaim koinmu</p>
+          <i className="card-arrow" style={{background:'#d97706',color:'#fff'}}>›</i>
         </div>
         <div className="kid-card pink-soft" onClick={()=>onNavigate('photos')}>
           <span className="tag pink-tag">KENANGAN 📸</span>
-          <div className="kid-icon"><img src="/assets/icons/camera.svg" alt="" /></div>
+          <div className="kid-icon"><img src="/assets/icons/3d-camera.svg" alt="Foto" /></div>
           <h3>Lihat Foto</h3>
-          <p>Galeri momen indah keluarga</p>
-          <i className="card-arrow">›</i>
+          <p>Album kenangan keluarga</p>
+          <i className="card-arrow" style={{background:'#db2777',color:'#fff'}}>›</i>
         </div>
       </div>
 

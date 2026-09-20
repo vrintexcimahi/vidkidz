@@ -4,7 +4,21 @@ const toast = document.querySelector('#toast');
 
 function setRole(role){
   roleButtons.forEach(btn => btn.classList.toggle('is-active', btn.dataset.role === role));
-  screens.forEach(screen => screen.classList.toggle('is-current', screen.dataset.screen === role));
+  screens.forEach(screen => {
+    if (role === 'all') {
+      screen.classList.add('is-current', 'is-visible');
+      screen.style.display = '';
+    } else {
+      const match = screen.dataset.screen === role;
+      screen.classList.toggle('is-current', match);
+      screen.classList.toggle('is-visible', match);
+      if (window.innerWidth <= 900) {
+        screen.style.display = match ? 'block' : 'none';
+      } else {
+        screen.style.display = '';
+      }
+    }
+  });
   localStorage.setItem('vrintex-ui-role', role);
 }
 
@@ -27,7 +41,7 @@ function showToast(message){
 }
 document.querySelectorAll('.js-toast').forEach(btn => btn.addEventListener('click', () => showToast(btn.dataset.message || 'Aksi berhasil')));
 
-const saved = localStorage.getItem('vrintex-ui-role') || 'admin';
+const saved = localStorage.getItem('vrintex-ui-role') || 'all';
 setRole(saved);
 
 if ('serviceWorker' in navigator) {

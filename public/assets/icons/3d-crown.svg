@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="cr-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#eab308" flood-opacity="0.45"/>
+    </filter>
+    <linearGradient id="crown-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="30%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+  </defs>
+  <g filter="url(#cr-shadow)">
+    <!-- Red Velvet Cushion -->
+    <path d="M26 68 Q60 46 94 68 Q60 84 26 68 Z" fill="#be123c"/>
+
+    <!-- Crown Body -->
+    <path d="M22 68 L16 38 L40 54 L60 26 L80 54 L104 38 L98 68 Z" fill="url(#crown-gold)"/>
+    
+    <!-- Pearls on Peaks -->
+    <circle cx="16" cy="36" r="5" fill="#ffffff"/>
+    <circle cx="40" cy="52" r="4" fill="#ffffff"/>
+    <circle cx="60" cy="24" r="6" fill="#ffffff"/>
+    <circle cx="80" cy="52" r="4" fill="#ffffff"/>
+    <circle cx="104" cy="36" r="5" fill="#ffffff"/>
+
+    <!-- Crown Base Band -->
+    <rect x="20" y="68" width="80" height="18" rx="7" fill="url(#crown-gold)"/>
+    
+    <!-- Inset Jewels on Band -->
+    <circle cx="34" cy="77" r="4.5" fill="#3b82f6"/> <!-- Sapphire -->
+    <ellipse cx="60" cy="77" rx="6" ry="5" fill="#ef4444"/> <!-- Ruby -->
+    <circle cx="86" cy="77" r="4.5" fill="#10b981"/> <!-- Emerald -->
+
+    <!-- Specular highlight bar -->
+    <path d="M24 72 H96 V75 H24 Z" fill="#ffffff" opacity="0.6"/>
+  </g>
+</svg>

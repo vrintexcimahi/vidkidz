@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="hg-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#f43f5e" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="bg-bubble-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1f2"/>
+      <stop offset="100%" stop-color="#ffe4e6"/>
+    </linearGradient>
+    <linearGradient id="hg-wood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+    <linearGradient id="sand-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fda4af"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
+  </defs>
+  <g filter="url(#hg-shadow)">
+    <rect x="10" y="10" width="100" height="100" rx="30" fill="url(#bg-bubble-pink)"/>
+    <!-- Top Cap -->
+    <rect x="36" y="28" width="48" height="8" rx="4" fill="url(#hg-wood)"/>
+    <!-- Bottom Cap -->
+    <rect x="36" y="84" width="48" height="8" rx="4" fill="url(#hg-wood)"/>
+    
+    <!-- Glass Contour -->
+    <path d="M42 36 Q60 60 42 84 H78 Q60 60 78 36 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    
+    <!-- Top Sand Cone -->
+    <path d="M46 42 Q60 52 74 42 L60 60 Z" fill="url(#sand-pink)"/>
+    <!-- Falling sand stream -->
+    <line x1="60" y1="58" x2="60" y2="76" stroke="#f43f5e" stroke-width="2" stroke-dasharray="2,2"/>
+    <!-- Bottom Sand Mound -->
+    <path d="M48 82 Q60 72 72 82 Z" fill="url(#sand-pink)"/>
+  </g>
+</svg>
