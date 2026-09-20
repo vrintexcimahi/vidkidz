@@ -7212,24 +7212,11 @@ function AdminDashboard() {
   const [confirm, setConfirm] = useState(null);
   const [modal, setModal] = useState(null);
 
-  const [unresolvedErrorCount, setUnresolvedErrorCount] = useState(() => {
-    return window.VidkidzLogger ? window.VidkidzLogger.getUnresolvedErrorCount() : 0;
-  });
-
-  useEffect(() => {
-    if (window.VidkidzLogger) {
-      const unsub = window.VidkidzLogger.subscribe(() => {
-        setUnresolvedErrorCount(window.VidkidzLogger.getUnresolvedErrorCount());
-      });
-      return unsub;
-    }
-  }, []);
-
   const navItems = [
     { id:'overview', label:'Overview', icon:'ui:grid' },
     { id:'families', label:'User Manager', icon:'ui:users' },
     { id:'userdata', label:'User Data Center', icon:'ui:server' },
-    { id:'monitoring', label:'Log & Monitoring', icon:'ui:terminal', badge: unresolvedErrorCount },
+    { id:'monitoring', label:'Log & Monitoring', icon:'ui:terminal' },
     { id:'backup', label:'Backup Database', icon:'ui:database' },
     { id:'devmode', label:'Developer Mode', icon:'ui:smartphone' },
     { id:'settings', label:'System Settings', icon:'ui:settings' },
@@ -7285,21 +7272,6 @@ function AdminDashboard() {
               <IconSlot icon={n.icon} size={16} color="currentColor" />
             </span>
             <span className="nav-label-popup">{n.label}</span>
-            {n.badge > 0 && (
-              <span style={{
-                marginLeft:'auto',
-                background:'#ef4444',
-                color:'#fff',
-                fontSize:10,
-                fontWeight:800,
-                padding:'1px 6px',
-                borderRadius:10,
-                lineHeight:1.2,
-                boxShadow:'0 0 8px rgba(239,68,68,0.6)'
-              }}>
-                {n.badge}
-              </span>
-            )}
           </div>
         ))}
         <div style={{marginTop:'auto'}}>

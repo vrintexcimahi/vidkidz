@@ -796,3 +796,6 @@
    - Endpoint root `http://localhost:3100`, `?preview_role=admin`, `?preview_role=family`, `?preview_role=kids` merespons sukses (HTTP 200).
 4. **Penghapusan Widget Switcher Kanan Atas (`device-view-switcher`)**:
    - Menghapus tombol floating switch device (ikon phone/monitor pill) di pojok kanan atas dari `DeviceViewShell` dan menonaktifkan CSS-nya secara permanen (`display: none !important;`) sehingga tampilan header bersih tanpa elemen mengambang.
+5. **Penghapusan Tampilan Lencana Notifikasi Log (`Log & Monitoring`)**:
+   - Menghapus badge notifikasi merah (`[ 2 ]` di sidebar desktop dan `[ 10 ]` di navigasi bawah mobile) pada item menu `Log & Monitoring` di `AdminDashboard`.
+   - Menghapus listener & state `unresolvedErrorCount` sehingga menu navigasi bersih dari angka badge notifikasi yang mengganggu.
