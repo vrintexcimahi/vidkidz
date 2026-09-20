@@ -11,7 +11,7 @@ const os = require('os');
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'vidkidz-secret-change-in-prod';
 const JWT_EXPIRES = '30d';
-const APP_VERSION = process.env.APP_VERSION || '5.2.19';
+const APP_VERSION = process.env.APP_VERSION || '5.2.20';
 const ASSET_VERSION = 'v33';
 const ADMIN_LOGIN_ENABLED = process.env.ALLOW_ADMIN_LOGIN !== 'false';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -20,9 +20,107 @@ const DEMO_FAMILY_EMAILS = new Set(['budi@vidkidz.local', 'siti@vidkidz.local'])
 const DEMO_KID_IDS = new Set(['k1', 'k2', 'k3']);
 const DATA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-data') : path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const MEDIA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-media') : path.join(DATA_DIR, 'media');
+if (!fs.existsSync(MEDIA_DIR)) fs.mkdirSync(MEDIA_DIR, { recursive: true });
 const STATE_FILE = path.join(DATA_DIR, 'vidkidz-state.json');
 let stateCache = null;
 let stateUpdatedAt = 0;
+
+// ─── Image API & Retention Config ──────────────────────────────────────────
+const IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL || 'https://image.vrintex.id/v1';
+const IMAGE_API_KEY = process.env.IMAGE_API_KEY || '';
+const IMAGE_MODEL = process.env.IMAGE_MODEL || 'ag/gemini-3.1-flash-image';
+const IMAGE_RETENTION_DAYS = parseInt(process.env.IMAGE_RETENTION_DAYS || '7', 10);
+const IMAGE_RETENTION_MS = IMAGE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const VALID_IMAGE_SIZES = ['1:1', '16:9', '9:16', '4:3'];
+
+// ─── Media Retention Cleaner (Cron & Startup) ──────────────────────────────
+function runMediaRetentionCleanup() {
+  try {
+    if (!fs.existsSync(MEDIA_DIR)) return { success: true, cleaned: 0, preserved: 0 };
+    const files = fs.readdirSync(MEDIA_DIR);
+    const now = Date.now();
+    let cleaned = 0;
+    let preserved = 0;
+
+    for (const file of files) {
+      const filePath = path.join(MEDIA_DIR, file);
+      try {
+        const stat = fs.statSync(filePath);
+        if (stat.isFile()) {
+          if (now - stat.mtimeMs > IMAGE_RETENTION_MS) {
+            fs.unlinkSync(filePath);
+            cleaned++;
+          } else {
+            preserved++;
+          }
+        }
+      } catch (err) {
+        console.error(`[Retention] Error cek file ${file}:`, err.message);
+      }
+    }
+
+    if (cleaned > 0) {
+      console.log(`[Retention] Cron Cleanup: Berhasil menghapus ${cleaned} file media yang berusia > ${IMAGE_RETENTION_DAYS} hari.`);
+    }
+    return { success: true, cleaned, preserved, retentionDays: IMAGE_RETENTION_DAYS };
+  } catch (err) {
+    console.error('[Retention] Gagal menjalankan cleanup:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+// Jalankan cron retention saat startup & interval berkala setiap 24 jam
+runMediaRetentionCleanup();
+const retentionIntervalTimer = setInterval(runMediaRetentionCleanup, 24 * 60 * 60 * 1000);
+if (retentionIntervalTimer && typeof retentionIntervalTimer.unref === 'function') {
+  retentionIntervalTimer.unref();
+}
+
+// Helper: Native Image Generation function
+async function generateImage(prompt, size = '16:9') {
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    throw new Error('Prompt gambar wajib diisi');
+  }
+
+  const normalizedSize = VALID_IMAGE_SIZES.includes(size) ? size : '16:9';
+  const baseUrl = (process.env.IMAGE_API_BASE_URL || 'https://image.vrintex.id/v1').replace(/\/$/, '');
+  const endpoint = `${baseUrl}/images/generations`;
+
+  const headers = { 'Content-Type': 'application/json' };
+  const apiKey = process.env.IMAGE_API_KEY;
+  if (apiKey && apiKey !== '***' && apiKey !== 'none') {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  let fetchFn = globalThis.fetch;
+  if (typeof fetchFn !== 'function') {
+    fetchFn = (await import('node-fetch')).default;
+  }
+
+  const res = await fetchFn(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: process.env.IMAGE_MODEL || 'ag/gemini-3.1-flash-image',
+      prompt: prompt.trim(),
+      size: normalizedSize,
+      response_format: 'url'
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Image API error (${res.status}): ${errText || res.statusText}`);
+  }
+
+  const data = await res.json();
+  if (!data || !data.data || !data.data[0] || !data.data[0].url) {
+    throw new Error('Format respon Image API tidak valid');
+  }
+
+  return data.data[0].url;
+}
 
 // ─── Seed initial state ──────────────────────────────────────────────────────
 const INITIAL_STATE = {
@@ -94,6 +192,9 @@ const INITIAL_STATE = {
     { id:'drec1', kidId:'k1', templateId:'kancil', title:'Si Kancil yang Cerdik', createdAt:Date.now()-86400000, rewardCoins:10, stars:5 }
   ],
   parentStoryAudios: [],
+  quizDuels: [
+    { id:'qduel1', familyId:'f1', category:'math', title:'Duel Matematika Cepat', challengerKidId:'k1', challengerKidName:'Andi', challengerAvatar:'👦', challengerScore:80, challengerTimeSeconds:42, opponentKidId:'k2', opponentKidName:'Sari', opponentAvatar:'👧', opponentScore:60, opponentTimeSeconds:48, winnerKidId:'k1', winnerKidName:'Andi', status:'completed', createdAt:Date.now()-86400000, rewardCoins:15 }
+  ],
   activityLog: [
     { id:'log1', ts:Date.now()-300000, user:'Andi', action:'Bermain Matematika Seru — skor 9/12', type:'game' },
     { id:'log2', ts:Date.now()-600000, user:'Budi Santoso', action:'Mengunci layar Andi', type:'lock' },
@@ -153,6 +254,7 @@ function getState() {
   if (!Array.isArray(stateCache.storyRecords)) stateCache.storyRecords = INITIAL_STATE.storyRecords || [];
   if (!Array.isArray(stateCache.drawingRecords)) stateCache.drawingRecords = INITIAL_STATE.drawingRecords || [];
   if (!Array.isArray(stateCache.parentStoryAudios)) stateCache.parentStoryAudios = INITIAL_STATE.parentStoryAudios || [];
+  if (!Array.isArray(stateCache.quizDuels)) stateCache.quizDuels = INITIAL_STATE.quizDuels || [];
   if (!Array.isArray(stateCache.activityLog)) stateCache.activityLog = INITIAL_STATE.activityLog;
   if (!Array.isArray(stateCache.devices)) stateCache.devices = [];
   if (!stateCache.systemSettings) stateCache.systemSettings = INITIAL_STATE.systemSettings;
@@ -248,6 +350,16 @@ function sanitizeStateForUser(state, user) {
       } else if (user?.role === 'kids') {
         const currentKid = (state.users.kids || []).find(k => k.id === user.id);
         clean.parentStoryAudios = clean.parentStoryAudios.filter(a => a.familyId === currentKid?.familyId);
+      }
+    }
+
+    // Filter quizDuels for family & kids isolation
+    if (clean.quizDuels) {
+      if (user?.role === 'family') {
+        clean.quizDuels = clean.quizDuels.filter(q => q.familyId === user.id);
+      } else if (user?.role === 'kids') {
+        const currentKid = (state.users.kids || []).find(k => k.id === user.id);
+        clean.quizDuels = clean.quizDuels.filter(q => q.familyId === currentKid?.familyId);
       }
     }
 
@@ -654,6 +766,81 @@ app.post('/api/kids/unlock', unlockLimiter, authMiddleware, (req, res) => {
   return res.json({ success: true, message: 'Layar berhasil dibuka', kidId: kid.id });
 });
 
+// ─── Media Storage Engine ───────────────────────────────────────────────────
+// POST /api/media/upload — upload drawing canvas or audio recording
+app.post('/api/media/upload', authMiddleware, (req, res) => {
+  try {
+    const { type, data, filename } = req.body || {};
+    if (!data || typeof data !== 'string') {
+      return res.status(400).json({ error: 'Data media diperlukan (base64/dataURL)' });
+    }
+    const matches = data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let mimeType = 'application/octet-stream';
+    let buffer = null;
+    let ext = 'bin';
+
+    if (matches && matches.length === 3) {
+      mimeType = matches[1];
+      buffer = Buffer.from(matches[2], 'base64');
+      if (mimeType.includes('png')) ext = 'png';
+      else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) ext = 'jpg';
+      else if (mimeType.includes('webp')) ext = 'webp';
+      else if (mimeType.includes('audio/webm') || mimeType.includes('webm')) ext = 'webm';
+      else if (mimeType.includes('audio/mp4') || mimeType.includes('m4a')) ext = 'm4a';
+      else if (mimeType.includes('audio/ogg') || mimeType.includes('ogg')) ext = 'ogg';
+      else if (mimeType.includes('audio/mpeg') || mimeType.includes('mp3')) ext = 'mp3';
+    } else {
+      buffer = Buffer.from(data, 'base64');
+    }
+
+    if (buffer.length > 10 * 1024 * 1024) {
+      return res.status(413).json({ error: 'Ukuran file media maksimal 10MB' });
+    }
+
+    const familyId = req.user.role === 'family' ? req.user.id : (req.user.familyId || 'fam');
+    const safePrefix = type === 'audio' ? 'audio' : type === 'art' ? 'art' : 'media';
+    const fileId = `${safePrefix}_${familyId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const filePath = path.join(MEDIA_DIR, fileId);
+
+    fs.writeFileSync(filePath, buffer);
+
+    return res.status(201).json({
+      success: true,
+      mediaId: fileId,
+      url: `/api/media/${fileId}`,
+      mimeType,
+      size: buffer.length
+    });
+  } catch (err) {
+    console.error('Media upload error:', err);
+    return res.status(500).json({ error: 'Gagal mengunggah media: ' + err.message });
+  }
+});
+
+// GET /api/media/:fileId — serve media with mime detection and path traversal protection
+app.get('/api/media/:fileId', (req, res) => {
+  const safeFileId = path.basename(req.params.fileId);
+  const filePath = path.join(MEDIA_DIR, safeFileId);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Media tidak ditemukan' });
+  }
+  const ext = path.extname(safeFileId).toLowerCase();
+  const mimeTypes = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.webm': 'audio/webm',
+    '.m4a': 'audio/mp4',
+    '.ogg': 'audio/ogg',
+    '.mp3': 'audio/mpeg'
+  };
+  const contentType = mimeTypes[ext] || 'application/octet-stream';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  fs.createReadStream(filePath).pipe(res);
+});
+
 // POST /api/auth/google — daftar/login akun Family lewat Google
 app.post('/api/auth/google', async (req, res) => {
   const { accessToken } = req.body;
@@ -901,6 +1088,7 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
     storyRecords: Array.isArray(incoming.storyRecords) ? incoming.storyRecords : [],
     drawingRecords: Array.isArray(incoming.drawingRecords) ? incoming.drawingRecords : [],
     parentStoryAudios: Array.isArray(incoming.parentStoryAudios) ? incoming.parentStoryAudios : [],
+    quizDuels: Array.isArray(incoming.quizDuels) ? incoming.quizDuels : [],
     activityLog: Array.isArray(incoming.activityLog) ? incoming.activityLog : [],
     devices: Array.isArray(incoming.devices) ? incoming.devices : [],
     systemSettings: incoming.systemSettings || {}
@@ -927,6 +1115,7 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
       storyRecords: restored.storyRecords.length,
       drawingRecords: restored.drawingRecords.length,
       parentStoryAudios: restored.parentStoryAudios.length,
+      quizDuels: restored.quizDuels.length,
       activityLog: restored.activityLog.length
     }
   });
@@ -992,6 +1181,7 @@ app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, re
       (state.storyRecords?.length || 0) +
       (state.drawingRecords?.length || 0) +
       (state.parentStoryAudios?.length || 0) +
+      (state.quizDuels?.length || 0) +
       (state.activityLog?.length || 0);
 
     const backupPayload = {
@@ -1027,6 +1217,7 @@ app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, re
         ` • Dongeng Anak: ${state.storyRecords?.length || 0}\n` +
         ` • Galeri Seni Anak: ${state.drawingRecords?.length || 0}\n` +
         ` • Rekaman Audio Orang Tua: ${state.parentStoryAudios?.length || 0}\n` +
+        ` • Kuis Duel Anak: ${state.quizDuels?.length || 0}\n` +
         ` • Log Aktivitas: ${state.activityLog?.length || 0}\n\n` +
         (customCaption ? `💬 *Catatan:* ${customCaption}\n\n` : '') +
         `✅ *Status:* Pencadangan berhasil dibuat secara otomatis.`;
@@ -1256,6 +1447,13 @@ app.patch('/api/state', authMiddleware, (req, res) => {
         const myAudios = incoming.parentStoryAudios.filter(a => a.familyId === req.user.id);
         state.parentStoryAudios = [...otherAudios, ...myAudios];
       }
+
+      // 11. Quiz duels: family manages duels matching their familyId
+      if (Array.isArray(incoming.quizDuels)) {
+        const otherDuels = (state.quizDuels || []).filter(q => q.familyId !== req.user.id);
+        const myDuels = incoming.quizDuels.filter(q => q.familyId === req.user.id);
+        state.quizDuels = [...otherDuels, ...myDuels];
+      }
     } else if (req.user.role === 'kids') {
       // Kids can only update their own record, hafalan, redemptions, and logs
       const kidIdx = (state.users.kids || []).findIndex(k => k.id === req.user.id);
@@ -1361,6 +1559,38 @@ app.patch('/api/state', authMiddleware, (req, res) => {
                 `🪙 *Bonus Koin:* +${nd.rewardCoins || 10} koin\n` +
                 `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
                 `🌟 Buka Family Dashboard untuk mengapresiasi karya seni ananda!`;
+              sendTelegramNotification({
+                token: parentFam.telegramConfig.token,
+                chatId: parentFam.telegramConfig.chatId,
+                text
+              }).catch(() => {});
+            }
+          }
+        }
+      }
+      if (Array.isArray(incoming.quizDuels)) {
+        const currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+        const myFamilyId = currentKid?.familyId;
+        const existingDuelIds = new Set((state.quizDuels || []).map(q => q.id));
+        const newDuels = incoming.quizDuels.filter(q => q.familyId === myFamilyId && !existingDuelIds.has(q.id));
+        const otherDuels = (state.quizDuels || []).filter(q => q.familyId !== myFamilyId);
+        const myDuels = incoming.quizDuels.filter(q => q.familyId === myFamilyId);
+        state.quizDuels = [...otherDuels, ...myDuels];
+
+        // Telegram real-time parent alert for completed quiz duel
+        if (newDuels.length > 0) {
+          const parentFam = (state.users.families || []).find(f => f.id === myFamilyId);
+          if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyQuizzes !== false) {
+            for (const nq of newDuels) {
+              const winnerName = nq.winnerKidName || (nq.winnerKidId === currentKid?.id ? currentKid?.name : 'Peserta');
+              const text = `🏆 *VIDKIDZ — Hasil Kuis Duel Kakak-Adik Selesai!*\n\n` +
+                `🥊 *Duel:* ${nq.title || 'Duel Asah Otak'}\n` +
+                `👦 *Penantang:* ${nq.challengerKidName || 'Anak'} (Skor: ${nq.challengerScore || 0})\n` +
+                `👧 *Lawan:* ${nq.opponentKidName || 'Lawan'} (Skor: ${nq.opponentScore || 0})\n` +
+                `👑 *Pemenang:* ${winnerName} 🎉\n` +
+                `🪙 *Bonus Koin Pemenang:* +${nq.rewardCoins || 15} koin\n` +
+                `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+                `👏 Pantau turnamen kuis anak di Family Dashboard!`;
               sendTelegramNotification({
                 token: parentFam.telegramConfig.token,
                 chatId: parentFam.telegramConfig.chatId,
@@ -1520,6 +1750,103 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
     console.error('AI Proxy error:', err);
     res.status(500).json({ error: 'Gagal menghubungi Anthropic API: ' + err.message });
   }
+});
+
+// POST /api/ai/generate-image — generate gambar edukatif AI via Vrintex Image API
+app.post('/api/ai/generate-image', authMiddleware, async (req, res) => {
+  if (req.user.demo) return res.status(403).json({ error: 'AI Generate Image tidak tersedia untuk akun demo' });
+  const { prompt, size = '16:9', saveLocal = false } = req.body || {};
+
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    return res.status(400).json({ error: 'Prompt gambar wajib diisi' });
+  }
+
+  const normalizedSize = VALID_IMAGE_SIZES.includes(size) ? size : '16:9';
+
+  try {
+    const imageUrl = await generateImage(prompt.trim(), normalizedSize);
+
+    // Opsi simpan lokal di MEDIA_DIR agar bisa diakses offline dan diatur oleh retention cron
+    let localUrl = null;
+    let localFileId = null;
+
+    if (saveLocal && imageUrl) {
+      try {
+        let fetchFn = globalThis.fetch;
+        if (typeof fetchFn !== 'function') {
+          fetchFn = (await import('node-fetch')).default;
+        }
+        const imgRes = await fetchFn(imageUrl);
+        if (imgRes.ok) {
+          const buffer = Buffer.from(await imgRes.arrayBuffer());
+          const familyId = req.user.role === 'family' ? req.user.id : (req.user.familyId || 'fam');
+          localFileId = `ai_${familyId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
+          const localPath = path.join(MEDIA_DIR, localFileId);
+          fs.writeFileSync(localPath, buffer);
+          localUrl = `/api/media/${localFileId}`;
+        }
+      } catch (saveErr) {
+        console.warn('[GenerateImage] Gagal menyimpan cache lokal:', saveErr.message);
+      }
+    }
+
+    return res.json({
+      success: true,
+      url: localUrl || imageUrl,
+      remoteUrl: imageUrl,
+      localUrl,
+      size: normalizedSize,
+      model: process.env.IMAGE_MODEL || 'ag/gemini-3.1-flash-image',
+      retentionDays: IMAGE_RETENTION_DAYS
+    });
+  } catch (err) {
+    console.error('Generate Image error:', err);
+    return res.status(502).json({ error: 'Gagal generate gambar: ' + err.message });
+  }
+});
+
+// GET /api/ai/render-image — Direct stream render redirect/proxy
+app.get('/api/ai/render-image', (req, res) => {
+  const { prompt, size = '16:9' } = req.query || {};
+  if (!prompt) {
+    return res.status(400).json({ error: 'Parameter prompt diperlukan' });
+  }
+  const normalizedSize = VALID_IMAGE_SIZES.includes(size) ? size : '16:9';
+  const baseUrl = (process.env.IMAGE_API_BASE_URL || 'https://image.vrintex.id/v1').replace(/\/v1\/?$/, '');
+  const renderUrl = `${baseUrl}/render?prompt=${encodeURIComponent(prompt)}&size=${encodeURIComponent(normalizedSize)}`;
+  return res.redirect(renderUrl);
+});
+
+// POST /api/admin/cleanup-retention — manual trigger pembersihan file media kadaluarsa
+app.post('/api/admin/cleanup-retention', authMiddleware, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Hanya admin yang dapat memicu pembersihan retention media' });
+  }
+  const result = runMediaRetentionCleanup();
+  return res.json(result);
+});
+
+// GET /api/admin/retention-status — cek status retention dan jumlah file media
+app.get('/api/admin/retention-status', authMiddleware, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Hanya admin yang dapat melihat status retention media' });
+  }
+  let totalFiles = 0;
+  let totalBytes = 0;
+  if (fs.existsSync(MEDIA_DIR)) {
+    const files = fs.readdirSync(MEDIA_DIR);
+    totalFiles = files.length;
+    for (const f of files) {
+      try { totalBytes += fs.statSync(path.join(MEDIA_DIR, f)).size; } catch (_) {}
+    }
+  }
+  return res.json({
+    retentionDays: IMAGE_RETENTION_DAYS,
+    retentionMs: IMAGE_RETENTION_MS,
+    totalFiles,
+    totalBytes,
+    mediaDir: MEDIA_DIR
+  });
 });
 
 // ── HEALTH CHECK ──────────────────────────────────────────────────────────────

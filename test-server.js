@@ -779,14 +779,82 @@ const server = app.listen(0, async () => {
     const savedOtherFamAudio = (otherFamAudioState.data.parentStoryAudios || []).find(a => a.id === 'audio_test_1');
     assert(!savedOtherFamAudio, 'Other family cannot see parent story voice audio in GET /api/state');
 
-    // --- 29. Admin Restore State Preserves Drawing & Audio Collections ---
-    console.log('\n--- 29. Admin Restore State Preserves Drawing & Audio Collections ---');
+    // --- 29. Media Storage API & Path Traversal Protection ---
+    console.log('\n--- 29. Media Storage API & Path Traversal Protection ---');
+    const sampleBase64Png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const uploadRes = await req('/api/media/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${artistKidToken}` },
+      body: JSON.stringify({ type: 'art', data: sampleBase64Png, filename: 'pixel.png' })
+    });
+    assert(uploadRes.ok && uploadRes.data.url && uploadRes.data.mediaId, 'Upload media succeeds and returns mediaId & URL');
+
+    const uploadedMediaId = uploadRes.data.mediaId;
+    const getMediaRes = await req(`/api/media/${uploadedMediaId}`);
+    assert(getMediaRes.status === 200, 'GET /api/media/:fileId serves uploaded media file');
+
+    const emptyUploadRes = await req('/api/media/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${artistKidToken}` },
+      body: JSON.stringify({ type: 'art' })
+    });
+    assert(emptyUploadRes.status === 400, 'Upload rejects missing media data payload');
+
+    const traversalRes = await req('/api/media/..%2F..%2Fserver.js');
+    assert(traversalRes.status === 404, 'Path traversal attack safely blocked (404)');
+
+    // --- 30. Sibling Quiz Duel Persistence & Multi-Tenant Privacy Isolation ---
+    console.log('\n--- 30. Sibling Quiz Duel Persistence & Multi-Tenant Privacy Isolation ---');
+    const newQuizDuel = {
+      id: 'qduel_test_1',
+      familyId: artistFamId,
+      category: 'math',
+      title: 'Duel Matematika Cepat',
+      challengerKidId: artistKidId,
+      challengerKidName: 'Bintang Kecil',
+      challengerAvatar: '🎨',
+      challengerScore: 100,
+      challengerTimeSeconds: 38,
+      opponentKidId: 'bot',
+      opponentKidName: 'Robot Pintar VIDKIDZ',
+      opponentAvatar: '🤖',
+      opponentScore: 70,
+      opponentTimeSeconds: 45,
+      winnerKidId: artistKidId,
+      winnerKidName: 'Bintang Kecil',
+      status: 'completed',
+      createdAt: Date.now(),
+      rewardCoins: 15
+    };
+
+    const duelPatchRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistKidToken}` },
+      body: JSON.stringify({ state: { quizDuels: [newQuizDuel] } })
+    });
+    assert(duelPatchRes.ok, 'Kid submitted quiz duel record via PATCH /api/state');
+
+    const kidDuelState = await req('/api/state', { headers: { Authorization: `Bearer ${artistKidToken}` } });
+    const savedDuelKid = (kidDuelState.data.quizDuels || []).find(q => q.id === 'qduel_test_1');
+    assert(savedDuelKid && savedDuelKid.winnerKidName === 'Bintang Kecil', 'Quiz duel successfully persisted on server for kid');
+
+    const ownFamDuelState = await req('/api/state', { headers: { Authorization: `Bearer ${artistFamToken}` } });
+    const savedDuelFam = (ownFamDuelState.data.quizDuels || []).find(q => q.id === 'qduel_test_1');
+    assert(savedDuelFam && savedDuelFam.id === 'qduel_test_1', 'Own family can see quiz duel in GET /api/state');
+
+    const otherFamDuelState = await req('/api/state', { headers: { Authorization: `Bearer ${famToken}` } });
+    const savedOtherFamDuel = (otherFamDuelState.data.quizDuels || []).find(q => q.id === 'qduel_test_1');
+    assert(!savedOtherFamDuel, 'Other family cannot see another family quiz duel in GET /api/state');
+
+    // --- 31. Admin Restore State Preserves Drawing, Audio & Quiz Collections ---
+    console.log('\n--- 31. Admin Restore State Preserves Drawing, Audio & Quiz Collections ---');
     const fullRestorePayload = {
       state: {
         users: { admins: [{ id: 'a1', email: 'admin@vidkidz.local', password: 'admin' }], families: [], kids: [] },
         storyRecords: [newStoryRecord],
         drawingRecords: [newDrawingRecord],
-        parentStoryAudios: [newParentAudio]
+        parentStoryAudios: [newParentAudio],
+        quizDuels: [newQuizDuel]
       }
     };
     const fullRestoreRes = await req('/api/admin/restore-state', {
@@ -797,6 +865,7 @@ const server = app.listen(0, async () => {
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.storyRecords === 1, 'Admin restore-state preserves storyRecords collection');
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.drawingRecords === 1, 'Admin restore-state preserves drawingRecords collection');
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.parentStoryAudios === 1, 'Admin restore-state preserves parentStoryAudios collection');
+    assert(fullRestoreRes.ok && fullRestoreRes.data.stats.quizDuels === 1, 'Admin restore-state preserves quizDuels collection');
 
     console.log(`\n========================================`);
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
@@ -820,6 +889,7 @@ const server = app.listen(0, async () => {
         d.state.storyRecords = (d.state.storyRecords || []).filter(s => !s.id.startsWith('srec_test_'));
         d.state.drawingRecords = (d.state.drawingRecords || []).filter(d => !d.id.startsWith('draw_test_'));
         d.state.parentStoryAudios = (d.state.parentStoryAudios || []).filter(a => !a.id.startsWith('audio_test_'));
+        d.state.quizDuels = (d.state.quizDuels || []).filter(q => !q.id.startsWith('qduel_test_') && q.id !== 'qduel_restore_test');
         fs.writeFileSync(p, JSON.stringify(d, null, 2), 'utf8');
       }
     } catch (_) {}

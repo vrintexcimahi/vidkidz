@@ -5250,6 +5250,9 @@ const INITIAL_STATE = {
     { id:'drec1', kidId:'k1', templateId:'kancil', title:'Si Kancil yang Cerdik', createdAt: Date.now()-86400000, rewardCoins:10, stars:5 }
   ],
   parentStoryAudios: [],
+  quizDuels: [
+    { id:'qduel1', familyId:'f1', category:'math', title:'Duel Matematika Cepat', challengerKidId:'k1', challengerKidName:'Andi', challengerAvatar:'👦', challengerScore:80, challengerTimeSeconds:42, opponentKidId:'k2', opponentKidName:'Sari', opponentAvatar:'👧', opponentScore:60, opponentTimeSeconds:48, winnerKidId:'k1', winnerKidName:'Andi', status:'completed', createdAt: Date.now()-86400000, rewardCoins:15 }
+  ],
   activityLog: [
     { id:'log1', ts: Date.now()-300000, user:'Andi', action:'Bermain Matematika Seru — skor 9/12', type:'game' },
     { id:'log2', ts: Date.now()-600000, user:'Budi Santoso', action:'Mengunci layar Andi', type:'lock' },
@@ -5294,6 +5297,7 @@ function normalizeState(state) {
   if (!Array.isArray(next.storyRecords)) next.storyRecords = [];
   if (!Array.isArray(next.drawingRecords)) next.drawingRecords = [];
   if (!Array.isArray(next.parentStoryAudios)) next.parentStoryAudios = [];
+  if (!Array.isArray(next.quizDuels)) next.quizDuels = [];
   if (!Array.isArray(next.activityLog)) next.activityLog = [];
   if (!Array.isArray(next.devices)) next.devices = [];
   if (!next.systemSettings) next.systemSettings = { ...INITIAL_STATE.systemSettings };
@@ -5341,7 +5345,7 @@ const BADGES = {
   koin_sultan: { emoji:'💰', name:'Koin Sultan', desc:'Kumpulkan 200 koin sekaligus' },
   video_bintang: { emoji:'🎬', name:'Video Bintang', desc:'Tonton 20 video' },
 };
-const APP_VERSION = '5.2.19';
+const APP_VERSION = '5.2.20';
 const VERSION_KEY = 'vidkidzAppVersion';
 const VERSION_SYNC_KEY = 'vidkidzLastAutoSyncedVersion';
 const VERSION_POLL_MS = 60 * 1000;
@@ -9218,7 +9222,7 @@ function AdminBackupDatabase({ onRestorePreview }) {
       const now = new Date();
       const payload = {
         appName: 'VIDKIDZ',
-        version: '5.2.19',
+        version: '5.2.20',
         backupDate: now.toISOString(),
         backupTimestamp: now.getTime(),
         totalRecords,
@@ -10612,6 +10616,160 @@ function FamilyBedtimeVoiceStudio({ myKids }) {
   );
 }
 
+function FamilyQuizTournament({ myKids }) {
+  const { state, updateState, addCoins, showNotif, addLog, currentUser } = useContext(AppCtx);
+  const myKidIds = new Set(myKids.map(k => k.id));
+  const duels = (state.quizDuels || []).filter(q => q.familyId === currentUser?.id || myKidIds.has(q.challengerKidId) || myKidIds.has(q.opponentKidId));
+  const [filterCategory, setFilterCategory] = useState('all');
+
+  const totalDuels = duels.length;
+  const kidWinCounts = {};
+  myKids.forEach(k => { kidWinCounts[k.id] = 0; });
+  duels.forEach(d => {
+    if (d.winnerKidId && kidWinCounts[d.winnerKidId] !== undefined) {
+      kidWinCounts[d.winnerKidId]++;
+    }
+  });
+
+  const filteredDuels = filterCategory === 'all' ? duels : duels.filter(d => d.category === filterCategory);
+
+  const handleBonusCoin = (kidId, kidName, amount) => {
+    addCoins(kidId, amount);
+    addLog(currentUser.name, `Memberikan bonus juara +${amount} koin untuk ${kidName}`, 'coin');
+    showNotif(`🎉 Berhasil memberikan bonus +${amount} Koin untuk ${kidName}! 🪙`, 'coin');
+  };
+
+  return (
+    <div className="fade-in">
+      <div className="page-header flex items-center justify-between mb-6" style={{gap:12,flexWrap:'wrap'}}>
+        <div>
+          <h2 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8}}>
+            <UiIcon name="award" size={20} color="var(--primary)" /> Turnamen & Duel Kuis Kakak-Adik
+          </h2>
+          <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>
+            Pantau hasil duel kuis asah otak antar anak, rekor kemenangan, dan berikan koin apresiasi juara!
+          </p>
+        </div>
+      </div>
+
+      {/* Leaderboard Cards */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(220px,100%),1fr))',gap:16,marginBottom:24}}>
+        <div className="card" style={{borderRadius:18,padding:18,background:'linear-gradient(135deg,rgba(0,120,255,0.1),rgba(0,120,255,0.02))',border:'1px solid rgba(0,120,255,0.2)'}}>
+          <div style={{fontSize:11,color:'var(--t3)',textTransform:'uppercase',fontWeight:700,letterSpacing:'0.6px'}}>Total Pertandingan</div>
+          <div style={{fontSize:28,fontWeight:900,color:'var(--t1)',fontFamily:'var(--font-display)',marginTop:6}}>
+            {totalDuels} <span style={{fontSize:14,color:'var(--t3)',fontWeight:500}}>duel</span>
+          </div>
+          <div style={{fontSize:11,color:'var(--t3)',marginTop:6}}>Mencakup duel saudara & lawan bot AI</div>
+        </div>
+
+        {myKids.map(kid => (
+          <div key={kid.id} className="card" style={{borderRadius:18,padding:18,background:'linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.02))',border:'1px solid rgba(245,158,11,0.25)'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div style={{fontSize:11,color:'var(--t3)',textTransform:'uppercase',fontWeight:700,letterSpacing:'0.6px'}}>Kemenangan</div>
+              <span style={{fontSize:24}}>{kid.avatar}</span>
+            </div>
+            <div style={{fontSize:28,fontWeight:900,color:'var(--warn)',fontFamily:'var(--font-display)',marginTop:4}}>
+              {kidWinCounts[kid.id] || 0} <span style={{fontSize:14,color:'var(--t3)',fontWeight:500}}>Menang 👑</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:10}}>
+              <span style={{fontSize:12,fontWeight:700,color:'var(--t1)'}}>{kid.name}</span>
+              <button className="btn btn-sm btn-ghost" onClick={() => handleBonusCoin(kid.id, kid.name, 10)} style={{fontSize:11,padding:'4px 8px',background:'rgba(245,158,11,0.15)',color:'var(--warn)'}}>
+                +10 🪙 Bonus
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter Category */}
+      <div style={{display:'flex',gap:8,marginBottom:18,overflowX:'auto',paddingBottom:4}}>
+        {[
+          { id: 'all', label: 'Semua Duel' },
+          { id: 'math', label: '🔢 Matematika' },
+          { id: 'adab', label: '🕌 Budi Pekerti' },
+          { id: 'sains', label: '🌿 Sains & Alam' },
+          { id: 'bendera', label: '🚩 Bendera Dunia' },
+        ].map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => setFilterCategory(cat.id)}
+            className={`btn btn-sm ${filterCategory === cat.id ? 'btn-primary' : 'btn-ghost'}`}
+            style={{borderRadius:20,whiteSpace:'nowrap',fontSize:12}}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Matches List */}
+      {filteredDuels.length === 0 ? (
+        <div className="card" style={{textAlign:'center',padding:40,borderRadius:18}}>
+          <div style={{fontSize:48,marginBottom:12}}>🥊</div>
+          <h3 style={{color:'var(--t1)',fontSize:16,fontWeight:700,margin:0}}>Belum Ada Catatan Duel</h3>
+          <p style={{color:'var(--t3)',fontSize:13,marginTop:6,maxWidth:420,marginInline:'auto'}}>
+            Anak-anak dapat memulai duel asah otak di menu "Duel Kuis" pada dasbor anak untuk saling menantang atau melawan Robot Pintar!
+          </p>
+        </div>
+      ) : (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(min(340px,100%),1fr))',gap:14}}>
+          {filteredDuels.map(d => {
+            const isWinnerP1 = d.winnerKidId === d.challengerKidId;
+            const isWinnerP2 = d.winnerKidId === d.opponentKidId;
+            const isDraw = !d.winnerKidId || d.winnerKidId === 'draw';
+            return (
+              <div key={d.id} className="card" style={{borderRadius:16,padding:16,border:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:12}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontSize:11,fontWeight:700,background:'rgba(255,255,255,0.06)',padding:'4px 10px',borderRadius:20,color:'var(--primary)'}}>
+                    {d.title || 'Duel Kuis'}
+                  </span>
+                  <span style={{fontSize:11,color:'var(--t4)'}}>
+                    {new Date(d.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}
+                  </span>
+                </div>
+
+                {/* Match VS Graphic */}
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'var(--bg-elevated)',padding:'12px 14px',borderRadius:14}}>
+                  {/* Challenger */}
+                  <div style={{textAlign:'center',flex:1}}>
+                    <div style={{fontSize:28}}>{d.challengerAvatar || '👦'}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:'var(--t1)',marginTop:2}}>{d.challengerKidName || 'Anak 1'}</div>
+                    <div style={{fontSize:18,fontWeight:900,color:isWinnerP1?'var(--success)':'var(--t2)',fontFamily:'var(--font-display)',marginTop:4}}>
+                      {d.challengerScore || 0}
+                      {isWinnerP1 && <span style={{fontSize:12,marginLeft:4}}>👑</span>}
+                    </div>
+                  </div>
+
+                  <div style={{fontSize:16,fontWeight:900,color:'var(--t4)',padding:'0 10px'}}>VS</div>
+
+                  {/* Opponent */}
+                  <div style={{textAlign:'center',flex:1}}>
+                    <div style={{fontSize:28}}>{d.opponentAvatar || '👧'}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:'var(--t1)',marginTop:2}}>{d.opponentKidName || 'Anak 2'}</div>
+                    <div style={{fontSize:18,fontWeight:900,color:isWinnerP2?'var(--success)':'var(--t2)',fontFamily:'var(--font-display)',marginTop:4}}>
+                      {d.opponentScore || 0}
+                      {isWinnerP2 && <span style={{fontSize:12,marginLeft:4}}>👑</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Outcome footer */}
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:12,color:'var(--t2)',paddingTop:4}}>
+                  <span>
+                    {isDraw ? '🤝 Hasil Seri!' : `🏆 Pemenang: ${d.winnerKidName || 'Juara'}`}
+                  </span>
+                  <span style={{color:'var(--warn)',fontWeight:700}}>
+                    +{d.rewardCoins || 15} 🪙 Koin
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ============================================================
 // FAMILY DASHBOARD
 // ============================================================
@@ -10628,6 +10786,7 @@ function FamilyDashboard() {
   const navItems = [
     { id:'overview', label:'Overview', icon:'ui:grid' },
     { id:'kids', label:'Manajemen Anak', icon:'ui:users' },
+    { id:'duel', label:'Turnamen Kuis', icon:'ui:award' },
     { id:'art', label:'Galeri Seni Anak', icon:'ui:palette' },
     { id:'bedtime', label:'Suara Dongeng', icon:'ui:volume' },
     { id:'coins', label:'Koin & Hadiah', icon:'ui:coin' },
@@ -10859,6 +11018,7 @@ function FamilyDashboard() {
         {page==='control' && <FamilyDeviceControl myKids={myKids} toggleLock={toggleLock} />}
         {page==='monitor' && <FamilyMonitor selectedKid={selectedKid} />}
         {page==='certificate' && <FamilyReportCertificate myKids={myKids} selectedKid={selectedKid} />}
+        {page==='duel' && <FamilyQuizTournament myKids={myKids} />}
         {page==='art' && <FamilyArtGallery myKids={myKids} />}
         {page==='bedtime' && <FamilyBedtimeVoiceStudio myKids={myKids} />}
         {page==='ai' && <FamilyAIAnalysis selectedKid={selectedKid} />}
@@ -12658,6 +12818,532 @@ function KidsColoringStudio({ kid }) {
 }
 
 // ============================================================
+// KIDS QUIZ DUEL — Sibling & Bot Educational Battle
+// ============================================================
+const QUIZ_BANKS = {
+  math: {
+    id: 'math',
+    title: 'Matematika Cepat',
+    emoji: '🔢',
+    color: '#0078ff',
+    desc: 'Uji kecepatan berhitung tambah, kurang & kali!',
+    questions: [
+      { q: 'Berapakah 7 + 8?', options: ['13', '14', '15', '16'], answer: 2 },
+      { q: 'Berapakah 25 - 9?', options: ['16', '15', '14', '17'], answer: 0 },
+      { q: 'Berapakah 6 × 4?', options: ['20', '24', '28', '22'], answer: 1 },
+      { q: 'Ibu beli 12 jeruk, dimakan 4. Berapa sisa jeruk?', options: ['6', '7', '8', '9'], answer: 2 },
+      { q: 'Berapakah 50 : 5?', options: ['5', '8', '10', '12'], answer: 2 },
+      { q: 'Berapakah 9 + 9 + 2?', options: ['18', '20', '19', '21'], answer: 1 },
+      { q: 'Berapakah 8 × 3?', options: ['21', '24', '27', '25'], answer: 1 },
+      { q: 'Berapakah 40 - 15?', options: ['25', '20', '35', '30'], answer: 0 }
+    ]
+  },
+  adab: {
+    id: 'adab',
+    title: 'Cerdas Budi Pekerti',
+    emoji: '🕌',
+    color: '#10b981',
+    desc: 'Latih adab sopan santun dan akhlak mulia sehari-hari',
+    questions: [
+      { q: 'Ketika bertemu orang yang lebih tua, kita sebaiknya...?', options: ['Mengabaikan', 'Menyapa & Salim dengan sopan', 'Berlari kencang', 'Berteriak'], answer: 1 },
+      { q: 'Sebelum makan dan minum, kita harus membaca doa dan menggunakan tangan...?', options: ['Kiri', 'Kanan', 'Bebas', 'Kedua tangan'], answer: 1 },
+      { q: 'Jika kita meminjam mainan teman, yang harus kita lakukan adalah...?', options: ['Membawa pulang', 'Merusaknya', 'Mengembalikan & Ucap terima kasih', 'Menyembunyikannya'], answer: 2 },
+      { q: 'Budi pekerti yang baik saat berbuat salah adalah...?', options: ['Menyalahkan orang lain', 'Meminta maaf dengan jujur', 'Pura-pura tidak tahu', 'Marah-marah'], answer: 1 },
+      { q: 'Jika melihat sampah di lantai rumah, sikap anak yang baik adalah...?', options: ['Membiarkannya', 'Membuang ke tempat sampah', 'Menendangnya', 'Menyuruh adik'], answer: 1 },
+      { q: 'Adab ketika berbicara kepada orang tua adalah...?', options: ['Lembut dan sopan', 'Membentak', 'Sambil marah', 'Menutup telinga'], answer: 0 }
+    ]
+  },
+  sains: {
+    id: 'sains',
+    title: 'Sains & Alam Cilik',
+    emoji: '🌿',
+    color: '#06b6d4',
+    desc: 'Petualangan seru mengenal hewan, bumi & sains!',
+    questions: [
+      { q: 'Planet tempat tinggal manusia bernama planet apa?', options: ['Mars', 'Bumi', 'Jupiter', 'Saturnus'], answer: 1 },
+      { q: 'Hewan yang bisa hidup di darat dan di air disebut hewan...?', options: ['Mamalia', 'Unggas', 'Amfibi', 'Reptil'], answer: 2 },
+      { q: 'Tumbuhan membutuhkan sinar apa untuk fotosintesis?', options: ['Sinar Lampu', 'Sinar Matahari', 'Sinar Bulan', 'Sinar Lilin'], answer: 1 },
+      { q: 'Berapakah jumlah kaki pada seekor laba-laba?', options: ['6', '8', '10', '4'], answer: 1 },
+      { q: 'Benda yang dapat ditarik oleh magnet biasanya terbuat dari...?', options: ['Plastik', 'Kayu', 'Besi', 'Kaca'], answer: 2 },
+      { q: 'Zat yang dihirup manusia saat bernapas adalah...?', options: ['Oksigen', 'Karbon', 'Nitrogen', 'Hidrogen'], answer: 0 }
+    ]
+  },
+  bendera: {
+    id: 'bendera',
+    title: 'Tebak Bendera & Dunia',
+    emoji: '🚩',
+    color: '#f59e0b',
+    desc: 'Keliling dunia mengenal bendera & budaya negara!',
+    questions: [
+      { q: 'Bendera negara manakah yang berwarna Merah Putih?', options: ['Indonesia', 'Jepang', 'Singapura', 'Malaysia'], answer: 0 },
+      { q: 'Bendera putih dengan lingkaran merah di tengah adalah bendera...?', options: ['Korea', 'Jepang', 'Tiongkok', 'Vietnam'], answer: 1 },
+      { q: 'Ibu kota negara Indonesia di Kalimantan Timur adalah...?', options: ['IKN Nusantara', 'Surabaya', 'Bandung', 'Medan'], answer: 0 },
+      { q: 'Bendera negara yang memiliki simbol bulan sabit dan bintang adalah...?', options: ['Turki & Malaysia', 'Prancis', 'Jerman', 'Inggris'], answer: 0 },
+      { q: 'Menara Eiffel yang terkenal berada di negara...?', options: ['Italia', 'Prancis', 'Belanda', 'Spanyol'], answer: 1 },
+      { q: 'Hewan berkantung yang menjadi ikon benua Australia adalah...?', options: ['Panda', 'Kangguru', 'Kucing', 'Zebra'], answer: 1 }
+    ]
+  }
+};
+
+function KidsQuizDuel({ kid }) {
+  const { state, updateState, addCoins, showNotif, addLog } = useContext(AppCtx);
+  const [phase, setPhase] = useState('menu'); // 'menu' | 'p1_ready' | 'p1_playing' | 'pass_device' | 'p2_ready' | 'p2_playing' | 'finish'
+  const [activeCategory, setActiveCategory] = useState('math');
+  const [duelMode, setDuelMode] = useState('bot'); // 'bot' | 'sibling'
+  const [opponentKid, setOpponentKid] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [questionIdx, setQuestionIdx] = useState(0);
+  const [timer, setTimer] = useState(15);
+  const [selectedOpt, setSelectedOpt] = useState(null);
+  const [answered, setAnswered] = useState(false);
+
+  const [p1Score, setP1Score] = useState(0);
+  const [p1Time, setP1Time] = useState(0);
+  const [p2Score, setP2Score] = useState(0);
+  const [p2Time, setP2Time] = useState(0);
+
+  const siblings = (state.users.kids || []).filter(k => k.familyId === kid?.familyId && k.id !== kid?.id);
+
+  useEffect(() => {
+    let interval = null;
+    if ((phase === 'p1_playing' || phase === 'p2_playing') && !answered && timer > 0) {
+      interval = setInterval(() => {
+        setTimer(t => {
+          if (t <= 1) {
+            handleTimeUp();
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [phase, answered, timer]);
+
+  const handleStartDuel = (categoryKey, mode, selectedSibling = null) => {
+    setActiveCategory(categoryKey);
+    setDuelMode(mode);
+    setOpponentKid(selectedSibling || { id: 'bot', name: 'Robot Pintar VIDKIDZ', avatar: '🤖' });
+
+    const bank = QUIZ_BANKS[categoryKey]?.questions || [];
+    const shuffled = [...bank].sort(() => 0.5 - Math.random()).slice(0, 5);
+    setQuestions(shuffled);
+    setQuestionIdx(0);
+    setP1Score(0);
+    setP1Time(0);
+    setP2Score(0);
+    setP2Time(0);
+    setSelectedOpt(null);
+    setAnswered(false);
+    setTimer(15);
+    setPhase('p1_ready');
+  };
+
+  const handleTimeUp = () => {
+    setAnswered(true);
+    setTimeout(() => {
+      nextQuestion(false, 15);
+    }, 1200);
+  };
+
+  const handleAnswer = (optIdx) => {
+    if (answered) return;
+    setSelectedOpt(optIdx);
+    setAnswered(true);
+    const currQ = questions[questionIdx];
+    const isCorrect = optIdx === currQ.answer;
+    const timeTaken = 15 - timer;
+
+    setTimeout(() => {
+      nextQuestion(isCorrect, timeTaken);
+    }, 900);
+  };
+
+  const nextQuestion = (isCorrect, timeTaken) => {
+    if (phase === 'p1_playing') {
+      let newP1Score = p1Score;
+      if (isCorrect) {
+        newP1Score = p1Score + 20;
+        setP1Score(newP1Score);
+      }
+      setP1Time(t => t + timeTaken);
+
+      if (questionIdx + 1 < questions.length) {
+        setQuestionIdx(i => i + 1);
+        setSelectedOpt(null);
+        setAnswered(false);
+        setTimer(15);
+      } else {
+        if (duelMode === 'sibling') {
+          setPhase('pass_device');
+        } else {
+          runBotTurn(newP1Score);
+        }
+      }
+    } else if (phase === 'p2_playing') {
+      let newP2Score = p2Score;
+      if (isCorrect) {
+        newP2Score = p2Score + 20;
+        setP2Score(newP2Score);
+      }
+      setP2Time(t => t + timeTaken);
+
+      if (questionIdx + 1 < questions.length) {
+        setQuestionIdx(i => i + 1);
+        setSelectedOpt(null);
+        setAnswered(false);
+        setTimer(15);
+      } else {
+        finalizeDuel(p1Score, newP2Score);
+      }
+    }
+  };
+
+  const runBotTurn = (finalP1) => {
+    const botScores = [60, 60, 80, 80, 100, 40];
+    const botFinalScore = botScores[Math.floor(Math.random() * botScores.length)];
+    const botTotalTime = 25 + Math.floor(Math.random() * 20);
+    setP2Score(botFinalScore);
+    setP2Time(botTotalTime);
+    finalizeDuel(finalP1, botFinalScore);
+  };
+
+  const finalizeDuel = (finalP1, finalP2) => {
+    setPhase('finish');
+    let winnerId = null;
+    let winnerName = null;
+    if (finalP1 > finalP2) {
+      winnerId = kid.id;
+      winnerName = kid.name;
+    } else if (finalP2 > finalP1) {
+      winnerId = opponentKid.id;
+      winnerName = opponentKid.name;
+    } else {
+      winnerId = 'draw';
+      winnerName = 'Seri';
+    }
+
+    const duelRecord = {
+      id: `qduel_${Date.now()}`,
+      familyId: kid.familyId,
+      category: activeCategory,
+      title: QUIZ_BANKS[activeCategory]?.title || 'Duel Kuis',
+      challengerKidId: kid.id,
+      challengerKidName: kid.name,
+      challengerAvatar: kid.avatar,
+      challengerScore: finalP1,
+      challengerTimeSeconds: p1Time || 40,
+      opponentKidId: opponentKid.id,
+      opponentKidName: opponentKid.name,
+      opponentAvatar: opponentKid.avatar,
+      opponentScore: finalP2,
+      opponentTimeSeconds: p2Time || 40,
+      winnerKidId: winnerId,
+      winnerKidName: winnerName,
+      status: 'completed',
+      createdAt: Date.now(),
+      rewardCoins: 15
+    };
+
+    updateState(s => {
+      if (!Array.isArray(s.quizDuels)) s.quizDuels = [];
+      s.quizDuels.unshift(duelRecord);
+    });
+
+    if (winnerId === kid.id) {
+      addCoins(kid.id, 15);
+      showNotif('🎉 Selamat! Kamu memenangkan duel kuis & dapat +15 Koin! 🪙', 'coin');
+    } else if (winnerId === 'draw') {
+      addCoins(kid.id, 10);
+      showNotif('🤝 Hasil Seri! Kamu dan lawanmu hebat & dapat +10 Koin! 🪙', 'coin');
+    } else {
+      addCoins(kid.id, 5);
+      showNotif('👏 Tetap semangat! Kamu dapat bonus +5 Koin partisipasi! 🪙', 'coin');
+    }
+    addLog(kid.name, `Menyelesaikan duel kuis ${QUIZ_BANKS[activeCategory]?.title}: Skor ${finalP1} vs ${finalP2}`, 'game');
+  };
+
+  const currQ = questions[questionIdx];
+  const myDuels = (state.quizDuels || []).filter(q => q.challengerKidId === kid?.id || q.opponentKidId === kid?.id);
+
+  return (
+    <div style={{padding:'20px 20px'}}>
+      {/* Header Banner */}
+      <div style={{background:'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(234,179,8,0.05))',border:'1.5px solid rgba(245,158,11,0.3)',borderRadius:22,padding:'20px',marginBottom:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <div style={{fontSize:48}}>🥊</div>
+          <div>
+            <h2 style={{fontFamily:'var(--font-kids)',fontSize:24,color:'#fff',margin:0}}>Duel Kuis Asah Otak!</h2>
+            <p style={{color:'rgba(255,255,255,0.7)',fontSize:13,marginTop:4,marginBottom:0}}>
+              Tantang saudara atau lawan Robot Pintar VIDKIDZ dalam 5 babak soal kilat!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {phase === 'menu' && (
+        <div className="fade-in">
+          <h3 style={{fontFamily:'var(--font-kids)',color:'#fff',fontSize:18,marginBottom:14}}>1. Pilih Kategori Soal</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12,marginBottom:24}}>
+            {Object.values(QUIZ_BANKS).map(cat => (
+              <div
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                style={{
+                  background: activeCategory === cat.id ? `linear-gradient(135deg, ${cat.color}33, ${cat.color}11)` : 'rgba(255,255,255,0.05)',
+                  border: `2px solid ${activeCategory === cat.id ? cat.color : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: 18,
+                  padding: 16,
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.2s',
+                  transform: activeCategory === cat.id ? 'translateY(-2px)' : 'none'
+                }}
+              >
+                <div style={{fontSize:38,marginBottom:8}}>{cat.emoji}</div>
+                <div style={{fontFamily:'var(--font-kids)',color:'#fff',fontSize:14,fontWeight:700}}>{cat.title}</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4}}>{cat.questions.length} Soal Siap</div>
+              </div>
+            ))}
+          </div>
+
+          <h3 style={{fontFamily:'var(--font-kids)',color:'#fff',fontSize:18,marginBottom:14}}>2. Pilih Lawan Tanding</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:14,marginBottom:28}}>
+            {/* Robot AI Bot */}
+            <div
+              onClick={() => handleStartDuel(activeCategory, 'bot')}
+              style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.05))',
+                border: '1.5px solid rgba(99,102,241,0.4)',
+                borderRadius: 18,
+                padding: 16,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12
+              }}
+            >
+              <div style={{fontSize:36}}>🤖</div>
+              <div>
+                <div style={{fontFamily:'var(--font-display)',fontWeight:800,color:'#fff',fontSize:14}}>Robot Pintar</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>Lawan Bot Otomatis</div>
+                <div style={{fontSize:10,color:'#818cf8',fontWeight:700,marginTop:2}}>Mulai Sekarang →</div>
+              </div>
+            </div>
+
+            {/* Siblings */}
+            {siblings.map(sib => (
+              <div
+                key={sib.id}
+                onClick={() => handleStartDuel(activeCategory, 'sibling', sib)}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(236,72,153,0.2), rgba(236,72,153,0.05))',
+                  border: '1.5px solid rgba(236,72,153,0.4)',
+                  borderRadius: 18,
+                  padding: 16,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12
+                }}
+              >
+                <div style={{fontSize:36}}>{sib.avatar}</div>
+                <div>
+                  <div style={{fontFamily:'var(--font-display)',fontWeight:800,color:'#fff',fontSize:14}}>{sib.name}</div>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>Duel 1 HP Bergantian</div>
+                  <div style={{fontSize:10,color:'#f472b6',fontWeight:700,marginTop:2}}>Tantang Saudara →</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Riwayat Duel */}
+          {myDuels.length > 0 && (
+            <div>
+              <h3 style={{fontFamily:'var(--font-kids)',color:'rgba(255,255,255,0.8)',fontSize:16,marginBottom:12}}>🏆 Riwayat Duel Terakhir</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {myDuels.slice(0, 5).map(d => {
+                  const won = d.winnerKidId === kid.id;
+                  const draw = d.winnerKidId === 'draw';
+                  return (
+                    <div key={d.id} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:14,padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <span style={{fontSize:22}}>{won ? '👑' : draw ? '🤝' : '🥊'}</span>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>{d.title} vs {d.opponentKidName}</div>
+                          <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
+                        </div>
+                      </div>
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontSize:14,fontWeight:900,color:won?'var(--success)':draw?'var(--warn)':'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)'}}>
+                          {d.challengerScore} - {d.opponentScore}
+                        </div>
+                        <div style={{fontSize:10,color:'var(--coin)',fontWeight:700}}>+{d.rewardCoins} 🪙</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* P1 Ready Screen */}
+      {phase === 'p1_ready' && (
+        <div className="fade-in" style={{textAlign:'center',padding:'40px 20px'}}>
+          <div style={{fontSize:64,marginBottom:16}}>{kid.avatar}</div>
+          <h2 style={{fontFamily:'var(--font-kids)',color:'#fff',fontSize:26}}>Giliran {kid.name}!</h2>
+          <p style={{color:'rgba(255,255,255,0.7)',fontSize:14,maxWidth:360,margin:'8px auto 24px'}}>
+            Siap-siap menjawab 5 pertanyaan secepat mungkin! Waktu tiap soal 15 detik.
+          </p>
+          <button
+            onClick={() => { setTimer(15); setPhase('p1_playing'); }}
+            style={{background:'linear-gradient(135deg, #10b981, #059669)',border:'none',color:'#fff',fontWeight:800,fontSize:16,padding:'14px 32px',borderRadius:20,cursor:'pointer',boxShadow:'0 6px 20px rgba(16,185,129,0.4)'}}
+          >
+            Mulai Sekarang! 🚀
+          </button>
+        </div>
+      )}
+
+      {/* Playing Screen */}
+      {(phase === 'p1_playing' || phase === 'p2_playing') && currQ && (
+        <div className="fade-in">
+          {/* Top Status Bar */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:24}}>{phase === 'p1_playing' ? kid.avatar : opponentKid.avatar}</span>
+              <span style={{fontWeight:800,color:'#fff',fontSize:14}}>
+                {phase === 'p1_playing' ? kid.name : opponentKid.name}
+              </span>
+            </div>
+            <div style={{fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.6)',background:'rgba(255,255,255,0.1)',padding:'4px 12px',borderRadius:20}}>
+              Soal {questionIdx + 1} dari 5
+            </div>
+            <div style={{fontSize:14,fontWeight:900,color:timer<=5?'var(--danger)':'var(--warn)',fontFamily:'var(--font-display)',display:'flex',alignItems:'center',gap:4}}>
+              <span>⏱️</span> {timer}s
+            </div>
+          </div>
+
+          {/* Question Card */}
+          <div style={{background:'rgba(255,255,255,0.08)',border:'1.5px solid rgba(255,255,255,0.15)',borderRadius:22,padding:'24px 20px',marginBottom:20,textAlign:'center'}}>
+            <h3 style={{fontFamily:'var(--font-kids)',fontSize:20,color:'#fff',lineHeight:1.4,margin:0}}>
+              {currQ.q}
+            </h3>
+          </div>
+
+          {/* Options */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            {currQ.options.map((opt, idx) => {
+              let optBg = 'rgba(255,255,255,0.06)';
+              let optBorder = 'rgba(255,255,255,0.15)';
+              let optColor = '#fff';
+
+              if (answered) {
+                if (idx === currQ.answer) {
+                  optBg = 'rgba(16,185,129,0.3)';
+                  optBorder = '#10b981';
+                  optColor = '#34d399';
+                } else if (idx === selectedOpt) {
+                  optBg = 'rgba(239,68,68,0.3)';
+                  optBorder = '#ef4444';
+                  optColor = '#f87171';
+                }
+              }
+
+              return (
+                <button
+                  key={idx}
+                  disabled={answered}
+                  onClick={() => handleAnswer(idx)}
+                  style={{
+                    background: optBg,
+                    border: `2px solid ${optBorder}`,
+                    color: optColor,
+                    borderRadius: 18,
+                    padding: '16px 14px',
+                    fontSize: 15,
+                    fontFamily: 'var(--font-kids)',
+                    cursor: answered ? 'default' : 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center'
+                  }}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Pass Device Screen */}
+      {phase === 'pass_device' && (
+        <div className="fade-in" style={{textAlign:'center',padding:'40px 20px'}}>
+          <div style={{fontSize:64,marginBottom:16}}>📱 ➔ {opponentKid.avatar}</div>
+          <h2 style={{fontFamily:'var(--font-kids)',color:'#fff',fontSize:26}}>Oper HP ke {opponentKid.name}!</h2>
+          <p style={{color:'rgba(255,255,255,0.7)',fontSize:14,maxWidth:360,margin:'8px auto 24px'}}>
+            Skor babak pertama sudah tersimpan. Sekarang giliran {opponentKid.name} menjawab pertanyaan yang sama!
+          </p>
+          <button
+            onClick={() => {
+              setQuestionIdx(0);
+              setSelectedOpt(null);
+              setAnswered(false);
+              setTimer(15);
+              setPhase('p2_playing');
+            }}
+            style={{background:'linear-gradient(135deg, #ec4899, #db2777)',border:'none',color:'#fff',fontWeight:800,fontSize:16,padding:'14px 32px',borderRadius:20,cursor:'pointer',boxShadow:'0 6px 20px rgba(236,72,153,0.4)'}}
+          >
+            {opponentKid.name} Siap Main! 🚀
+          </button>
+        </div>
+      )}
+
+      {/* Finish Screen */}
+      {phase === 'finish' && (
+        <div className="fade-in" style={{textAlign:'center',padding:'30px 16px'}}>
+          <div style={{fontSize:64,marginBottom:8}}>🏆</div>
+          <h2 style={{fontFamily:'var(--font-kids)',fontSize:28,color:'#fff',margin:0}}>
+            {p1Score > p2Score ? `Hore! ${kid.name} Menang! 🎉` : p2Score > p1Score ? `${opponentKid.name} Menang! 🎉` : 'Pertandingan Seri! 🤝'}
+          </h2>
+          <p style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:6,marginBottom:20}}>
+            Duel kuis {QUIZ_BANKS[activeCategory]?.title} selesai!
+          </p>
+
+          {/* Scores comparison */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:24,background:'rgba(255,255,255,0.06)',padding:'20px',borderRadius:22,maxWidth:420,margin:'0 auto 24px'}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:36}}>{kid.avatar}</div>
+              <div style={{fontSize:14,fontWeight:800,color:'#fff',marginTop:4}}>{kid.name}</div>
+              <div style={{fontSize:28,fontWeight:900,color:p1Score>=p2Score?'var(--success)':'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',marginTop:4}}>{p1Score}</div>
+            </div>
+            <div style={{fontSize:20,fontWeight:900,color:'rgba(255,255,255,0.3)'}}>VS</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:36}}>{opponentKid.avatar}</div>
+              <div style={{fontSize:14,fontWeight:800,color:'#fff',marginTop:4}}>{opponentKid.name}</div>
+              <div style={{fontSize:28,fontWeight:900,color:p2Score>=p1Score?'var(--success)':'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',marginTop:4}}>{p2Score}</div>
+            </div>
+          </div>
+
+          <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+            <button
+              onClick={() => setPhase('menu')}
+              style={{background:'linear-gradient(135deg, #0078ff, #0056b3)',border:'none',color:'#fff',fontWeight:800,fontSize:14,padding:'12px 24px',borderRadius:16,cursor:'pointer'}}
+            >
+              Main Lagi 🥊
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // KIDS DASHBOARD
 // ============================================================
 function KidsDashboard() {
@@ -12685,14 +13371,15 @@ function KidsDashboard() {
   const albumVideos = selectedAlb ? DEMO_VIDEOS.filter(v => selectedAlb.videos.includes(v.id)) : [];
 
   const MENU = [
-    { id:'home', label:'Beranda', emoji:'\u{1F3E0}' },
-    { id:'videos', label:'Video', emoji:'\u{1F3AC}' },
-    { id:'drawing', label:'Mewarnai', emoji:'\u{1F3A8}' },
-    { id:'stories', label:'Dongeng', emoji:'\u{1F4DA}' },
-    { id:'photos', label:'Foto', emoji:'\u{1F4F7}' },
-    { id:'games', label:'Game', emoji:'\u{1F3AE}' },
-    { id:'hafalan', label:'Hafalan', emoji:'\u{1F4D6}' },
-    { id:'coins', label:'Koin', emoji:'\u{1F4B0}' },
+    { id:'home', label:'Beranda', emoji:'🏠' },
+    { id:'videos', label:'Video', emoji:'🎬' },
+    { id:'duel', label:'Duel Kuis', emoji:'🥊' },
+    { id:'drawing', label:'Mewarnai', emoji:'🎨' },
+    { id:'stories', label:'Dongeng', emoji:'📚' },
+    { id:'photos', label:'Foto', emoji:'📷' },
+    { id:'games', label:'Game', emoji:'🎮' },
+    { id:'hafalan', label:'Hafalan', emoji:'📖' },
+    { id:'coins', label:'Koin', emoji:'🪙' },
   ];
   return (
     <div className="kids-app app-mobile-frame" style={{minHeight:'100vh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
@@ -12700,7 +13387,7 @@ function KidsDashboard() {
       <div className="kids-header" style={{flexShrink:0}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           {page==='player' && (<button onClick={()=>setPage('videos')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Kembali</button>)}
-          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories'||page==='drawing') && (<button onClick={()=>setPage('home')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
+          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories'||page==='drawing'||page==='duel') && (<button onClick={()=>setPage('home')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <img src="/logo-mark.png" alt="VIDKIDZ" style={{width:34,height:34,objectFit:'contain'}} />
             <div style={{fontSize:28}}>{kid?.avatar}</div>
@@ -12751,6 +13438,7 @@ function KidsDashboard() {
         {page==='coins' && <KidsCoinsPage kid={kid} />}
         {page==='stories' && <KidsStoryHub kid={kid} />}
         {page==='drawing' && <KidsColoringStudio kid={kid} />}
+        {page==='duel' && <KidsQuizDuel kid={kid} />}
       </div>
 
       {/* BOTTOM NAV — position:absolute so clipped by parent overflow:hidden */}
@@ -12910,6 +13598,7 @@ function KidsHomePage({ kid, onNavigate }) {
       <h3 style={{fontFamily:'var(--font-kids)',color:'rgba(255,255,255,0.8)',marginBottom:12,fontSize:16}}>🚀 Mau ngapain hari ini?</h3>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
         {[
+          { id:'duel', emoji:'🥊', title:'Duel Kuis Pintar', desc:'Tantang saudara atau robot AI!', color:'#f59e0b', bg:'rgba(245,158,11,0.15)' },
           { id:'drawing', emoji:'🎨', title:'Studio Mewarnai', desc:'Mewarnai fabel & kanvas kreasi!', color:'#ec4899', bg:'rgba(236,72,153,0.15)' },
           { id:'stories', emoji:'📚', title:'Dongeng Santai', desc:'Kisah budi pekerti & audio book', color:'#8b5cf6', bg:'rgba(139,92,246,0.15)' },
           { id:'games', emoji:'🎮', title:'Main Game Seru', desc:'Matematika, Tebak Hewan & lainnya!', color:'#0078ff', bg:'rgba(0,120,255,0.15)' },

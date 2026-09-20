@@ -549,7 +549,62 @@
 2. **Audio File Object Storage (Cloudflare R2 / AWS S3 / MinIO)**:
    - Memindahkan data Base64 audio rekaman suara orang tua dari JSON state ke object storage terkompresi (Opus/WebM/MP3) dengan presigned URL untuk menjaga ukuran state tetap ringan. Effort: M.
 3. **Multi-Player / Sibling Quiz Challenge Mode**:
-   - Fitur kuis duel asah otak interaktif antar anak dalam satu keluarga (misal: tebak bendera, kuis matematika cepat) menggunakan WebSockets atau Server-Sent Events (SSE). Effort: M.
+   - Fitur kuis duel asah otak interaktif antar anak dalam satu keluarga (misal: tebak bendera, kuis matematika cepat) menggunakan WebSockets atau Server-Sent Events (SSE). Effort: M. *(SELESAI DIIMPLEMENTASIKAN PADA RUN #14 SEBAGAI KidsQuizDuel & FamilyQuizTournament)*
+
+## [2026-09-20] Audit & Feature Implementation Run #14 — Sibling Quiz Duel Arena, Family Tournament & Media Storage Engine (Autonomous MAX++++++)
+
+### Area yang sudah diaudit & diimplementasikan
+- **Interactive Sibling Quiz Duel Arena (`KidsQuizDuel` di `public/index.html`)**:
+  - Arena duel asah otak edukatif interaktif untuk anak dengan 2 mode tanding:
+    1. *Duel Lawan Saudara (Pass & Play / 1 Perangkat)*: Anak bermain bergantian dengan saudara di keluarga yang sama untuk menjawab paket 5 soal yang identik.
+    2. *Duel Lawan Robot Pintar (AI Bot)*: Anak bertanding melawan kecerdasan bot otomatis VIDKIDZ dengan simulasi skor dan waktu responsif.
+  - 4 Kategori kuis edukasi berbobot tinggi:
+    1. 🔢 *Matematika Cepat* (Penjumlahan, Pengurangan, Perkalian & Pembagian Dasar)
+    2. 🕌 *Cerdas Budi Pekerti* (Adab sopan santun, kejujuran, menghormati orang tua, menjaga kebersihan)
+    3. 🌿 *Sains & Alam Cilik* (Tata surya, hewan amfibi, fotosintesis, magnet, organ pernapasan)
+    4. 🚩 *Tebak Bendera & Dunia* (Bendera negara dunia, ibu kota IKN Nusantara, geografi & fauna khas)
+  - 5 Babak soal kilat per pertandingan dengan timer mundur 15 detik animasi visual dan evaluasi benar/salah instan.
+  - Sistem penilaian dinamis (+20 poin per jawaban tepat) dan kalkulasi waktu pengerjaan.
+  - Layar selebrasi kemenangan dengan grafis piala 🏆, perbandingan skor vs lawan, dan reward gamifikasi koin (+15 koin pemenang, +10 koin seri, +5 koin partisipasi).
+  - Integrasi tab navigasi "Duel Kuis 🥊" di `KidsDashboard` dan kartu pintasan di beranda `KidsHomePage`.
+- **Turnamen Kuis Anak di Dasbor Keluarga (`FamilyQuizTournament` di `public/index.html`)**:
+  - Tab navigasi baru "Turnamen Kuis 🏆" pada menu Dasbor Keluarga.
+  - Metrik agregasi turnamen: Total Pertandingan, Papan Peringkat Kemenangan per Anak (Leaderboard Kakak-Adik), dan tombol Apresiasi Juara Orang Tua (+10 🪙 Koin).
+  - Filter kategori duel (Semua, Matematika, Budi Pekerti, Sains, Bendera).
+  - Kartu riwayat pertandingan lengkap: tanggal duel, avatar anak vs lawan, rincian skor akhir, lencana mahkota pemenang 👑, dan koin reward yang diperoleh.
+- **Media Storage Engine & Path Traversal Protection (`server.js`)**:
+  - Direktori penyimpanan media mandiri (`data/media/` atau temporary serverless) terpisah dari flat file state.
+  - Endpoint `POST /api/media/upload`: Menerima base64 dataURL lukisan atau audio rekaman, memvalidasi MIME type (`png`, `jpeg`, `webp`, `webm`, `m4a`, `ogg`, `mp3`), membatasi ukuran maksimal 10MB, dan menyimpan file biner terindeks.
+  - Endpoint `GET /api/media/:fileId`: Melayani streaming file media statis dengan header MIME type otomatis, proteksi path traversal ketat via `path.basename()`, dan browser HTTP cache `max-age=86400`.
+- **Backend Multi-Tenant Isolation & Alert Telegram (`server.js`)**:
+  - `sanitizeStateForUser()` menyaring koleksi `quizDuels` secara ketat: anak dan orang tua hanya dapat melihat riwayat duel milik keluarganya sendiri.
+  - Notifikasi Telegram real-time ke orang tua saat anak menyelesaikan kuis duel (`🏆 Hasil Kuis Duel Kakak-Adik Selesai!`).
+  - Pemulihan database admin (`POST /api/admin/restore-state`) dan laporan backup Telegram (`POST /api/admin/telegram-backup`) mempertahankan koleksi `quizDuels`.
+- **Service Worker & PWA Invalidation (`public/sw.js` & `package.json`)**:
+  - Bump `APP_VERSION` ke `5.2.20` dan `CACHE_VERSION` ke `v43`.
+- **Automated Test Suite (`test-server.js`)**:
+  - Penambahan Test Group 29: Media Storage API & Path Traversal Protection (4 assertions).
+  - Penambahan Test Group 30: Sibling Quiz Duel Persistence & Multi-Tenant Privacy Isolation (4 assertions).
+  - Penambahan Test Group 31: Admin Restore State Preserves Drawing, Audio & Quiz Collections (4 assertions).
+  - Total pengujian meningkat menjadi: **111 passed, 0 failed** (100% pass rate).
+
+### Hasil Pengujian & Verifikasi
+1. **Automated Suite**:
+   - `npm test` -> **111 passed, 0 failed** (seluruh 31 grup pengujian lulus 100%).
+2. **Sintaks Transpilasi Babel / React Standalone**:
+   - `scratch/verify_babel.js` -> PASS (0 syntax error, transpilasi Babel berhasil penuh).
+3. **Endpoint Server & PWA Shell**:
+   - `GET /api/health` -> HTTP 200 `{"status":"ok","version":"5.2.20","assetVersion":"v33"}`.
+   - `POST /api/media/upload` -> HTTP 201 Uploaded & Served.
+   - `GET /api/media/..%2F..%2Fserver.js` -> HTTP 404 (Path traversal blocked).
+
+### Rekomendasi Fitur Lanjutan Berikutnya (Next Iterations)
+1. **Database Storage Layer Migration (SQLite / LibSQL / PostgreSQL)**:
+   - Migrasi penyimpanan dari flat file JSON (`data/vidkidz-state.json`) ke engine database relasional ACID seperti SQLite/LibSQL atau PostgreSQL (via Prisma/Kysely) untuk konkurensi tinggi dan penanganan file media audio/gambar yang efisien. Effort: M.
+2. **Real-Time WebSocket / SSE Sibling Duel Synchronization**:
+   - Memungkinkan kakak dan adik bermain duel kuis secara langsung dari dua gadget terpisah secara bersamaan (real-time buzzer & live timer synchronization). Effort: M.
+3. **Speech Recognition Voice Answer Mode for Quiz**:
+   - Menambahkan opsi menjawab kuis menggunakan suara (anak menyebutkan pilihan jawaban secara lisan dengan evaluasi AI Speech Recognition). Effort: S-M.
 
 
 
