@@ -72,8 +72,10 @@ const setToken = (t) => {
 const clearToken = () => {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(SESSION_META_KEY);
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(SESSION_META_KEY);
+  if (typeof window !== 'undefined' && window.self === window.top) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(SESSION_META_KEY);
+  }
 };
 async function apiFetch(path, options={}) {
   const token = getToken();
@@ -5883,21 +5885,54 @@ function AppProvider({ children }) {
         s = normalizeState(s);
         setState(s);
         setApiKey(s.systemSettings?.apiKey || '');
-        if (restoredPayload?.demoExpiresAt) setDemoExpiresAt(restoredPayload.demoExpiresAt);
-        if (restoredPayload?.role === 'admin') {
-          const admin = s.users.admins.find(a => a.id === restoredPayload.id);
-          if (admin) setCurrentUser({ ...admin, role:'admin' });
-          else clearToken();
-        } else if (restoredPayload?.role === 'family') {
-          const family = s.users.families.find(f => f.id === restoredPayload.id);
-          if (family) setCurrentUser({ ...family, role:'family', demoAccess: !!restoredPayload.demo, demoExpiresAt: restoredPayload.demoExpiresAt });
-          else clearToken();
-        } else if (restoredPayload?.role === 'kids') {
-          const kid = s.users.kids.find(k => k.id === restoredPayload.id);
-          if (kid) {
-            setCurrentUser({ ...kid, role:'kids', demoAccess: !!restoredPayload.demo, demoExpiresAt: restoredPayload.demoExpiresAt });
-            setCurrentKidId(kid.id);
-          } else clearToken();
+        // Check for role preview parameter (for Developer Workbench / 3 Mobile)
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashStr = window.location.hash || '';
+        let forcedRole = searchParams.get('preview_role') || searchParams.get('role');
+        if (!forcedRole && hashStr.includes('?')) {
+          const hashParams = new URLSearchParams(hashStr.split('?')[1]);
+          forcedRole = hashParams.get('preview_role') || hashParams.get('role');
+        }
+        if (!forcedRole && window.self !== window.top) {
+          if (hashStr.startsWith('#kids')) forcedRole = 'kids';
+          else if (hashStr.startsWith('#overview') || hashStr.startsWith('#family')) forcedRole = 'family';
+          else if (hashStr.startsWith('#admin')) forcedRole = 'admin';
+          else if (hashStr.startsWith('#login')) forcedRole = 'login';
+        }
+
+        if (forcedRole === 'login') {
+          setCurrentUser(null);
+          setCurrentKidId(null);
+        } else if (forcedRole === 'admin') {
+          const admin = (s.users.admins || [])[0] || { id: 'admin-1', name: 'Super Admin', role: 'admin', permissions: ['all'] };
+          setCurrentUser({ ...admin, role: 'admin', demoAccess: true });
+          setCurrentKidId(null);
+        } else if (forcedRole === 'family') {
+          const family = (s.users.families || [])[0] || { id: 'fam-1', name: 'Keluarga Budi', role: 'family' };
+          setCurrentUser({ ...family, role: 'family', demoAccess: true });
+          const linkedKidId = family.linkedKids?.[0] || (s.users.kids?.find(k => k.familyId === family.id)?.id);
+          if (linkedKidId) setCurrentKidId(linkedKidId);
+        } else if (forcedRole === 'kids') {
+          const kid = (s.users.kids || [])[0] || { id: 'kid-1', name: 'Budi Jr', role: 'kids', coins: 150 };
+          setCurrentUser({ ...kid, role: 'kids', demoAccess: true });
+          setCurrentKidId(kid.id);
+        } else {
+          if (restoredPayload?.demoExpiresAt) setDemoExpiresAt(restoredPayload.demoExpiresAt);
+          if (restoredPayload?.role === 'admin') {
+            const admin = s.users.admins.find(a => a.id === restoredPayload.id);
+            if (admin) setCurrentUser({ ...admin, role:'admin' });
+            else clearToken();
+          } else if (restoredPayload?.role === 'family') {
+            const family = s.users.families.find(f => f.id === restoredPayload.id);
+            if (family) setCurrentUser({ ...family, role:'family', demoAccess: !!restoredPayload.demo, demoExpiresAt: restoredPayload.demoExpiresAt });
+            else clearToken();
+          } else if (restoredPayload?.role === 'kids') {
+            const kid = s.users.kids.find(k => k.id === restoredPayload.id);
+            if (kid) {
+              setCurrentUser({ ...kid, role:'kids', demoAccess: !!restoredPayload.demo, demoExpiresAt: restoredPayload.demoExpiresAt });
+              setCurrentKidId(kid.id);
+            } else clearToken();
+          }
         }
       })
       .catch(() => setState(loadState()))
@@ -9408,6 +9443,9 @@ function AdminBackupDatabase({ onRestorePreview }) {
 function AdminDeveloperMode() {
   const [currentRoute, setCurrentRoute] = useState('#kids');
   const [cacheBuster, setCacheBuster] = useState(() => Date.now());
+  const [adminCb, setAdminCb] = useState(() => Date.now());
+  const [familyCb, setFamilyCb] = useState(() => Date.now());
+  const [kidsCb, setKidsCb] = useState(() => Date.now());
   const [customInput, setCustomInput] = useState('');
   const [layoutMode, setLayoutMode] = useState('split');
   const [clockTime, setClockTime] = useState('09:41');
@@ -9423,19 +9461,25 @@ function AdminDeveloperMode() {
   }, []);
 
   const origin = window.location.origin;
-  const fullTargetUrl = `${origin}/${currentRoute}?_cb=${cacheBuster}`;
 
   const routes = [
-    { label: 'Kids Mode', route: '#kids', icon: 'ui:smile' },
-    { label: 'Parent / Family', route: '#overview', icon: 'ui:users' },
-    { label: 'Login Screen', route: '#login', icon: 'ui:lock' },
-    { label: 'Video Albums', route: '#albums', icon: 'ui:play' },
-    { label: 'Koin & Hadiah', route: '#rewards', icon: 'ui:coin' },
-    { label: 'Portal Admin', route: '#admin', icon: 'ui:zap' },
+    { label: 'Kids Mode', route: '#kids', icon: 'ui:smile', role: 'kids' },
+    { label: 'Parent / Family', route: '#overview', icon: 'ui:users', role: 'family' },
+    { label: 'Login Screen', route: '#login', icon: 'ui:lock', role: 'login' },
+    { label: 'Video Albums', route: '#albums', icon: 'ui:play', role: 'family' },
+    { label: 'Koin & Hadiah', route: '#rewards', icon: 'ui:coin', role: 'kids' },
+    { label: 'Portal Admin', route: '#admin', icon: 'ui:zap', role: 'admin' },
   ];
 
+  const activeRouteObj = routes.find(r => r.route === currentRoute) || routes[0];
+  const fullTargetUrl = `${origin}/?preview_role=${activeRouteObj.role || ''}${currentRoute}&_cb=${cacheBuster}`;
+
   const handleRefresh = () => {
-    setCacheBuster(Date.now());
+    const t = Date.now();
+    setCacheBuster(t);
+    setAdminCb(t);
+    setFamilyCb(t);
+    setKidsCb(t);
   };
 
   return (
@@ -9444,24 +9488,44 @@ function AdminDeveloperMode() {
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <UiIcon name="smartphone" size={20} color="var(--primary)" />
           <div>
-            <div style={{fontSize:14,fontWeight:800,color:'var(--t1)'}}>Developer Dual-View Responsive Workbench</div>
-            <div style={{fontSize:11,color:'var(--t3)'}}>Simulasi live perangkat iPhone 15 Pro & Desktop Flex secara berdampingan</div>
+            <div style={{fontSize:14,fontWeight:800,color:'var(--t1)'}}>
+              {layoutMode === 'three_mobile' ? 'Developer Multi-Role 3 Mobile Workbench' : 'Developer Dual-View Responsive Workbench'}
+            </div>
+            <div style={{fontSize:11,color:'var(--t3)'}}>
+              {layoutMode === 'three_mobile'
+                ? 'Simulasi live 3 layar mobile berjajar: Super Admin, Orang Tua (Family), & Mode Anak'
+                : 'Simulasi live perangkat iPhone 15 Pro & Desktop Flex secara berdampingan'}
+            </div>
           </div>
         </div>
 
-        <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
-          {routes.map(r => (
-            <button
-              key={r.route}
-              className={`btn btn-xs ${currentRoute===r.route?'btn-admin':'btn-ghost'}`}
-              onClick={()=>{setCurrentRoute(r.route);handleRefresh();}}
-              style={{display:'flex',alignItems:'center',gap:6}}
-            >
-              <IconSlot icon={r.icon} size={13} color="currentColor" />
-              <span>{r.label}</span>
-            </button>
-          ))}
-        </div>
+        {layoutMode === 'three_mobile' ? (
+          <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+            <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'4px 10px',fontSize:11,color:'#fca5a5',fontWeight:700}}>
+              <span>👑 Phone 1: Admin</span>
+            </div>
+            <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:8,padding:'4px 10px',fontSize:11,color:'#6ee7b7',fontWeight:700}}>
+              <span>👨‍👩‍👧 Phone 2: Orang Tua</span>
+            </div>
+            <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(14,165,233,0.12)',border:'1px solid rgba(14,165,233,0.3)',borderRadius:8,padding:'4px 10px',fontSize:11,color:'#7dd3fc',fontWeight:700}}>
+              <span>🌟 Phone 3: Anak</span>
+            </div>
+          </div>
+        ) : (
+          <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
+            {routes.map(r => (
+              <button
+                key={r.route}
+                className={`btn btn-xs ${currentRoute===r.route?'btn-admin':'btn-ghost'}`}
+                onClick={()=>{setCurrentRoute(r.route);handleRefresh();}}
+                style={{display:'flex',alignItems:'center',gap:6}}
+              >
+                <IconSlot icon={r.icon} size={13} color="currentColor" />
+                <span>{r.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <div style={{display:'flex',background:'rgba(0,0,0,0.4)',padding:2,borderRadius:8,border:'1px solid var(--border)'}}>
@@ -9471,6 +9535,13 @@ function AdminDeveloperMode() {
               style={{background:layoutMode==='split'?'var(--primary)':'transparent',color:layoutMode==='split'?'#fff':'var(--t3)'}}
             >
               Split View
+            </button>
+            <button
+              className="btn btn-xs"
+              onClick={()=>setLayoutMode('three_mobile')}
+              style={{background:layoutMode==='three_mobile'?'var(--primary)':'transparent',color:layoutMode==='three_mobile'?'#fff':'var(--t3)'}}
+            >
+              3 Mobile
             </button>
             <button
               className="btn btn-xs"
@@ -9488,13 +9559,184 @@ function AdminDeveloperMode() {
             </button>
           </div>
 
-          <button className="btn btn-ghost btn-sm" onClick={handleRefresh} title="Muat Ulang Kedua Layar">
+          <button className="btn btn-ghost btn-sm" onClick={handleRefresh} title="Muat Ulang Semua Layar">
             <UiIcon name="refresh" size={15} />
           </button>
         </div>
       </div>
 
-      <div className="dev-workbench-split">
+      <div
+        className="dev-workbench-split"
+        style={layoutMode === 'three_mobile' ? {
+          display: 'flex',
+          gap: 18,
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          paddingBottom: 12,
+          alignItems: 'stretch',
+          justifyContent: 'flex-start'
+        } : undefined}
+      >
+        {layoutMode === 'three_mobile' && (
+          <div style={{display:'flex',gap:20,margin:'0 auto',minWidth:'min-content',height:'100%',alignItems:'stretch'}}>
+            {/* PHONE 1: SUPER ADMIN */}
+            <div
+              className="phone-chassis"
+              style={{
+                width: 375,
+                minWidth: 350,
+                maxWidth: 390,
+                height: '100%',
+                borderRadius: 18,
+                border: '1px solid rgba(239,68,68,0.35)',
+                boxShadow: '0 20px 45px rgba(239,68,68,0.14), 0 8px 30px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div className="phone-topbar" style={{background:'#16131d',borderBottom:'1px solid rgba(239,68,68,0.22)'}}>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#ef4444',display:'inline-block'}} />
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}} />
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#10b981',display:'inline-block'}} />
+                </div>
+
+                <div className="browser-omnibox" style={{display:'flex',alignItems:'center',gap:6,justifyContent:'center',padding:'0 8px',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.28)'}}>
+                  <UiIcon name="shield" size={12} color="#f87171" />
+                  <span style={{color:'#fca5a5',fontSize:11,fontWeight:800}}>Admin · GOD MODE</span>
+                  <span style={{color:'var(--t3)',fontSize:10}}>· {clockTime}</span>
+                </div>
+
+                <button className="btn btn-ghost btn-xs" onClick={()=>setAdminCb(Date.now())} style={{padding:'2px 6px'}} title="Muat Ulang Admin">
+                  <UiIcon name="refresh" size={12} />
+                </button>
+              </div>
+
+              <div style={{background:'linear-gradient(90deg, rgba(239,68,68,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#fecaca',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+                <span style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:13}}>👑</span>
+                  <span>ROLE 1: SUPER ADMIN</span>
+                </span>
+                <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:9,color:'#f87171'}}>
+                  <span style={{width:6,height:6,borderRadius:'50%',background:'#ef4444',boxShadow:'0 0 6px #ef4444',display:'inline-block'}} />
+                  LIVE PREVIEW
+                </span>
+              </div>
+
+              <div className="phone-screen">
+                <iframe
+                  title="Admin Dashboard Live Preview"
+                  src={`${origin}/?preview_role=admin#admin&_cb=${adminCb}`}
+                />
+              </div>
+            </div>
+
+            {/* PHONE 2: ORANG TUA / FAMILY */}
+            <div
+              className="phone-chassis"
+              style={{
+                width: 375,
+                minWidth: 350,
+                maxWidth: 390,
+                height: '100%',
+                borderRadius: 18,
+                border: '1px solid rgba(16,185,129,0.35)',
+                boxShadow: '0 20px 45px rgba(16,185,129,0.14), 0 8px 30px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div className="phone-topbar" style={{background:'#0e1919',borderBottom:'1px solid rgba(16,185,129,0.22)'}}>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#ef4444',display:'inline-block'}} />
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}} />
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#10b981',display:'inline-block'}} />
+                </div>
+
+                <div className="browser-omnibox" style={{display:'flex',alignItems:'center',gap:6,justifyContent:'center',padding:'0 8px',background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.28)'}}>
+                  <UiIcon name="users" size={12} color="#34d399" />
+                  <span style={{color:'#6ee7b7',fontSize:11,fontWeight:800}}>Family Control</span>
+                  <span style={{color:'var(--t3)',fontSize:10}}>· {clockTime}</span>
+                </div>
+
+                <button className="btn btn-ghost btn-xs" onClick={()=>setFamilyCb(Date.now())} style={{padding:'2px 6px'}} title="Muat Ulang Family">
+                  <UiIcon name="refresh" size={12} />
+                </button>
+              </div>
+
+              <div style={{background:'linear-gradient(90deg, rgba(16,185,129,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#a7f3d0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+                <span style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:13}}>👨‍👩‍👧</span>
+                  <span>ROLE 2: ORANG TUA</span>
+                </span>
+                <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:9,color:'#34d399'}}>
+                  <span style={{width:6,height:6,borderRadius:'50%',background:'#10b981',boxShadow:'0 0 6px #10b981',display:'inline-block'}} />
+                  LIVE PREVIEW
+                </span>
+              </div>
+
+              <div className="phone-screen">
+                <iframe
+                  title="Family Dashboard Live Preview"
+                  src={`${origin}/?preview_role=family#overview&_cb=${familyCb}`}
+                />
+              </div>
+            </div>
+
+            {/* PHONE 3: MODE ANAK / KIDS */}
+            <div
+              className="phone-chassis"
+              style={{
+                width: 375,
+                minWidth: 350,
+                maxWidth: 390,
+                height: '100%',
+                borderRadius: 18,
+                border: '1px solid rgba(14,165,233,0.35)',
+                boxShadow: '0 20px 45px rgba(14,165,233,0.14), 0 8px 30px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div className="phone-topbar" style={{background:'#0c1724',borderBottom:'1px solid rgba(14,165,233,0.22)'}}>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#ef4444',display:'inline-block'}} />
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}} />
+                  <span style={{width:9,height:9,borderRadius:'50%',background:'#10b981',display:'inline-block'}} />
+                </div>
+
+                <div className="browser-omnibox" style={{display:'flex',alignItems:'center',gap:6,justifyContent:'center',padding:'0 8px',background:'rgba(14,165,233,0.1)',border:'1px solid rgba(14,165,233,0.28)'}}>
+                  <UiIcon name="smile" size={12} color="#38bdf8" />
+                  <span style={{color:'#7dd3fc',fontSize:11,fontWeight:800}}>Mode Anak</span>
+                  <span style={{color:'var(--t3)',fontSize:10}}>· {clockTime}</span>
+                </div>
+
+                <button className="btn btn-ghost btn-xs" onClick={()=>setKidsCb(Date.now())} style={{padding:'2px 6px'}} title="Muat Ulang Anak">
+                  <UiIcon name="refresh" size={12} />
+                </button>
+              </div>
+
+              <div style={{background:'linear-gradient(90deg, rgba(14,165,233,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#bae6fd',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+                <span style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:13}}>🌟</span>
+                  <span>ROLE 3: MODE ANAK</span>
+                </span>
+                <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:9,color:'#38bdf8'}}>
+                  <span style={{width:6,height:6,borderRadius:'50%',background:'#0ea5e9',boxShadow:'0 0 6px #0ea5e9',display:'inline-block'}} />
+                  LIVE PREVIEW
+                </span>
+              </div>
+
+              <div className="phone-screen">
+                <iframe
+                  title="Kids Dashboard Live Preview"
+                  src={`${origin}/?preview_role=kids#kids&_cb=${kidsCb}`}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {(layoutMode === 'split' || layoutMode === 'mobile') && (
           <div className="phone-chassis" style={{width: layoutMode === 'mobile' ? 420 : 393, margin: layoutMode === 'mobile' ? '0 auto' : undefined}}>
             <div className="phone-topbar">
@@ -15460,7 +15702,7 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  if ((hash.includes('dev') || hash.includes('workbench')) && state) {
+  if ((hash.includes('dev') || hash.includes('workbench')) && state && (typeof window === 'undefined' || window.self === window.top)) {
     return <AdminDeveloperMode />;
   }
 
