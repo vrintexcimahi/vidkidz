@@ -1017,8 +1017,9 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
   box-shadow: 0 14px 38px rgba(5,89,143,0.16);
   backdrop-filter: blur(14px);
 }
+.device-view-switcher,
 .device-view-root.is-desktop-device .device-view-switcher {
-  display: flex;
+  display: none !important;
 }
 .device-view-option {
   width: 36px;
@@ -5781,23 +5782,6 @@ function DeviceViewShell({ children }) {
 
   return (
     <div className={`device-view-root ${isDesktopDevice ? 'is-desktop-device' : ''} device-view-${effectiveView}`}>
-      {(
-        <div className="device-view-switcher" aria-label="Pilihan tampilan device">
-          {DEVICE_VIEW_OPTIONS.map(option => (
-            <button
-              key={option.id}
-              className={`device-view-option ${effectiveView===option.id?'active':''}`}
-              type="button"
-              title={`Tampilan ${option.label}`}
-              aria-label={`Tampilan ${option.label}`}
-              aria-pressed={effectiveView===option.id}
-              onClick={() => setDeviceView(option.id)}
-            >
-              <UiIcon name={option.icon} size={18} color="currentColor" />
-            </button>
-          ))}
-        </div>
-      )}
       {children}
     </div>
   );

@@ -794,3 +794,5 @@
    - Status: **PASS — 130 passed, 0 failed** (100% lulus di 34 grup uji komprehensif).
 3. **Pemeriksaan Endpoint HTTP**:
    - Endpoint root `http://localhost:3100`, `?preview_role=admin`, `?preview_role=family`, `?preview_role=kids` merespons sukses (HTTP 200).
+4. **Penghapusan Widget Switcher Kanan Atas (`device-view-switcher`)**:
+   - Menghapus tombol floating switch device (ikon phone/monitor pill) di pojok kanan atas dari `DeviceViewShell` dan menonaktifkan CSS-nya secara permanen (`display: none !important;`) sehingga tampilan header bersih tanpa elemen mengambang.
