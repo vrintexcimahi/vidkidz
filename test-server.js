@@ -674,19 +674,129 @@ const server = app.listen(0, async () => {
     assert(savedStory && savedStory.storyId === 'story1', 'Story record successfully persisted on server');
     assert(savedStory && savedStory.rewardCoins === 10, 'Story rewardCoins persisted correctly');
 
-    // Admin restore state preserves storyRecords
-    const adminRestorePayload = {
+    // --- 27. Kids Creative Coloring & Drawing Records Privacy Isolation ---
+    console.log('\n--- 27. Creative Coloring & Drawing Records Privacy Isolation ---');
+    const regArtistFam = await req('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Keluarga Seniman',
+        email: `seniman_${Date.now()}@test.local`,
+        password: 'securePass123!',
+        otp: '123456',
+        acceptedTerms: true
+      })
+    });
+    assert(regArtistFam.ok && !!regArtistFam.data.token, 'Register non-demo family for coloring & audio tests');
+    const artistFamToken = regArtistFam.data.token;
+    const artistFamId = regArtistFam.data.user.id;
+
+    const artistKidId = `kid_art_${Date.now()}`;
+    const addArtKidRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}` },
+      body: JSON.stringify({
+        state: {
+          users: {
+            kids: [
+              {
+                id: artistKidId,
+                name: 'Seniman Cilik',
+                age: 8,
+                familyId: artistFamId,
+                avatar: '🎨',
+                coins: 50,
+                lockPin: '1122'
+              }
+            ]
+          }
+        }
+      })
+    });
+    assert(addArtKidRes.ok, 'Family added child for creative coloring test');
+
+    const artistKidLogin = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: artistKidId, password: '1122', role: 'kids' })
+    });
+    const artistKidToken = artistKidLogin.data.token;
+
+    const newDrawingRecord = {
+      id: 'draw_test_1',
+      kidId: artistKidId,
+      templateId: 'kancil',
+      title: 'Si Kancil Cerdik',
+      dataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      createdAt: Date.now(),
+      rewardCoins: 10
+    };
+
+    const drawPatchRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistKidToken}` },
+      body: JSON.stringify({ state: { drawingRecords: [newDrawingRecord] } })
+    });
+    assert(drawPatchRes.ok, 'Kid submitted drawing record via PATCH /api/state');
+
+    const kidDrawState = await req('/api/state', { headers: { Authorization: `Bearer ${artistKidToken}` } });
+    const savedDrawKid = (kidDrawState.data.drawingRecords || []).find(d => d.id === 'draw_test_1');
+    assert(savedDrawKid && savedDrawKid.title === 'Si Kancil Cerdik', 'Drawing record successfully persisted on server for kid');
+
+    const ownFamDrawState = await req('/api/state', { headers: { Authorization: `Bearer ${artistFamToken}` } });
+    const savedDrawFam = (ownFamDrawState.data.drawingRecords || []).find(d => d.id === 'draw_test_1');
+    assert(savedDrawFam && savedDrawFam.id === 'draw_test_1', 'Own family can see child artwork in GET /api/state');
+
+    const otherFamDrawState = await req('/api/state', { headers: { Authorization: `Bearer ${famToken}` } });
+    const savedDrawOtherFam = (otherFamDrawState.data.drawingRecords || []).find(d => d.id === 'draw_test_1');
+    assert(!savedDrawOtherFam, 'Other family cannot see another family kid artwork in GET /api/state');
+
+    // --- 28. Parent Bedtime Story Audio Recordings & Family Isolation ---
+    console.log('\n--- 28. Parent Bedtime Story Audio Recordings & Family Isolation ---');
+    const newParentAudio = {
+      id: 'audio_test_1',
+      familyId: artistFamId,
+      storyId: 'story1',
+      recordedBy: 'Keluarga Seniman',
+      audioData: 'data:audio/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwEAAAAAAA',
+      recordedAt: Date.now()
+    };
+
+    const audioPatchRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}` },
+      body: JSON.stringify({ state: { parentStoryAudios: [newParentAudio] } })
+    });
+    assert(audioPatchRes.ok, 'Family saved parent bedtime story audio via PATCH /api/state');
+
+    const famAudioState = await req('/api/state', { headers: { Authorization: `Bearer ${artistFamToken}` } });
+    const savedFamAudio = (famAudioState.data.parentStoryAudios || []).find(a => a.id === 'audio_test_1');
+    assert(savedFamAudio && savedFamAudio.storyId === 'story1', 'Parent story audio successfully persisted for family');
+
+    const kidAudioState = await req('/api/state', { headers: { Authorization: `Bearer ${artistKidToken}` } });
+    const savedKidAudio = (kidAudioState.data.parentStoryAudios || []).find(a => a.id === 'audio_test_1');
+    assert(savedKidAudio && savedKidAudio.id === 'audio_test_1', 'Own kid can access parent story voice audio in GET /api/state');
+
+    const otherFamAudioState = await req('/api/state', { headers: { Authorization: `Bearer ${famToken}` } });
+    const savedOtherFamAudio = (otherFamAudioState.data.parentStoryAudios || []).find(a => a.id === 'audio_test_1');
+    assert(!savedOtherFamAudio, 'Other family cannot see parent story voice audio in GET /api/state');
+
+    // --- 29. Admin Restore State Preserves Drawing & Audio Collections ---
+    console.log('\n--- 29. Admin Restore State Preserves Drawing & Audio Collections ---');
+    const fullRestorePayload = {
       state: {
         users: { admins: [{ id: 'a1', email: 'admin@vidkidz.local', password: 'admin' }], families: [], kids: [] },
-        storyRecords: [newStoryRecord]
+        storyRecords: [newStoryRecord],
+        drawingRecords: [newDrawingRecord],
+        parentStoryAudios: [newParentAudio]
       }
     };
-    const restoreRes = await req('/api/admin/restore-state', {
+    const fullRestoreRes = await req('/api/admin/restore-state', {
       method: 'POST',
       headers: { Authorization: `Bearer ${adminToken}` },
-      body: JSON.stringify(adminRestorePayload)
+      body: JSON.stringify(fullRestorePayload)
     });
-    assert(restoreRes.ok && restoreRes.data.stats.storyRecords === 1, 'Admin restore-state preserves storyRecords collection');
+    assert(fullRestoreRes.ok && fullRestoreRes.data.stats.storyRecords === 1, 'Admin restore-state preserves storyRecords collection');
+    assert(fullRestoreRes.ok && fullRestoreRes.data.stats.drawingRecords === 1, 'Admin restore-state preserves drawingRecords collection');
+    assert(fullRestoreRes.ok && fullRestoreRes.data.stats.parentStoryAudios === 1, 'Admin restore-state preserves parentStoryAudios collection');
 
     console.log(`\n========================================`);
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
@@ -708,6 +818,8 @@ const server = app.listen(0, async () => {
         d.state.redemptions = d.state.redemptions.filter(r => !r.id.startsWith('red_test_'));
         d.state.hafalanRecords = d.state.hafalanRecords.filter(h => !h.id.startsWith('rec_haf_'));
         d.state.storyRecords = (d.state.storyRecords || []).filter(s => !s.id.startsWith('srec_test_'));
+        d.state.drawingRecords = (d.state.drawingRecords || []).filter(d => !d.id.startsWith('draw_test_'));
+        d.state.parentStoryAudios = (d.state.parentStoryAudios || []).filter(a => !a.id.startsWith('audio_test_'));
         fs.writeFileSync(p, JSON.stringify(d, null, 2), 'utf8');
       }
     } catch (_) {}

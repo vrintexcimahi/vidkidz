@@ -1,5 +1,5 @@
-const APP_VERSION = '5.2.18';
-const CACHE_VERSION = 'v41';
+const APP_VERSION = '5.2.19';
+const CACHE_VERSION = 'v42';
 const STATIC_CACHE = `vidkidz-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `vidkidz-runtime-${CACHE_VERSION}`;
 const APP_SHELL = [

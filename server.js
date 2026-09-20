@@ -90,6 +90,10 @@ const INITIAL_STATE = {
   storyRecords: [
     { id:'srec1', kidId:'k1', storyId:'story1', title:'Kisah Semut yang Rajin & Belalang Penyanyi', completedAt:Date.now()-86400000, rewardCoins:10, moralLearned:'Rajin bekerja dan mempersiapkan bekal hari ini akan menyelamatkan kita di masa depan.' }
   ],
+  drawingRecords: [
+    { id:'drec1', kidId:'k1', templateId:'kancil', title:'Si Kancil yang Cerdik', createdAt:Date.now()-86400000, rewardCoins:10, stars:5 }
+  ],
+  parentStoryAudios: [],
   activityLog: [
     { id:'log1', ts:Date.now()-300000, user:'Andi', action:'Bermain Matematika Seru — skor 9/12', type:'game' },
     { id:'log2', ts:Date.now()-600000, user:'Budi Santoso', action:'Mengunci layar Andi', type:'lock' },
@@ -147,6 +151,8 @@ function getState() {
   if (!Array.isArray(stateCache.redemptions)) stateCache.redemptions = INITIAL_STATE.redemptions;
   if (!Array.isArray(stateCache.hafalanRecords)) stateCache.hafalanRecords = INITIAL_STATE.hafalanRecords;
   if (!Array.isArray(stateCache.storyRecords)) stateCache.storyRecords = INITIAL_STATE.storyRecords || [];
+  if (!Array.isArray(stateCache.drawingRecords)) stateCache.drawingRecords = INITIAL_STATE.drawingRecords || [];
+  if (!Array.isArray(stateCache.parentStoryAudios)) stateCache.parentStoryAudios = INITIAL_STATE.parentStoryAudios || [];
   if (!Array.isArray(stateCache.activityLog)) stateCache.activityLog = INITIAL_STATE.activityLog;
   if (!Array.isArray(stateCache.devices)) stateCache.devices = [];
   if (!stateCache.systemSettings) stateCache.systemSettings = INITIAL_STATE.systemSettings;
@@ -222,6 +228,26 @@ function sanitizeStateForUser(state, user) {
       } else if (user?.role === 'family') {
         const myKidIds = new Set((state.users.kids || []).filter(k => k.familyId === user.id).map(k => k.id));
         clean.storyRecords = clean.storyRecords.filter(s => myKidIds.has(s.kidId));
+      }
+    }
+
+    // Filter drawingRecords for kid & family privacy
+    if (clean.drawingRecords) {
+      if (user?.role === 'kids') {
+        clean.drawingRecords = clean.drawingRecords.filter(d => d.kidId === user.id);
+      } else if (user?.role === 'family') {
+        const myKidIds = new Set((state.users.kids || []).filter(k => k.familyId === user.id).map(k => k.id));
+        clean.drawingRecords = clean.drawingRecords.filter(d => myKidIds.has(d.kidId));
+      }
+    }
+
+    // Filter parentStoryAudios for family & kids isolation
+    if (clean.parentStoryAudios) {
+      if (user?.role === 'family') {
+        clean.parentStoryAudios = clean.parentStoryAudios.filter(a => a.familyId === user.id);
+      } else if (user?.role === 'kids') {
+        const currentKid = (state.users.kids || []).find(k => k.id === user.id);
+        clean.parentStoryAudios = clean.parentStoryAudios.filter(a => a.familyId === currentKid?.familyId);
       }
     }
 
@@ -873,6 +899,8 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
     redemptions: Array.isArray(incoming.redemptions) ? incoming.redemptions : [],
     hafalanRecords: Array.isArray(incoming.hafalanRecords) ? incoming.hafalanRecords : [],
     storyRecords: Array.isArray(incoming.storyRecords) ? incoming.storyRecords : [],
+    drawingRecords: Array.isArray(incoming.drawingRecords) ? incoming.drawingRecords : [],
+    parentStoryAudios: Array.isArray(incoming.parentStoryAudios) ? incoming.parentStoryAudios : [],
     activityLog: Array.isArray(incoming.activityLog) ? incoming.activityLog : [],
     devices: Array.isArray(incoming.devices) ? incoming.devices : [],
     systemSettings: incoming.systemSettings || {}
@@ -897,6 +925,8 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
       redemptions: restored.redemptions.length,
       hafalanRecords: restored.hafalanRecords.length,
       storyRecords: restored.storyRecords.length,
+      drawingRecords: restored.drawingRecords.length,
+      parentStoryAudios: restored.parentStoryAudios.length,
       activityLog: restored.activityLog.length
     }
   });
@@ -960,6 +990,8 @@ app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, re
       (state.redemptions?.length || 0) +
       (state.hafalanRecords?.length || 0) +
       (state.storyRecords?.length || 0) +
+      (state.drawingRecords?.length || 0) +
+      (state.parentStoryAudios?.length || 0) +
       (state.activityLog?.length || 0);
 
     const backupPayload = {
@@ -993,6 +1025,8 @@ app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, re
         ` • Penukaran Hadiah: ${state.redemptions?.length || 0}\n` +
         ` • Hafalan: ${state.hafalanRecords?.length || 0}\n` +
         ` • Dongeng Anak: ${state.storyRecords?.length || 0}\n` +
+        ` • Galeri Seni Anak: ${state.drawingRecords?.length || 0}\n` +
+        ` • Rekaman Audio Orang Tua: ${state.parentStoryAudios?.length || 0}\n` +
         ` • Log Aktivitas: ${state.activityLog?.length || 0}\n\n` +
         (customCaption ? `💬 *Catatan:* ${customCaption}\n\n` : '') +
         `✅ *Status:* Pencadangan berhasil dibuat secara otomatis.`;
@@ -1208,6 +1242,20 @@ app.patch('/api/state', authMiddleware, (req, res) => {
         const myRecords = incoming.storyRecords.filter(r => myKidIds.has(r.kidId));
         state.storyRecords = [...otherRecords, ...myRecords];
       }
+
+      // 9. Drawing records: family manages artwork of their own kids
+      if (Array.isArray(incoming.drawingRecords)) {
+        const otherRecords = (state.drawingRecords || []).filter(r => !myKidIds.has(r.kidId));
+        const myRecords = incoming.drawingRecords.filter(r => myKidIds.has(r.kidId));
+        state.drawingRecords = [...otherRecords, ...myRecords];
+      }
+
+      // 10. Parent story audios: family manages recordings matching their familyId
+      if (Array.isArray(incoming.parentStoryAudios)) {
+        const otherAudios = (state.parentStoryAudios || []).filter(a => a.familyId !== req.user.id);
+        const myAudios = incoming.parentStoryAudios.filter(a => a.familyId === req.user.id);
+        state.parentStoryAudios = [...otherAudios, ...myAudios];
+      }
     } else if (req.user.role === 'kids') {
       // Kids can only update their own record, hafalan, redemptions, and logs
       const kidIdx = (state.users.kids || []).findIndex(k => k.id === req.user.id);
@@ -1285,6 +1333,34 @@ app.patch('/api/state', authMiddleware, (req, res) => {
                 `🪙 *Bonus Koin:* +${ns.rewardCoins || 10} koin\n` +
                 `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
                 `🌙 Selamat istirahat dengan mimpi indah dan budi pekerti luhur!`;
+              sendTelegramNotification({
+                token: parentFam.telegramConfig.token,
+                chatId: parentFam.telegramConfig.chatId,
+                text
+              }).catch(() => {});
+            }
+          }
+        }
+      }
+      if (Array.isArray(incoming.drawingRecords)) {
+        const existingDrawIds = new Set((state.drawingRecords || []).map(d => d.id));
+        const newDrawings = incoming.drawingRecords.filter(d => d.kidId === req.user.id && !existingDrawIds.has(d.id));
+        const otherDrawings = (state.drawingRecords || []).filter(d => d.kidId !== req.user.id);
+        const myDrawings = incoming.drawingRecords.filter(d => d.kidId === req.user.id);
+        state.drawingRecords = [...otherDrawings, ...myDrawings];
+
+        // Telegram real-time parent alert for creative art
+        if (newDrawings.length > 0) {
+          const currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+          const parentFam = (state.users.families || []).find(f => f.id === currentKid?.familyId);
+          if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyArt !== false) {
+            for (const nd of newDrawings) {
+              const text = `🎨 *VIDKIDZ — Karya Seni Baru Selesai!*\n\n` +
+                `👦 *Anak:* ${currentKid?.name || 'Anak'}\n` +
+                `🖼️ *Karya:* ${nd.title || 'Mewarnai Gambar'}\n` +
+                `🪙 *Bonus Koin:* +${nd.rewardCoins || 10} koin\n` +
+                `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+                `🌟 Buka Family Dashboard untuk mengapresiasi karya seni ananda!`;
               sendTelegramNotification({
                 token: parentFam.telegramConfig.token,
                 chatId: parentFam.telegramConfig.chatId,

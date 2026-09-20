@@ -5246,6 +5246,10 @@ const INITIAL_STATE = {
   storyRecords: [
     { id:'srec1', kidId:'k1', storyId:'story1', title:'Kisah Semut yang Rajin & Belalang Penyanyi', completedAt: Date.now()-86400000, rewardCoins:10, moralLearned:'Bekerja keras dan mempersiapkan bekal hari ini akan menyelamatkan kita di masa depan yang sulit.' }
   ],
+  drawingRecords: [
+    { id:'drec1', kidId:'k1', templateId:'kancil', title:'Si Kancil yang Cerdik', createdAt: Date.now()-86400000, rewardCoins:10, stars:5 }
+  ],
+  parentStoryAudios: [],
   activityLog: [
     { id:'log1', ts: Date.now()-300000, user:'Andi', action:'Bermain Matematika Seru — skor 9/12', type:'game' },
     { id:'log2', ts: Date.now()-600000, user:'Budi Santoso', action:'Mengunci layar Andi', type:'lock' },
@@ -5288,6 +5292,8 @@ function normalizeState(state) {
   if (!Array.isArray(next.redemptions)) next.redemptions = [];
   if (!Array.isArray(next.hafalanRecords)) next.hafalanRecords = [];
   if (!Array.isArray(next.storyRecords)) next.storyRecords = [];
+  if (!Array.isArray(next.drawingRecords)) next.drawingRecords = [];
+  if (!Array.isArray(next.parentStoryAudios)) next.parentStoryAudios = [];
   if (!Array.isArray(next.activityLog)) next.activityLog = [];
   if (!Array.isArray(next.devices)) next.devices = [];
   if (!next.systemSettings) next.systemSettings = { ...INITIAL_STATE.systemSettings };
@@ -5335,7 +5341,7 @@ const BADGES = {
   koin_sultan: { emoji:'💰', name:'Koin Sultan', desc:'Kumpulkan 200 koin sekaligus' },
   video_bintang: { emoji:'🎬', name:'Video Bintang', desc:'Tonton 20 video' },
 };
-const APP_VERSION = '5.2.18';
+const APP_VERSION = '5.2.19';
 const VERSION_KEY = 'vidkidzAppVersion';
 const VERSION_SYNC_KEY = 'vidkidzLastAutoSyncedVersion';
 const VERSION_POLL_MS = 60 * 1000;
@@ -6104,6 +6110,18 @@ function UiIcon({ name, size=22, color='currentColor', strokeWidth=2 }) {
   const key = String(name || '').toLowerCase().trim();
 
   switch (key) {
+    case 'palette':
+    case 'brush':
+    case 'art':
+      return (
+        <svg {...common}>
+          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+          <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+          <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+          <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+          <path d="M12 2C6.49 2 2 6.49 2 12c0 4.41 3.59 8 8 8 .55 0 1-.45 1-1 0-.28-.11-.53-.29-.71-.3-.29-.49-.7-.49-1.15 0-.97.78-1.75 1.75-1.75h2.17c3.96 0 7.17-3.21 7.17-7.17C21.31 5.09 17.11 2 12 2z"/>
+        </svg>
+      );
     case 'grid':
     case 'dashboard':
     case 'overview':
@@ -9200,7 +9218,7 @@ function AdminBackupDatabase({ onRestorePreview }) {
       const now = new Date();
       const payload = {
         appName: 'VIDKIDZ',
-        version: '5.2.18',
+        version: '5.2.19',
         backupDate: now.toISOString(),
         backupTimestamp: now.getTime(),
         totalRecords,
@@ -9924,6 +9942,7 @@ function FamilyReportCertificate({ myKids, selectedKid }) {
   const hafalanDone = (currentKid?.hafalanDone || []).length;
   const totalHafalan = HAFALAN_LIST.length;
   const storiesDone = (state.storyRecords || []).filter(r => r.kidId === currentKid?.id).length;
+  const drawingsDone = (state.drawingRecords || []).filter(r => r.kidId === currentKid?.id).length;
   const records = (state.hafalanRecords || []).filter(r => r.kidId === currentKid?.id);
   const aiRecords = records.filter(r => r.score !== undefined);
   const avgAiScore = aiRecords.length > 0 
@@ -10064,6 +10083,7 @@ function FamilyReportCertificate({ myKids, selectedKid }) {
       `Alhamdulillah, ananda *${currentKid?.name}* telah menuntaskan capaian belajar hebat:\n\n` +
       `📖 *Hafalan Tuntas:* ${hafalanDone} Materi\n` +
       `📚 *Dongeng Budi Pekerti:* ${storiesDone} Cerita\n` +
+      `🎨 *Karya Seni Mewarnai:* ${drawingsDone} Lukisan\n` +
       `🎯 *Rata-rata Skor Pelafalan AI:* ${avgAiScore}% (Mumtaz)\n` +
       `⏱️ *Waktu Belajar Aktif:* ${watchTime} Menit\n` +
       `🪙 *Total Koin Prestasi:* ${totalCoins} Koin\n` +
@@ -10207,6 +10227,392 @@ function FamilyReportCertificate({ myKids, selectedKid }) {
 }
 
 // ============================================================
+// FAMILY ART GALLERY (CHILDREN DRAWINGS & COLORING REPOSITORY)
+// ============================================================
+function FamilyArtGallery({ myKids }) {
+  const { state, updateState, showNotif, addLog, currentUser } = useContext(AppCtx);
+  const [selectedKidFilter, setSelectedKidFilter] = useState('all');
+  const [activePreview, setActivePreview] = useState(null);
+
+  const myKidIds = new Set(myKids.map(k => k.id));
+  const drawings = (state.drawingRecords || []).filter(d => myKidIds.has(d.kidId));
+  const filteredDrawings = selectedKidFilter === 'all' ? drawings : drawings.filter(d => d.kidId === selectedKidFilter);
+
+  const handleGiveAppreciation = (drawing) => {
+    updateState(s => {
+      const target = (s.drawingRecords || []).find(d => d.id === drawing.id);
+      if (target) {
+        target.stars = (target.stars || 0) + 1;
+        target.parentPraise = 'Bunda & Ayah sangat bangga dengan karya lukisanmu! Teruslah berkreasi! ⭐';
+      }
+    });
+    addLog(currentUser.name, `Memberikan bintang apresiasi untuk karya seni ${drawing.kidName || 'Anak'}`, 'coin');
+    showNotif('⭐ Apresiasi dan bintang berhasil dikirim ke galeri anak!', 'coin');
+  };
+
+  const handleDeleteArtwork = (drawingId) => {
+    if (!window.confirm('Yakin ingin menghapus lukisan ini dari galeri?')) return;
+    updateState(s => {
+      s.drawingRecords = (s.drawingRecords || []).filter(d => d.id !== drawingId);
+    });
+    showNotif('Lukisan telah dihapus dari galeri', 'warn');
+  };
+
+  return (
+    <div className="fade-in">
+      <div className="page-header flex items-center justify-between mb-6" style={{gap:12,flexWrap:'wrap'}}>
+        <div>
+          <h2 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:10}}>
+            <UiIcon name="palette" size={26} color="var(--primary)" /> Galeri Seni & Mewarnai Anak
+          </h2>
+          <p style={{color:'var(--t3)',fontSize:13,marginTop:2}}>
+            Koleksi karya lukisan dan mewarnai karakter fabel hasil kreasi anak-anak Anda
+          </p>
+        </div>
+        {myKids.length > 1 && (
+          <div style={{display:'flex',gap:8,background:'var(--bg-elevated)',padding:4,borderRadius:12,border:'1px solid var(--border)'}}>
+            <button className={`btn btn-sm ${selectedKidFilter==='all'?'btn-primary':'btn-ghost'}`} onClick={()=>setSelectedKidFilter('all')}>Semua Anak</button>
+            {myKids.map(k => (
+              <button key={k.id} className={`btn btn-sm ${selectedKidFilter===k.id?'btn-primary':'btn-ghost'}`} onClick={()=>setSelectedKidFilter(k.id)}>
+                {k.avatar} {k.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {filteredDrawings.length === 0 ? (
+        <div className="card" style={{textAlign:'center',padding:'60px 20px',borderRadius:20}}>
+          <div style={{fontSize:54,marginBottom:12}}>🎨</div>
+          <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:18,color:'var(--t1)',marginBottom:6}}>Belum Ada Karya Seni yang Disimpan</div>
+          <p style={{fontSize:13,color:'var(--t3)',maxWidth:460,margin:'0 auto 20px'}}>
+            Anak-anak dapat membuka menu "Mewarnai 🎨" di Kids Dashboard untuk mulai mewarnai fabel budi pekerti atau melukis di kanvas bebas!
+          </p>
+        </div>
+      ) : (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(min(280px,100%),1fr))',gap:18}}>
+          {filteredDrawings.map(d => {
+            const kidObj = myKids.find(k => k.id === d.kidId);
+            return (
+              <div key={d.id} className="card" style={{borderRadius:18,padding:16,display:'flex',flexDirection:'column',gap:12,background:'var(--bg-card)',border:'1.5px solid var(--border)',transition:'all 0.2s'}}>
+                <div style={{position:'relative',borderRadius:12,overflow:'hidden',background:'#fff',border:'1px solid rgba(0,0,0,0.08)',aspectRatio:'4/3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}
+                  onClick={() => setActivePreview(d)}>
+                  {d.dataUrl ? (
+                    <img src={d.dataUrl} alt={d.title} style={{width:'100%',height:'100%',objectFit:'contain'}} />
+                  ) : (
+                    <div style={{fontSize:48}}>🎨</div>
+                  )}
+                  <div style={{position:'absolute',top:8,right:8,background:'rgba(0,0,0,0.6)',backdropFilter:'blur(4px)',borderRadius:8,padding:'3px 8px',fontSize:10,color:'#fff',fontWeight:700}}>
+                    🔍 Perbesar
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+                    <h3 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:16,color:'var(--t1)',margin:0}}>{d.title || 'Karya Mewarnai'}</h3>
+                    <div style={{background:'rgba(245,158,11,0.15)',color:'#f59e0b',borderRadius:8,padding:'2px 8px',fontSize:11,fontWeight:800}}>
+                      +10 🪙
+                    </div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--t3)'}}>
+                    <span>{kidObj?.avatar || '👦'} {d.kidName || kidObj?.name || 'Anak'}</span>
+                    <span>•</span>
+                    <span>{d.createdAt ? new Date(d.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '-'}</span>
+                  </div>
+                  {d.parentPraise && (
+                    <div style={{marginTop:8,background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:8,padding:'6px 10px',fontSize:11,color:'#f59e0b',fontStyle:'italic'}}>
+                      💬 "{d.parentPraise}"
+                    </div>
+                  )}
+                </div>
+
+                <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                  <button className="btn btn-primary btn-sm flex-1" onClick={() => handleGiveAppreciation(d)} style={{justifyContent:'center',display:'inline-flex',alignItems:'center',gap:6}}>
+                    <span>⭐</span> Beri Bintang ({d.stars || 0})
+                  </button>
+                  {d.dataUrl && (
+                    <a className="btn btn-ghost btn-sm" href={d.dataUrl} download={`${d.title || 'karya_anak'}.png`} title="Unduh Gambar" style={{padding:'6px 10px'}}>
+                      <UiIcon name="download" size={15} />
+                    </a>
+                  )}
+                  <button className="btn btn-ghost btn-sm" onClick={() => handleDeleteArtwork(d.id)} title="Hapus" style={{padding:'6px 10px',color:'var(--danger)'}}>
+                    <UiIcon name="trash" size={15} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Fullscreen High-Res Modal */}
+      {activePreview && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',backdropFilter:'blur(8px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setActivePreview(null)}>
+          <div style={{background:'var(--bg-card)',borderRadius:20,maxWidth:720,width:'100%',padding:24,border:'1px solid var(--border)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+              <div>
+                <h3 style={{fontFamily:'var(--font-display)',fontSize:18,fontWeight:800,color:'var(--t1)',margin:0}}>{activePreview.title}</h3>
+                <div style={{fontSize:12,color:'var(--t3)',marginTop:2}}>Karya oleh {activePreview.kidName}</div>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setActivePreview(null)} style={{fontSize:18}}>✕</button>
+            </div>
+            <div style={{background:'#ffffff',borderRadius:14,padding:10,marginBottom:16,display:'flex',alignItems:'center',justifyContent:'center',maxHeight:'60vh',overflow:'hidden'}}>
+              <img src={activePreview.dataUrl} alt={activePreview.title} style={{maxWidth:'100%',maxHeight:'55vh',objectFit:'contain',borderRadius:8}} />
+            </div>
+            <div style={{display:'flex',justifyContent:'flex-end',gap:10}}>
+              {activePreview.dataUrl && (
+                <a className="btn btn-primary" href={activePreview.dataUrl} download={`${activePreview.title}.png`} style={{display:'inline-flex',alignItems:'center',gap:8}}>
+                  <UiIcon name="download" size={16} /> Unduh File Resolusi Penuh
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// FAMILY BEDTIME VOICE STUDIO (PARENT VOICE RECORDER)
+// ============================================================
+function FamilyBedtimeVoiceStudio({ myKids }) {
+  const { state, updateState, showNotif, addLog, currentUser } = useContext(AppCtx);
+  const [activeStory, setActiveStory] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState(null);
+  const [recordedBlob, setRecordedBlob] = useState(null);
+
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const previewAudioRef = useRef(null);
+
+  const myAudios = (state.parentStoryAudios || []).filter(a => a.familyId === currentUser.id);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const startRecording = async () => {
+    try {
+      audioChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setRecordedBlob(audioBlob);
+        const url = URL.createObjectURL(audioBlob);
+        setRecordedAudioUrl(url);
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      recorder.start(250);
+      setIsRecording(true);
+      setRecordSeconds(0);
+      timerRef.current = setInterval(() => {
+        setRecordSeconds(s => s + 1);
+      }, 1000);
+      showNotif('🎙️ Perekaman suara dimulai. Silakan bacakan cerita dengan nada hangat.');
+    } catch (err) {
+      console.error(err);
+      showNotif('Izin mikrofon diperlukan untuk merekam suara dongeng.', 'warn');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+      showNotif('⏹️ Perekaman selesai! Dengarkan pratinjau sebelum menyimpan.');
+    }
+  };
+
+  const handleSaveRecording = () => {
+    if (!recordedBlob || !activeStory) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Data = reader.result;
+      const newAudioRecord = {
+        id: `audio_${activeStory.id}_${currentUser.id}`,
+        familyId: currentUser.id,
+        storyId: activeStory.id,
+        storyTitle: activeStory.title,
+        recordedBy: currentUser.name,
+        audioData: base64Data,
+        duration: recordSeconds,
+        recordedAt: Date.now()
+      };
+
+      updateState(s => {
+        const other = (s.parentStoryAudios || []).filter(a => !(a.familyId === currentUser.id && a.storyId === activeStory.id));
+        s.parentStoryAudios = [...other, newAudioRecord];
+      });
+
+      addLog(currentUser.name, `Menyimpan rekaman suara dongeng: ${activeStory.title}`, 'admin');
+      showNotif('🎉 Rekaman suara berhasil disimpan! Anak kini dapat mendengarkan suara Anda.', 'coin');
+      setActiveStory(null);
+      setRecordedAudioUrl(null);
+      setRecordedBlob(null);
+      setRecordSeconds(0);
+    };
+    reader.readAsDataURL(recordedBlob);
+  };
+
+  const handleDeleteAudio = (storyId) => {
+    if (!window.confirm('Hapus rekaman suara untuk dongeng ini?')) return;
+    updateState(s => {
+      s.parentStoryAudios = (s.parentStoryAudios || []).filter(a => !(a.familyId === currentUser.id && a.storyId === storyId));
+    });
+    showNotif('Rekaman suara dihapus', 'warn');
+  };
+
+  const formatTime = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  return (
+    <div className="fade-in">
+      <div className="page-header flex items-center justify-between mb-6" style={{gap:12,flexWrap:'wrap'}}>
+        <div>
+          <h2 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:10}}>
+            <UiIcon name="volume" size={26} color="var(--primary)" /> Rekam Suara Dongeng Tidur
+          </h2>
+          <p style={{color:'var(--t3)',fontSize:13,marginTop:2}}>
+            Bacakan dongeng fabel dengan suara asli Ayah atau Bunda agar ananda tidur lelap dengan hangat
+          </p>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(min(320px,100%),1fr))',gap:18}}>
+        {STORY_LIST.map(story => {
+          const audio = myAudios.find(a => a.storyId === story.id);
+          return (
+            <div key={story.id} className="card" style={{borderRadius:18,padding:20,display:'flex',flexDirection:'column',gap:14,border:`1.5px solid ${audio?'rgba(16,185,129,0.3)':'var(--border)'}`,background:'var(--bg-card)'}}>
+              <div style={{display:'flex',alignItems:'flex-start',gap:14}}>
+                <div style={{fontSize:42,background:'rgba(255,255,255,0.05)',borderRadius:16,padding:10}}>{story.emoji}</div>
+                <div style={{flex:1}}>
+                  <h3 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:16,color:'var(--t1)',margin:0,lineHeight:1.3}}>{story.title}</h3>
+                  <div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>Karakter: {story.character}</div>
+                  <div style={{fontSize:11,color:'var(--primary)',marginTop:2}}>⏱️ {story.durationMinutes} menit membaca</div>
+                </div>
+              </div>
+
+              {audio ? (
+                <div style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:12,padding:'10px 14px',display:'flex',flexDirection:'column',gap:8}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <span style={{fontSize:12,fontWeight:700,color:'#10b981',display:'flex',alignItems:'center',gap:6}}>
+                      <span>✓</span> Suara Ayah/Bunda Aktif
+                    </span>
+                    <span style={{fontSize:10,color:'var(--t3)'}}>
+                      {new Date(audio.recordedAt).toLocaleDateString('id-ID', { day:'numeric', month:'short' })}
+                    </span>
+                  </div>
+                  <audio controls src={audio.audioData} style={{width:'100%',height:32,marginTop:2}} />
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:4}}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setActiveStory(story); setRecordedAudioUrl(null); setRecordedBlob(null); }} style={{fontSize:11,padding:'4px 8px',color:'var(--primary)'}}>
+                      🎙️ Rekam Ulang
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => handleDeleteAudio(story.id)} style={{fontSize:11,padding:'4px 8px',color:'var(--danger)'}}>
+                      🗑️ Hapus
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{background:'rgba(0,120,255,0.04)',border:'1px solid rgba(0,120,255,0.15)',borderRadius:12,padding:'12px',textAlign:'center'}}>
+                  <div style={{fontSize:12,color:'var(--t3)',marginBottom:8}}>Belum ada rekaman suara orang tua</div>
+                  <button className="btn btn-primary btn-sm" onClick={() => { setActiveStory(story); setRecordedAudioUrl(null); setRecordedBlob(null); }} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                    <UiIcon name="mic" size={14} /> Mulai Rekam Suara
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Recording Studio Modal */}
+      {activeStory && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',backdropFilter:'blur(8px)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => { if (!isRecording) setActiveStory(null); }}>
+          <div style={{background:'var(--bg-card)',borderRadius:22,maxWidth:740,width:'100%',padding:24,border:'1.5px solid var(--border)',maxHeight:'90vh',display:'flex',flexDirection:'column'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:28}}>{activeStory.emoji}</span>
+                <div>
+                  <h3 style={{fontFamily:'var(--font-display)',fontSize:18,fontWeight:800,color:'var(--t1)',margin:0}}>{activeStory.title}</h3>
+                  <div style={{fontSize:12,color:'var(--t3)',marginTop:2}}>Bacakan paragraf di bawah dengan tenang dan ekspresif</div>
+                </div>
+              </div>
+              {!isRecording && (
+                <button className="btn btn-ghost btn-sm" onClick={() => setActiveStory(null)} style={{fontSize:18}}>✕</button>
+              )}
+            </div>
+
+            {/* Scrollable Story Text */}
+            <div style={{flex:1,overflowY:'auto',background:'rgba(255,255,255,0.03)',borderRadius:14,padding:18,marginBottom:18,border:'1px solid var(--border)',lineHeight:1.8,fontSize:15,color:'var(--t1)'}}>
+              {activeStory.paragraphs.map((p, idx) => (
+                <p key={idx} style={{marginBottom:14,textIndent:20}}>{p}</p>
+              ))}
+              <div style={{background:'rgba(245,158,11,0.1)',borderLeft:'4px solid #f59e0b',padding:'10px 14px',borderRadius:8,fontSize:13,color:'#fbbf24',fontStyle:'italic'}}>
+                💡 Pesan Moral: "{activeStory.moralLearned}"
+              </div>
+            </div>
+
+            {/* Recording Controls */}
+            <div style={{background:'var(--bg-elevated)',borderRadius:16,padding:16,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:14,height:14,borderRadius:'50%',background:isRecording?'#ef4444':'#64748b',animation:isRecording?'pulse 1.2s infinite':'none'}} />
+                <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:22,color:isRecording?'#ef4444':'var(--t1)'}}>
+                  {formatTime(recordSeconds)}
+                </div>
+                {isRecording && <span style={{fontSize:12,color:'#ef4444',fontWeight:700}}>Sedang Merekam...</span>}
+              </div>
+
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                {!isRecording && !recordedAudioUrl && (
+                  <button className="btn btn-primary" onClick={startRecording} style={{background:'#ef4444',borderColor:'#ef4444',display:'inline-flex',alignItems:'center',gap:8}}>
+                    <UiIcon name="mic" size={16} /> Mulai Rekam
+                  </button>
+                )}
+                {isRecording && (
+                  <button className="btn btn-primary" onClick={stopRecording} style={{background:'#10b981',borderColor:'#10b981',display:'inline-flex',alignItems:'center',gap:8}}>
+                    <span>⏹️</span> Selesai Merekam
+                  </button>
+                )}
+                {!isRecording && recordedAudioUrl && (
+                  <>
+                    <button className="btn btn-ghost" onClick={startRecording} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                      <UiIcon name="refresh" size={15} /> Rekam Ulang
+                    </button>
+                    <audio ref={previewAudioRef} src={recordedAudioUrl} controls style={{height:36}} />
+                    <button className="btn btn-primary" onClick={handleSaveRecording} style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#10b981,#059669)',borderColor:'#059669'}}>
+                      <span>💾</span> Simpan Suara
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // FAMILY DASHBOARD
 // ============================================================
 function FamilyDashboard() {
@@ -10222,6 +10628,8 @@ function FamilyDashboard() {
   const navItems = [
     { id:'overview', label:'Overview', icon:'ui:grid' },
     { id:'kids', label:'Manajemen Anak', icon:'ui:users' },
+    { id:'art', label:'Galeri Seni Anak', icon:'ui:palette' },
+    { id:'bedtime', label:'Suara Dongeng', icon:'ui:volume' },
     { id:'coins', label:'Koin & Hadiah', icon:'ui:coin' },
     { id:'videos', label:'Kelola Video', icon:'ui:play' },
     { id:'photos', label:'Foto', icon:'ui:camera' },
@@ -10451,6 +10859,8 @@ function FamilyDashboard() {
         {page==='control' && <FamilyDeviceControl myKids={myKids} toggleLock={toggleLock} />}
         {page==='monitor' && <FamilyMonitor selectedKid={selectedKid} />}
         {page==='certificate' && <FamilyReportCertificate myKids={myKids} selectedKid={selectedKid} />}
+        {page==='art' && <FamilyArtGallery myKids={myKids} />}
+        {page==='bedtime' && <FamilyBedtimeVoiceStudio myKids={myKids} />}
         {page==='ai' && <FamilyAIAnalysis selectedKid={selectedKid} />}
         {page==='telegram' && <FamilyTelegramSettings />}
       </div>
@@ -11447,6 +11857,24 @@ function KidsStoryHub({ kid }) {
             <span>←</span> Kembali ke Daftar Dongeng
           </button>
 
+          {/* Parent Voice Note Banner if available */}
+          {(() => {
+            const parentAudio = (state.parentStoryAudios || []).find(a => a.storyId === activeStory.id);
+            if (!parentAudio) return null;
+            return (
+              <div style={{background:'linear-gradient(135deg, rgba(236,72,153,0.18), rgba(168,85,247,0.18))',border:'1.5px solid rgba(236,72,153,0.35)',borderRadius:18,padding:'14px 18px',marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
+                <div style={{display:'flex',alignItems:'center',gap:12}}>
+                  <span style={{fontSize:28}}>🎙️</span>
+                  <div>
+                    <div style={{fontFamily:'var(--font-kids)',fontSize:16,color:'#f472b6',fontWeight:700}}>Ada Suara Dongeng dari Bunda / Ayah! ❤️</div>
+                    <div style={{fontSize:12,color:'rgba(255,255,255,0.7)',marginTop:2}}>Dengarkan rekaman suara asli hangat membacakan kisah ini</div>
+                  </div>
+                </div>
+                <audio controls src={parentAudio.audioData} style={{height:38,borderRadius:20}} onPlay={stopAudio} />
+              </div>
+            );
+          })()}
+
           {/* Reader Topbar */}
           <div style={{background:'rgba(15,23,42,0.85)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:20,padding:18,marginBottom:18,boxShadow:'0 10px 30px rgba(0,0,0,0.35)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
@@ -11543,6 +11971,693 @@ function KidsStoryHub({ kid }) {
 }
 
 // ============================================================
+// KIDS COLORING & CREATIVE CANVAS STUDIO
+// ============================================================
+const COLORING_TEMPLATES = [
+  {
+    id: 'kancil',
+    title: 'Si Kancil yang Cerdik',
+    emoji: '🐰',
+    desc: 'Kancil cerdik di taman wortel',
+    draw: (ctx, w, h) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Grass Hill
+      ctx.beginPath();
+      ctx.ellipse(w/2, h + 30, w * 0.7, 100, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Sun
+      ctx.beginPath();
+      ctx.arc(w * 0.82, 80, 40, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Clouds
+      ctx.beginPath();
+      ctx.arc(100, 75, 24, 0, Math.PI * 2);
+      ctx.arc(135, 60, 30, 0, Math.PI * 2);
+      ctx.arc(170, 75, 24, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Bunny Body
+      ctx.beginPath();
+      ctx.ellipse(w/2, h/2 + 55, 60, 75, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Bunny Head
+      ctx.beginPath();
+      ctx.arc(w/2, h/2 - 45, 52, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Ears
+      ctx.beginPath();
+      ctx.ellipse(w/2 - 24, h/2 - 130, 16, 48, -0.15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(w/2 + 24, h/2 - 130, 16, 48, 0.15, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Inner ears
+      ctx.beginPath();
+      ctx.ellipse(w/2 - 24, h/2 - 130, 7, 34, -0.15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(w/2 + 24, h/2 - 130, 7, 34, 0.15, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Eyes
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(w/2 - 18, h/2 - 50, 6, 0, Math.PI * 2);
+      ctx.arc(w/2 + 18, h/2 - 50, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Nose & mouth
+      ctx.beginPath();
+      ctx.arc(w/2, h/2 - 35, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(w/2 - 8, h/2 - 28, 8, 0, Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 + 8, h/2 - 28, 8, 0, Math.PI);
+      ctx.stroke();
+
+      // Feet
+      ctx.beginPath();
+      ctx.ellipse(w/2 - 42, h/2 + 130, 24, 14, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(w/2 + 42, h/2 + 130, 24, 14, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Carrot
+      ctx.beginPath();
+      ctx.moveTo(w/2 + 35, h/2 + 20);
+      ctx.lineTo(w/2 + 80, h/2 + 60);
+      ctx.lineTo(w/2 + 50, h/2 + 75);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'singa',
+    title: 'Singa & Si Tikus Baik',
+    emoji: '🦁',
+    desc: 'Raja hutan bersahabat dengan tikus',
+    draw: (ctx, w, h) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Mane
+      ctx.beginPath();
+      ctx.arc(w/2 - 40, h/2 - 30, 85, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Lion Head
+      ctx.beginPath();
+      ctx.arc(w/2 - 40, h/2 - 30, 52, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Lion Ears
+      ctx.beginPath();
+      ctx.arc(w/2 - 85, h/2 - 80, 16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 + 5, h/2 - 80, 16, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Lion Eyes
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(w/2 - 58, h/2 - 35, 6, 0, Math.PI * 2);
+      ctx.arc(w/2 - 22, h/2 - 35, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Lion Nose & Mouth
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 40, h/2 - 20);
+      ctx.lineTo(w/2 - 48, h/2 - 10);
+      ctx.lineTo(w/2 - 32, h/2 - 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(w/2 - 48, h/2 - 2, 8, 0, Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 - 32, h/2 - 2, 8, 0, Math.PI);
+      ctx.stroke();
+
+      // Lion Body
+      ctx.beginPath();
+      ctx.ellipse(w/2 - 40, h/2 + 80, 65, 55, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Little Mouse
+      ctx.beginPath();
+      ctx.ellipse(w/2 + 85, h/2 + 75, 26, 20, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 + 75, h/2 + 55, 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 + 95, h/2 + 55, 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 + 85, h/2 + 70, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(w/2 + 120, h/2 + 75, 15, Math.PI, 0);
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'burung_hantu',
+    title: 'Burung Hantu Bijak',
+    emoji: '🦉',
+    desc: 'Di atas dahan malam purnama',
+    draw: (ctx, w, h) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Moon
+      ctx.beginPath();
+      ctx.arc(w * 0.22, 90, 50, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Branch
+      ctx.beginPath();
+      ctx.moveTo(0, h - 90);
+      ctx.bezierCurveTo(w * 0.4, h - 80, w * 0.7, h - 120, w, h - 90);
+      ctx.lineTo(w, h - 60);
+      ctx.bezierCurveTo(w * 0.7, h - 90, w * 0.4, h - 50, 0, h - 70);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Owl Body
+      ctx.beginPath();
+      ctx.ellipse(w/2, h/2 - 10, 60, 75, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Eyes
+      ctx.beginPath();
+      ctx.arc(w/2 - 25, h/2 - 40, 22, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(w/2 + 25, h/2 - 40, 22, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(w/2 - 25, h/2 - 40, 8, 0, Math.PI * 2);
+      ctx.arc(w/2 + 25, h/2 - 40, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Beak
+      ctx.beginPath();
+      ctx.moveTo(w/2, h/2 - 22);
+      ctx.lineTo(w/2 - 8, h/2 - 32);
+      ctx.lineTo(w/2 + 8, h/2 - 32);
+      ctx.closePath();
+      ctx.fill();
+
+      // Ear tufts
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 45, h/2 - 75);
+      ctx.lineTo(w/2 - 35, h/2 - 105);
+      ctx.lineTo(w/2 - 15, h/2 - 80);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(w/2 + 45, h/2 - 75);
+      ctx.lineTo(w/2 + 35, h/2 - 105);
+      ctx.lineTo(w/2 + 15, h/2 - 80);
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'gajah',
+    title: 'Gajah Ceria',
+    emoji: '🐘',
+    desc: 'Gajah bermain air gembira',
+    draw: (ctx, w, h) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Elephant Body
+      ctx.beginPath();
+      ctx.ellipse(w/2 + 20, h/2 + 20, 80, 65, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(w/2 - 50, h/2 - 10, 50, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Ear
+      ctx.beginPath();
+      ctx.ellipse(w/2 - 25, h/2 - 15, 30, 45, 0.2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Eye
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(w/2 - 65, h/2 - 20, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Trunk
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 85, h/2 - 5);
+      ctx.bezierCurveTo(w/2 - 130, h/2 - 10, w/2 - 120, h/2 - 90, w/2 - 80, h/2 - 95);
+      ctx.bezierCurveTo(w/2 - 100, h/2 - 80, w/2 - 105, h/2 - 5, w/2 - 75, h/2 + 15);
+      ctx.stroke();
+
+      // Water drops
+      const drop = (x, y) => { ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke(); };
+      drop(w/2 - 60, h/2 - 125);
+      drop(w/2 - 40, h/2 - 145);
+      drop(w/2 - 15, h/2 - 135);
+
+      // Legs
+      ctx.beginPath();
+      ctx.rect(w/2 - 35, h/2 + 75, 26, 50);
+      ctx.rect(w/2 + 5, h/2 + 75, 26, 50);
+      ctx.rect(w/2 + 45, h/2 + 75, 26, 50);
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'roket',
+    title: 'Roket Antariksa Cilik',
+    emoji: '🚀',
+    desc: 'Meluncur menembus bintang-bintang',
+    draw: (ctx, w, h) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Rocket
+      ctx.beginPath();
+      ctx.moveTo(w/2, h/2 - 140);
+      ctx.bezierCurveTo(w/2 + 55, h/2 - 60, w/2 + 55, h/2 + 50, w/2 + 45, h/2 + 70);
+      ctx.lineTo(w/2 - 45, h/2 + 70);
+      ctx.bezierCurveTo(w/2 - 55, h/2 + 50, w/2 - 55, h/2 - 60, w/2, h/2 - 140);
+      ctx.stroke();
+
+      // Window
+      ctx.beginPath();
+      ctx.arc(w/2, h/2 - 25, 25, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Wings
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 45, h/2 + 30);
+      ctx.lineTo(w/2 - 95, h/2 + 90);
+      ctx.lineTo(w/2 - 45, h/2 + 70);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(w/2 + 45, h/2 + 30);
+      ctx.lineTo(w/2 + 95, h/2 + 90);
+      ctx.lineTo(w/2 + 45, h/2 + 70);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Flame
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 30, h/2 + 70);
+      ctx.lineTo(w/2 - 20, h/2 + 120);
+      ctx.lineTo(w/2, h/2 + 85);
+      ctx.lineTo(w/2 + 20, h/2 + 120);
+      ctx.lineTo(w/2 + 30, h/2 + 70);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'bebas',
+    title: 'Kanvas Bebas Kreatif',
+    emoji: '🎨',
+    desc: 'Kanvas putih polos untuk lukisan bebasmu',
+    draw: (ctx, w, h) => {
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 8]);
+      ctx.strokeRect(20, 20, w - 40, h - 40);
+      ctx.setLineDash([]);
+    }
+  }
+];
+
+function KidsColoringStudio({ kid }) {
+  const { state, updateState, addCoins, showNotif, addLog } = useContext(AppCtx);
+  const [activeTemplate, setActiveTemplate] = useState(COLORING_TEMPLATES[0]);
+  const [activeColor, setActiveColor] = useState('#ef4444');
+  const [brushSize, setBrushSize] = useState(10);
+  const [toolMode, setToolMode] = useState('brush'); // 'brush' | 'eraser' | 'stamp'
+  const [activeStamp, setActiveStamp] = useState('⭐');
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyStep, setHistoryStep] = useState(-1);
+  const [showMyArt, setShowMyArt] = useState(false);
+
+  const canvasRef = useRef(null);
+
+  const COLORS = [
+    '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4',
+    '#3b82f6', '#6366f1', '#a855f7', '#ec4899', '#78350f', '#475569',
+    '#0f172a', '#ffffff'
+  ];
+
+  const STAMPS = ['⭐', '❤️', '🌈', '👑', '🌸', '🦋', '🎈', '☀️'];
+
+  const initCanvas = (template) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    template.draw(ctx, canvas.width, canvas.height);
+    const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setHistory([snap]);
+    setHistoryStep(0);
+  };
+
+  useEffect(() => {
+    initCanvas(activeTemplate);
+  }, [activeTemplate]);
+
+  const saveHistoryState = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const nextHistory = history.slice(0, historyStep + 1);
+    nextHistory.push(snap);
+    if (nextHistory.length > 25) nextHistory.shift();
+    setHistory(nextHistory);
+    setHistoryStep(nextHistory.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (historyStep > 0) {
+      const targetStep = historyStep - 1;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.putImageData(history[targetStep], 0, 0);
+      setHistoryStep(targetStep);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyStep < history.length - 1) {
+      const targetStep = historyStep + 1;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.putImageData(history[targetStep], 0, 0);
+      setHistoryStep(targetStep);
+    }
+  };
+
+  const handleClear = () => {
+    if (window.confirm('Bersihkan kanvas dan mulai dari awal?')) {
+      initCanvas(activeTemplate);
+    }
+  };
+
+  const getCoords = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  };
+
+  const startDraw = (e) => {
+    e.preventDefault();
+    const coords = getCoords(e);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (toolMode === 'stamp') {
+      ctx.font = '42px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(activeStamp, coords.x, coords.y);
+      saveHistoryState();
+      return;
+    }
+
+    setIsDrawing(true);
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    ctx.strokeStyle = toolMode === 'eraser' ? '#ffffff' : activeColor;
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  };
+
+  const drawingMove = (e) => {
+    if (!isDrawing || toolMode === 'stamp') return;
+    e.preventDefault();
+    const coords = getCoords(e);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.lineTo(coords.x, coords.y);
+    ctx.stroke();
+  };
+
+  const endDraw = (e) => {
+    if (isDrawing) {
+      if (e) e.preventDefault();
+      setIsDrawing(false);
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.closePath();
+      saveHistoryState();
+    }
+  };
+
+  const handleSaveArtwork = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    const newRecord = {
+      id: `draw_${Date.now()}`,
+      kidId: kid.id,
+      kidName: kid.name,
+      templateId: activeTemplate.id,
+      title: activeTemplate.title,
+      dataUrl: dataUrl,
+      rewardCoins: 10,
+      createdAt: Date.now()
+    };
+
+    updateState(s => {
+      if (!Array.isArray(s.drawingRecords)) s.drawingRecords = [];
+      s.drawingRecords.unshift(newRecord);
+    });
+
+    addCoins(kid.id, 10);
+    addLog(kid.name, `Menyelesaikan karya seni: ${activeTemplate.title}`, 'game');
+    showNotif('🎨 Hore! Hasil karyamu berhasil disimpan & kamu dapat +10 Koin! 🪙', 'coin');
+  };
+
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `karya_${kid.name}_${activeTemplate.id}.png`;
+    link.href = dataUrl;
+    link.click();
+    showNotif('📥 Gambar berhasil diunduh ke perangkatmu!', 'success');
+  };
+
+  const mySavedDrawings = (state.drawingRecords || []).filter(d => d.kidId === kid?.id);
+
+  return (
+    <div style={{padding:'16px 16px 80px'}}>
+      {/* Header & Template Picker */}
+      <div style={{marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginBottom:10}}>
+          <div>
+            <h2 style={{fontFamily:'var(--font-kids)',fontSize:22,color:'#fff',margin:0,display:'flex',alignItems:'center',gap:8}}>
+              <span>🎨</span> Studio Mewarnai Cilik
+            </h2>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginTop:2}}>
+              Warnai karakter fabel dan dapatkan +10 koin untuk setiap karya!
+            </div>
+          </div>
+          <button onClick={() => setShowMyArt(!showMyArt)}
+            style={{background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',color:'#fff',borderRadius:12,padding:'6px 12px',fontSize:12,fontWeight:700,fontFamily:'var(--font-display)',cursor:'pointer'}}>
+            🖼️ Galeri Saya ({mySavedDrawings.length})
+          </button>
+        </div>
+
+        {/* Template Buttons */}
+        <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:8}}>
+          {COLORING_TEMPLATES.map(t => (
+            <button key={t.id} onClick={() => setActiveTemplate(t)}
+              style={{flexShrink:0,background:activeTemplate.id===t.id?'linear-gradient(135deg,#ec4899,#8b5cf6)':'rgba(255,255,255,0.06)',border:activeTemplate.id===t.id?'2px solid #fff':'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:'8px 14px',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',gap:8,transition:'all 0.2s'}}>
+              <span style={{fontSize:20}}>{t.emoji}</span>
+              <span style={{fontSize:12,fontWeight:700,fontFamily:'var(--font-display)'}}>{t.title}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Canvas Wrap */}
+      <div style={{position:'relative',width:'100%',maxWidth:640,margin:'0 auto 14px',borderRadius:20,overflow:'hidden',boxShadow:'0 16px 40px rgba(0,0,0,0.5)',background:'#ffffff',border:'4px solid #334155',touchAction:'none'}}>
+        <canvas
+          ref={canvasRef}
+          width={640}
+          height={460}
+          onMouseDown={startDraw}
+          onMouseMove={drawingMove}
+          onMouseUp={endDraw}
+          onMouseLeave={endDraw}
+          onTouchStart={startDraw}
+          onTouchMove={drawingMove}
+          onTouchEnd={endDraw}
+          style={{display:'block',width:'100%',height:'auto',aspectRatio:'640 / 460',cursor:toolMode==='stamp'?'cell':toolMode==='eraser'?'grab':'crosshair'}}
+        />
+      </div>
+
+      {/* Toolbar & Palette Panel */}
+      <div style={{maxWidth:640,margin:'0 auto',background:'rgba(15,23,42,0.92)',backdropFilter:'blur(10px)',border:'1.5px solid rgba(255,255,255,0.12)',borderRadius:20,padding:'14px 16px',boxShadow:'0 10px 30px rgba(0,0,0,0.3)'}}>
+        {/* Tool Mode Buttons */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginBottom:12,borderBottom:'1px solid rgba(255,255,255,0.08)',paddingBottom:10}}>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            <button onClick={() => setToolMode('brush')}
+              style={{background:toolMode==='brush'?'#3b82f6':'rgba(255,255,255,0.08)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',fontSize:12,fontWeight:700,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6}}>
+              <span>🖌️</span> Kuas
+            </button>
+            <button onClick={() => setToolMode('eraser')}
+              style={{background:toolMode==='eraser'?'#ec4899':'rgba(255,255,255,0.08)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',fontSize:12,fontWeight:700,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6}}>
+              <span>🧼</span> Penghapus
+            </button>
+            <button onClick={() => setToolMode('stamp')}
+              style={{background:toolMode==='stamp'?'#f59e0b':'rgba(255,255,255,0.08)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',fontSize:12,fontWeight:700,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6}}>
+              <span>✨</span> Stiker
+            </button>
+          </div>
+
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={handleUndo} disabled={historyStep <= 0}
+              style={{background:'rgba(255,255,255,0.08)',border:'none',color:'#fff',borderRadius:8,padding:'6px 10px',fontSize:12,cursor:historyStep>0?'pointer':'not-allowed',opacity:historyStep>0?1:0.3}} title="Batalkan (Undo)">
+              ↩️
+            </button>
+            <button onClick={handleRedo} disabled={historyStep >= history.length - 1}
+              style={{background:'rgba(255,255,255,0.08)',border:'none',color:'#fff',borderRadius:8,padding:'6px 10px',fontSize:12,cursor:historyStep<history.length-1?'pointer':'not-allowed',opacity:historyStep<history.length-1?1:0.3}} title="Ulangi (Redo)">
+              ↪️
+            </button>
+            <button onClick={handleClear}
+              style={{background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',borderRadius:8,padding:'6px 10px',fontSize:12,cursor:'pointer'}} title="Bersihkan Kanvas">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        {/* Secondary controls based on mode */}
+        {toolMode === 'stamp' ? (
+          <div style={{display:'flex',gap:8,alignItems:'center',overflowX:'auto',paddingBottom:4,marginBottom:12}}>
+            <span style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontWeight:700}}>Pilih Stiker:</span>
+            {STAMPS.map(s => (
+              <button key={s} onClick={() => setActiveStamp(s)}
+                style={{fontSize:22,background:activeStamp===s?'rgba(245,158,11,0.3)':'transparent',border:activeStamp===s?'2px solid #f59e0b':'1px solid transparent',borderRadius:10,padding:'4px 8px',cursor:'pointer'}}>
+                {s}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+            <span style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontWeight:700}}>Ukuran:</span>
+            {[
+              { label:'Halus', size:4 },
+              { label:'Sedang', size:10 },
+              { label:'Tebal', size:22 },
+              { label:'Super', size:40 }
+            ].map(b => (
+              <button key={b.size} onClick={() => setBrushSize(b.size)}
+                style={{background:brushSize===b.size?'#6366f1':'rgba(255,255,255,0.08)',border:'none',color:'#fff',borderRadius:8,padding:'4px 10px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+                {b.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Color Palette */}
+        {toolMode !== 'eraser' && (
+          <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
+            {COLORS.map(c => (
+              <button key={c} onClick={() => { setActiveColor(c); if (toolMode === 'eraser') setToolMode('brush'); }}
+                style={{width:28,height:28,borderRadius:'50%',background:c,border:activeColor===c?'3px solid #ffffff':'2px solid rgba(0,0,0,0.2)',cursor:'pointer',boxShadow:activeColor===c?'0 0 10px '+c:'none',transition:'transform 0.15s',transform:activeColor===c?'scale(1.2)':'scale(1)'}}
+              />
+            ))}
+            <input type="color" value={activeColor} onChange={e => setActiveColor(e.target.value)}
+              style={{width:28,height:28,borderRadius:'50%',border:'none',cursor:'pointer',background:'none',padding:0}} title="Pilih warna bebas" />
+          </div>
+        )}
+
+        {/* Action Buttons: Save (+10 Coins) & Download */}
+        <div style={{display:'flex',gap:10,alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',paddingTop:6,borderTop:'1px solid rgba(255,255,255,0.08)'}}>
+          <button onClick={handleSaveArtwork}
+            style={{flex:1,background:'linear-gradient(135deg, #f59e0b, #d97706)',border:'none',color:'#fff',borderRadius:14,padding:'12px 18px',fontSize:14,fontWeight:900,fontFamily:'var(--font-kids)',cursor:'pointer',boxShadow:'0 4px 16px rgba(245,158,11,0.35)',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            <span>💾</span> Simpan Hasil Karya (+10🪙)
+          </button>
+          <button onClick={handleDownload}
+            style={{background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.15)',color:'#fff',borderRadius:14,padding:'12px 16px',fontSize:13,fontWeight:700,fontFamily:'var(--font-display)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6}}>
+            <span>📥</span> Unduh PNG
+          </button>
+        </div>
+      </div>
+
+      {/* Child's Personal Gallery Section */}
+      {showMyArt && (
+        <div style={{maxWidth:640,margin:'20px auto 0',background:'rgba(15,23,42,0.85)',borderRadius:20,padding:18,border:'1px solid rgba(255,255,255,0.1)'}}>
+          <h3 style={{fontFamily:'var(--font-kids)',fontSize:18,color:'#fff',margin:'0 0 12px'}}>
+            🖼️ Koleksi Lukisan Saya ({mySavedDrawings.length})
+          </h3>
+          {mySavedDrawings.length === 0 ? (
+            <div style={{textAlign:'center',padding:'30px 10px',color:'rgba(255,255,255,0.5)',fontSize:13}}>
+              Belum ada lukisan yang disimpan. Klik "Simpan Hasil Karya" di atas untuk menyimpannya ke galeri!
+            </div>
+          ) : (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
+              {mySavedDrawings.map(d => (
+                <div key={d.id} style={{background:'rgba(255,255,255,0.05)',borderRadius:14,padding:8,border:'1px solid rgba(255,255,255,0.08)'}}>
+                  <div style={{borderRadius:10,overflow:'hidden',background:'#fff',aspectRatio:'4/3',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:6}}>
+                    <img src={d.dataUrl} alt={d.title} style={{width:'100%',height:'100%',objectFit:'contain'}} />
+                  </div>
+                  <div style={{fontSize:11,fontWeight:700,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{d.title}</div>
+                  <div style={{fontSize:9,color:'rgba(255,255,255,0.4)'}}>{new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // KIDS DASHBOARD
 // ============================================================
 function KidsDashboard() {
@@ -11572,6 +12687,7 @@ function KidsDashboard() {
   const MENU = [
     { id:'home', label:'Beranda', emoji:'\u{1F3E0}' },
     { id:'videos', label:'Video', emoji:'\u{1F3AC}' },
+    { id:'drawing', label:'Mewarnai', emoji:'\u{1F3A8}' },
     { id:'stories', label:'Dongeng', emoji:'\u{1F4DA}' },
     { id:'photos', label:'Foto', emoji:'\u{1F4F7}' },
     { id:'games', label:'Game', emoji:'\u{1F3AE}' },
@@ -11584,7 +12700,7 @@ function KidsDashboard() {
       <div className="kids-header" style={{flexShrink:0}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           {page==='player' && (<button onClick={()=>setPage('videos')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Kembali</button>)}
-          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories') && (<button onClick={()=>setPage('home')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
+          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories'||page==='drawing') && (<button onClick={()=>setPage('home')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <img src="/logo-mark.png" alt="VIDKIDZ" style={{width:34,height:34,objectFit:'contain'}} />
             <div style={{fontSize:28}}>{kid?.avatar}</div>
@@ -11634,6 +12750,7 @@ function KidsDashboard() {
         {page==='hafalan' && <KidsHafalanHub kid={kid} />}
         {page==='coins' && <KidsCoinsPage kid={kid} />}
         {page==='stories' && <KidsStoryHub kid={kid} />}
+        {page==='drawing' && <KidsColoringStudio kid={kid} />}
       </div>
 
       {/* BOTTOM NAV — position:absolute so clipped by parent overflow:hidden */}
@@ -11791,7 +12908,9 @@ function KidsHomePage({ kid, onNavigate }) {
 
       {/* Quick actions */}
       <h3 style={{fontFamily:'var(--font-kids)',color:'rgba(255,255,255,0.8)',marginBottom:12,fontSize:16}}>🚀 Mau ngapain hari ini?</h3>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
         {[
+          { id:'drawing', emoji:'🎨', title:'Studio Mewarnai', desc:'Mewarnai fabel & kanvas kreasi!', color:'#ec4899', bg:'rgba(236,72,153,0.15)' },
           { id:'stories', emoji:'📚', title:'Dongeng Santai', desc:'Kisah budi pekerti & audio book', color:'#8b5cf6', bg:'rgba(139,92,246,0.15)' },
           { id:'games', emoji:'🎮', title:'Main Game Seru', desc:'Matematika, Tebak Hewan & lainnya!', color:'#0078ff', bg:'rgba(0,120,255,0.15)' },
           { id:'hafalan', emoji:'📖', title:'Hafalan Mengaji', desc:'Rekam bacaan sholat & surat', color:'#7bdc38', bg:'rgba(123,220,56,0.1)' },
