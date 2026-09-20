@@ -602,6 +602,125 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .animate-shake { animation: shake 0.4s ease; }
 .recording-dot { animation: recordPulse 1.5s ease-in-out infinite; }
 
+@keyframes floatSlow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes floatGently { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+@keyframes pulseGlow { 0%,100% { filter: drop-shadow(0 0 4px rgba(255,190,26,0.4)); } 50% { filter: drop-shadow(0 0 16px rgba(255,190,26,0.85)); } }
+@keyframes flameFlicker { 0%,100% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 6px rgba(249,115,22,0.6)); } 50% { transform: scale(1.15) rotate(4deg); filter: drop-shadow(0 0 16px rgba(239,68,68,0.95)); } }
+@keyframes cyberPulse { 0%,100% { box-shadow: 0 0 8px rgba(14,165,233,0.3); } 50% { box-shadow: 0 0 20px rgba(14,165,233,0.7); } }
+@keyframes ambientBubbleFloat { 0% { transform: translateY(0) scale(0.9); opacity: 0.18; } 50% { transform: translateY(-36px) scale(1.1); opacity: 0.38; } 100% { transform: translateY(0) scale(0.9); opacity: 0.18; } }
+
+.animate-float-slow { animation: floatSlow 3s ease-in-out infinite; }
+.animate-float-gentle { animation: floatGently 4s ease-in-out infinite; }
+.animate-glow-pulse { animation: pulseGlow 2.2s ease-in-out infinite; }
+.animate-flame { animation: flameFlicker 1.8s ease-in-out infinite; display: inline-block; }
+.animate-cyber { animation: cyberPulse 2.4s ease-in-out infinite; }
+
+/* Enhanced Interactive & Decorative Components */
+.card-interactive-lift {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
+.card-interactive-lift:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+}
+
+.shimmer-container {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-container::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(60deg, transparent 40%, rgba(255,255,255,0.14) 50%, transparent 60%);
+  pointer-events: none;
+  transform: translateX(-100%);
+  transition: transform 0.8s ease;
+}
+.shimmer-container:hover::after {
+  transform: translateX(100%);
+}
+
+.badge-live-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+}
+.pulse-dot-green {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
+  animation: recordPulse 1.8s infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.pulse-dot-blue {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  box-shadow: 0 0 0 0 rgba(14,165,233,0.7);
+  animation: recordPulse 1.8s infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.pulse-dot-amber {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 0 rgba(245,158,11,0.7);
+  animation: recordPulse 1.8s infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Kids ambient sparkles & bubbles */
+.kids-bubble-decor {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.38), rgba(31,182,255,0.12));
+  box-shadow: 0 0 16px rgba(31,182,255,0.22), inset 0 0 10px rgba(255,255,255,0.45);
+  animation: ambientBubbleFloat 7s ease-in-out infinite;
+}
+.kids-action-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s ease, border-color 0.2s;
+  border-width: 1.5px;
+  border-style: solid;
+}
+.kids-action-tile:hover {
+  transform: translateY(-6px) scale(1.03);
+}
+.kids-action-tile .action-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  padding: 2px 7px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+
 .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 13px; }
 .progress { background: var(--border); border-radius: 10px; height: 6px; overflow: hidden; }
 .progress-bar { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
@@ -6589,29 +6708,30 @@ function Modal({ open, onClose, title, children, lg }) {
   );
 }
 function StatCard({ label, value, icon, color='var(--primary)', sub }) {
-  const c = 'var(--primary)';
+  const c = color || 'var(--primary)';
   return (
-    <div className="stat-card">
-      <div className="stat-glow" style={{ background: c }} />
+    <div className="stat-card card-interactive-lift shimmer-container" style={{cursor:'default',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)'}}>
+      <div className="stat-glow animate-glow-pulse" style={{ background: c, opacity: 0.18 }} />
       <div className="flex items-center justify-between mb-3">
         <span className="stat-label" style={{color:'var(--t3)',fontSize:11,textTransform:'uppercase',letterSpacing:'1px',fontFamily:'var(--font-display)',fontWeight:700}}>{label}</span>
         <span className="stat-icon" style={{
           width: 38,
           height: 38,
-          borderRadius: 10,
+          borderRadius: 12,
           background: 'rgba(10, 140, 255, 0.09)',
           border: '1px solid rgba(10, 140, 255, 0.18)',
           color: c,
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flexShrink: 0
+          flexShrink: 0,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
         }}>
           <IconSlot icon={icon} size={20} color={c} />
         </span>
       </div>
-      <div className="stat-value" style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:32,color:'var(--t1)',lineHeight:1}}>{value}</div>
-      {sub && <div className="stat-sub" style={{color:'var(--t3)',fontSize:12,marginTop:6}}>{sub}</div>}
+      <div className="stat-value" style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:32,color:'var(--t1)',lineHeight:1,letterSpacing:'-0.5px'}}>{value}</div>
+      {sub && <div className="stat-sub" style={{color:'var(--t3)',fontSize:12,marginTop:6,display:'flex',alignItems:'center',gap:4}}>{sub}</div>}
     </div>
   );
 }
@@ -7185,31 +7305,40 @@ function AdminDashboard() {
           <div className="fade-in">
             <div className="admin-header page-header" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24,flexWrap:'wrap',gap:12}}>
               <div>
-                <h2 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8}}>
-                  Selamat datang, {currentUser.name} <UiIcon name="zap" size={20} color="var(--primary)" />
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                  <span className="badge-live-pulse animate-cyber" style={{background:'rgba(14,165,233,0.12)',border:'1px solid rgba(14,165,233,0.35)',color:'#38bdf8'}}>
+                    <span className="pulse-dot-blue" />
+                    <span>SYSTEM CORE ONLINE • v5.2.21</span>
+                  </span>
+                  <span style={{fontSize:11,color:'var(--t3)',display:'flex',alignItems:'center',gap:4}}>
+                    <UiIcon name="server" size={12} color="var(--t3)" /> Telemetri Realtime
+                  </span>
+                </div>
+                <h2 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8,fontSize:24}}>
+                  Selamat datang, {currentUser.name} <span className="animate-flame" style={{fontSize:22}}>⚡</span>
                 </h2>
-                <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>System overview — {new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
+                <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>System overview & live management — {new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
               </div>
               <div className="admin-header-actions">
-                <span className="badge badge-admin" style={{display:'inline-flex',alignItems:'center',gap:6}}>
-                  <UiIcon name="zap" size={13} color="currentColor" /> GOD MODE
+                <span className="badge badge-admin shimmer-container" style={{display:'inline-flex',alignItems:'center',gap:6,boxShadow:'0 0 16px rgba(242,82,123,0.3)',padding:'6px 12px'}}>
+                  <UiIcon name="zap" size={14} color="currentColor" /> GOD MODE
                 </span>
-                <button className="btn admin-logout-btn" onClick={logout} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                <button className="btn admin-logout-btn card-interactive-lift" onClick={logout} style={{display:'inline-flex',alignItems:'center',gap:6}}>
                   <UiIcon name="logout" size={14} color="currentColor" /> Logout
                 </button>
               </div>
             </div>
             <div className="dashboard-stats" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(210px,100%),1fr))',gap:16,marginBottom:24}}>
-              <StatCard label="Keluarga" value={families.length} icon="ui:users" color="var(--primary)" sub={`${families.length} akun aktif`} />
-              <StatCard label="Premium" value={premiumFamilies} icon="ui:star" color="var(--primary)" sub="Plan aktif" />
-              <StatCard label="Basic" value={basicFamilies} icon="ui:user" color="var(--primary)" sub="Plan standar" />
-              <StatCard label="Anak" value={totalFamilyKids} icon="ui:smile" color="var(--primary)" sub="Dikelola Family" />
+              <StatCard label="Keluarga" value={families.length} icon="ui:users" color="#0ea5e9" sub={`${families.length} akun aktif`} />
+              <StatCard label="Premium" value={premiumFamilies} icon="ui:star" color="#ec4899" sub="Plan aktif" />
+              <StatCard label="Basic" value={basicFamilies} icon="ui:user" color="#8b5cf6" sub="Plan standar" />
+              <StatCard label="Anak" value={totalFamilyKids} icon="ui:smile" color="#10b981" sub="Dikelola Family" />
             </div>
             <div className="admin-overview-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(520px, 100%), 1fr))',gap:'clamp(14px, 1.6vw, 24px)',alignItems:'start',marginBottom:24}}>
-              <div className="card">
+              <div className="card card-interactive-lift shimmer-container" style={{border:'1px solid var(--border)'}}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8}}>
-                    <UiIcon name="activity" size={18} color="var(--primary)" /> Aktivitas Terbaru
+                    <UiIcon name="activity" size={18} color="#0ea5e9" /> Aktivitas Terbaru
                   </h3>
                   <button className="btn btn-ghost btn-sm" onClick={()=>setPage('monitoring')}>Lihat Semua</button>
                 </div>
@@ -7217,7 +7346,7 @@ function AdminDashboard() {
                   <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Tipe</th></tr></thead>
                   <tbody>
                     {state.activityLog.slice(0,6).map(log => (
-                      <tr key={log.id}>
+                      <tr key={log.id} style={{transition:'background 0.15s'}}>
                         <td style={{color:'var(--t3)',fontSize:11}}>{timeAgo(log.ts)}</td>
                         <td><span style={{fontWeight:600,color:'var(--t1)'}}>{log.user}</span></td>
                         <td>{log.action}</td>
@@ -7227,10 +7356,10 @@ function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-              <div className="card">
+              <div className="card card-interactive-lift shimmer-container" style={{border:'1px solid var(--border)'}}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8}}>
-                    <UiIcon name="users" size={18} color="var(--primary)" /> User Family Terbaru
+                    <UiIcon name="users" size={18} color="#10b981" /> User Family Terbaru
                   </h3>
                   <button className="btn btn-ghost btn-sm" onClick={()=>setPage('families')}>Kelola Users</button>
                 </div>
@@ -7238,7 +7367,7 @@ function AdminDashboard() {
                   <thead><tr><th>Nama</th><th>Email</th><th>Plan</th><th>Anak</th><th>Bergabung</th></tr></thead>
                   <tbody>
                     {families.slice(0,5).map(f => (
-                      <tr key={f.id}>
+                      <tr key={f.id} style={{transition:'background 0.15s'}}>
                         <td><div className="flex items-center gap-2"><Avatar name={f.name} size={30} /><span style={{fontWeight:600,color:'var(--t1)'}}>{f.name}</span></div></td>
                         <td>{f.email}</td>
                         <td><span className={`badge ${f.plan==='Premium'?'badge-admin':'badge-primary'}`}>{f.plan}</span></td>
@@ -10889,66 +11018,96 @@ function FamilyDashboard() {
           <div className="fade-in">
             <div className="page-header flex items-center justify-between mb-6" style={{gap:12,flexWrap:'wrap'}}>
               <div>
-                <h2 style={{color:'var(--t1)'}}>Selamat datang, {currentUser.name.split(' ')[0]}</h2>
-                <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>Pantau prestasi & belajar anak Anda</p>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                  <span className="badge-live-pulse" style={{background:'rgba(16,185,129,0.12)',border:'1px solid rgba(16,185,129,0.3)',color:'#10b981'}}>
+                    <span className="pulse-dot-green" />
+                    <span>Proteksi Keluarga Aktif</span>
+                  </span>
+                  <span style={{fontSize:11,color:'var(--t3)'}}>· Realtime Guard</span>
+                </div>
+                <h2 style={{color:'var(--t1)',fontSize:24,display:'flex',alignItems:'center',gap:8}}>
+                  Selamat datang, {currentUser.name.split(' ')[0]} <span className="animate-wave" style={{fontSize:20}}>👋</span>
+                </h2>
+                <p style={{color:'var(--t3)',fontSize:12,marginTop:2}}>Pantau perkembangan prestasi, ibadah & keamanan digital anak</p>
               </div>
             </div>
             <div className="dashboard-stats" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(210px,100%),1fr))',gap:16,marginBottom:24}}>
-              <StatCard label="Total Anak" value={myKids.length} icon="ui:users" color="var(--primary)" />
-              <StatCard label="Total Koin" value={myKids.reduce((s,k)=>(s+(k.coins||0)),0)} icon="ui:coin" color="var(--primary)" />
-              <StatCard label="Hafalan" value={myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0)} icon="ui:book" color="var(--primary)" />
-              <StatCard label="Pending" value={pendingRedemptions.length} icon="ui:hourglass" color="var(--primary)" sub={pendingRedemptions.length>0?'Perlu disetujui':''} />
+              <StatCard label="Total Anak" value={myKids.length} icon="ui:users" color="#0ea5e9" sub={`${myKids.length} profil aktif`} />
+              <StatCard label="Total Koin" value={myKids.reduce((s,k)=>(s+(k.coins||0)),0)} icon="ui:coin" color="#f59e0b" sub="Tabungan koin" />
+              <StatCard label="Hafalan" value={myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0)} icon="ui:book" color="#10b981" sub="Total surah & doa" />
+              <StatCard label="Pending" value={pendingRedemptions.length} icon="ui:hourglass" color="#ec4899" sub={pendingRedemptions.length>0?'Perlu disetujui':'Semua beres'} />
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(280px,100%),1fr))',gap:16}}>
               {myKids.map(kid => (
-                <div key={kid.id} className="card" style={{border:`1.5px solid ${kid.isLocked?'rgba(255,95,125,0.3)':kid.isOnline?'rgba(123,220,56,0.3)':'var(--border)'}`}}>
+                <div key={kid.id} className="card card-interactive-lift shimmer-container" style={{border:`1.5px solid ${kid.isLocked?'rgba(239,68,68,0.35)':kid.isOnline?'rgba(16,185,129,0.35)':'rgba(14,165,233,0.22)'}`,background:'var(--bg-card)',boxShadow:'0 10px 28px rgba(0,0,0,0.12)'}}>
                   <div className="flex items-center gap-3 mb-3">
-                    <Avatar name={kid.name} size={44} color={avatarColor(kid.id)} />
+                    <div className="animate-float-slow">
+                      <Avatar name={kid.name} size={46} color={avatarColor(kid.id)} />
+                    </div>
                     <div style={{flex:1}}>
-                      <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:18,color:'var(--t1)'}}>{kid.name}</div>
-                      <div style={{fontSize:12,color:'var(--t3)'}}>Usia {kid.age} tahun</div>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <span style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:18,color:'var(--t1)'}}>{kid.name}</span>
+                        {kid.isLocked ? (
+                          <span className="badge-live-pulse" style={{background:'rgba(239,68,68,0.15)',color:'#ef4444',padding:'2px 8px',fontSize:10}}>
+                            <UiIcon name="lock" size={11} /> Terkunci
+                          </span>
+                        ) : (
+                          <span className="badge-live-pulse" style={{background:'rgba(16,185,129,0.15)',color:'#10b981',padding:'2px 8px',fontSize:10}}>
+                            <span className="pulse-dot-green" style={{width:6,height:6}} /> Aktif
+                          </span>
+                        )}
+                      </div>
+                      <div style={{fontSize:12,color:'var(--t3)',marginTop:2}}>Usia {kid.age} tahun</div>
                       <div style={{display:'flex',gap:4,marginTop:4}}>
                         {(kid.badges||[]).map(b => <span key={b} style={{fontSize:16}} title={BADGES[b]?.name}>{BADGES[b]?.emoji}</span>)}
                       </div>
                     </div>
-                    <div className="coin-badge">Koin {kid.coins||0}</div>
+                    <div className="coin-badge animate-glow-pulse" style={{boxShadow:'0 0 10px rgba(255,190,26,0.3)',border:'1px solid rgba(255,218,74,0.5)'}}>
+                      🪙 {kid.coins||0}
+                    </div>
                   </div>
                   <div style={{display:'flex',gap:8,marginBottom:12}}>
-                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:8,padding:'8px 10px',textAlign:'center'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:'var(--warn)',fontFamily:'var(--font-display)'}}>🔥 {kid.streak||0}</div>
-                      <div style={{fontSize:10,color:'var(--t3)'}}>Hari Streak</div>
+                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:10,padding:'10px 10px',textAlign:'center',border:'1px solid var(--border)'}}>
+                      <div style={{fontSize:18,fontWeight:800,color:'var(--warn)',fontFamily:'var(--font-display)',display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                        <span className="animate-flame">🔥</span> {kid.streak||0}
+                      </div>
+                      <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>Hari Streak</div>
                     </div>
-                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:8,padding:'8px 10px',textAlign:'center'}}>
+                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:10,padding:'10px 10px',textAlign:'center',border:'1px solid var(--border)'}}>
                       <div style={{fontSize:18,fontWeight:800,color:'var(--success)',fontFamily:'var(--font-display)'}}>{(kid.hafalanDone||[]).length}</div>
-                      <div style={{fontSize:10,color:'var(--t3)'}}>Hafalan</div>
+                      <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>Hafalan</div>
                     </div>
-                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:8,padding:'8px 10px',textAlign:'center'}}>
-                      <div style={{fontSize:18,fontWeight:800,color:'var(--primary)',fontFamily:'var(--font-display)'}}>{kid.watchTime||0}</div>
-                      <div style={{fontSize:10,color:'var(--t3)'}}>Mnt Tonton</div>
+                    <div style={{flex:1,background:'var(--bg-elevated)',borderRadius:10,padding:'10px 10px',textAlign:'center',border:'1px solid var(--border)'}}>
+                      <div style={{fontSize:18,fontWeight:800,color:'#0ea5e9',fontFamily:'var(--font-display)'}}>{kid.watchTime||0}</div>
+                      <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>Mnt Tonton</div>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className={`btn btn-sm flex-1 ${kid.isLocked?'btn-family':'btn-danger'}`} style={{justifyContent:'center',display:'inline-flex',alignItems:'center',gap:6}} onClick={()=>toggleLock(kid.id)}>
-                      <UiIcon name={kid.isLocked?'unlock':'lock'} size={14} /> {kid.isLocked?'Buka':'Kunci'}
+                    <button className={`btn btn-sm flex-1 card-interactive-lift ${kid.isLocked?'btn-family':'btn-danger'}`} style={{justifyContent:'center',display:'inline-flex',alignItems:'center',gap:6}} onClick={()=>toggleLock(kid.id)}>
+                      <UiIcon name={kid.isLocked?'unlock':'lock'} size={14} /> {kid.isLocked?'Buka Layar':'Kunci Layar'}
                     </button>
-                    <button className="btn btn-primary btn-sm" onClick={()=>launchKidSession(kid.id)}>Kids</button>
-                    <button className="btn btn-ghost btn-sm" onClick={()=>{setSelectedKidId(kid.id);setPage('monitor');}} title="Monitor"><UiIcon name="eye" size={14} /></button>
+                    <button className="btn btn-primary btn-sm card-interactive-lift" style={{display:'inline-flex',alignItems:'center',gap:6}} onClick={()=>launchKidSession(kid.id)}>
+                      <UiIcon name="play" size={13} /> Kids
+                    </button>
+                    <button className="btn btn-ghost btn-sm card-interactive-lift" onClick={()=>{setSelectedKidId(kid.id);setPage('monitor');}} title="Monitor">
+                      <UiIcon name="eye" size={14} />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Akses Pintas Fitur Keluarga */}
-            <div className="card" style={{marginTop: 18}}>
+            <div className="card card-interactive-lift" style={{marginTop: 20,border:'1px solid var(--border)'}}>
               <div className="flex items-center justify-between mb-3">
                 <h3 style={{color:'var(--t1)',margin:0,fontSize:14,display:'flex',alignItems:'center',gap:8}}>
                   <UiIcon name="grid" size={16} color="var(--primary)" /> Akses Pintas Fitur
                 </h3>
                 <span style={{fontSize:11,color:'var(--t3)'}}>Kontrol Cepat</span>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:10}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(140px, 100%), 1fr))',gap:10}}>
                 <button
-                  className="btn btn-ghost"
+                  className="btn btn-ghost card-interactive-lift shimmer-container"
                   onClick={()=>setPage('coins')}
                   style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px 10px',background:'var(--bg-elevated)',borderRadius:14,border:'1px solid var(--border)'}}
                 >
@@ -10960,7 +11119,7 @@ function FamilyDashboard() {
                 </button>
 
                 <button
-                  className="btn btn-ghost"
+                  className="btn btn-ghost card-interactive-lift shimmer-container"
                   onClick={()=>setPage('control')}
                   style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px 10px',background:'var(--bg-elevated)',borderRadius:14,border:'1px solid var(--border)'}}
                 >
@@ -10972,7 +11131,7 @@ function FamilyDashboard() {
                 </button>
 
                 <button
-                  className="btn btn-ghost"
+                  className="btn btn-ghost card-interactive-lift shimmer-container"
                   onClick={()=>setPage('monitor')}
                   style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px 10px',background:'var(--bg-elevated)',borderRadius:14,border:'1px solid var(--border)'}}
                 >
@@ -10984,7 +11143,7 @@ function FamilyDashboard() {
                 </button>
 
                 <button
-                  className="btn btn-ghost"
+                  className="btn btn-ghost card-interactive-lift shimmer-container"
                   onClick={()=>setPage('ai')}
                   style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px 10px',background:'var(--bg-elevated)',borderRadius:14,border:'1px solid var(--border)'}}
                 >
@@ -10993,6 +11152,30 @@ function FamilyDashboard() {
                   </span>
                   <span style={{fontSize:12,fontWeight:700,color:'var(--t1)'}}>AI Analisis</span>
                   <span style={{fontSize:10,color:'var(--t3)'}}>Minat & Bakat</span>
+                </button>
+
+                <button
+                  className="btn btn-ghost card-interactive-lift shimmer-container"
+                  onClick={()=>setPage('duel')}
+                  style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px 10px',background:'var(--bg-elevated)',borderRadius:14,border:'1px solid var(--border)'}}
+                >
+                  <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:36,height:36,borderRadius:12,background:'rgba(236,72,153,0.15)',color:'#ec4899'}}>
+                    <UiIcon name="award" size={18} />
+                  </span>
+                  <span style={{fontSize:12,fontWeight:700,color:'var(--t1)'}}>Turnamen Kuis</span>
+                  <span style={{fontSize:10,color:'var(--t3)'}}>Duel Saudara</span>
+                </button>
+
+                <button
+                  className="btn btn-ghost card-interactive-lift shimmer-container"
+                  onClick={()=>setPage('art')}
+                  style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'14px 10px',background:'var(--bg-elevated)',borderRadius:14,border:'1px solid var(--border)'}}
+                >
+                  <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:36,height:36,borderRadius:12,background:'rgba(6,182,212,0.15)',color:'#06b6d4'}}>
+                    <UiIcon name="palette" size={18} />
+                  </span>
+                  <span style={{fontSize:12,fontWeight:700,color:'var(--t1)'}}>Galeri Seni</span>
+                  <span style={{fontSize:10,color:'var(--t3)'}}>Lukisan Anak</span>
                 </button>
               </div>
             </div>
@@ -13993,23 +14176,30 @@ function KidsDashboard() {
   ];
   return (
     <div className="kids-app app-mobile-frame" style={{minHeight:'100vh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
+      {/* AMBIENT FLOATING DECORATIONS */}
+      <div className="kids-bubble-decor" style={{width:140,height:140,top:'6%',left:'-40px',animationDelay:'0s'}} />
+      <div className="kids-bubble-decor" style={{width:90,height:90,top:'42%',right:'-30px',animationDelay:'2.5s'}} />
+      <div className="kids-bubble-decor" style={{width:70,height:70,bottom:'15%',left:'8%',animationDelay:'4.5s'}} />
+
       {/* HEADER */}
       <div className="kids-header" style={{flexShrink:0}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
-          {page==='player' && (<button onClick={()=>setPage('videos')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Kembali</button>)}
-          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories'||page==='drawing'||page==='duel') && (<button onClick={()=>setPage('home')} style={{background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {page==='player' && (<button onClick={()=>setPage('videos')} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.12)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Kembali</button>)}
+          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories'||page==='drawing'||page==='duel') && (<button onClick={()=>setPage('home')} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.12)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
             <img src="/logo-mark.png" alt="VIDKIDZ" style={{width:34,height:34,objectFit:'contain'}} />
-            <div style={{fontSize:28}}>{kid?.avatar}</div>
+            <div className="animate-float-slow" style={{fontSize:30,filter:'drop-shadow(0 4px 10px rgba(0,0,0,0.3))'}}>{kid?.avatar}</div>
             <div>
-              <div style={{fontFamily:'var(--font-kids)',fontSize:18,color:'#fff',lineHeight:1.2}}>Halo, {kid?.name}!</div>
-              <div style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>Streak {kid?.streak||0} hari</div>
+              <div style={{fontFamily:'var(--font-kids)',fontSize:18,color:'#fff',lineHeight:1.2,display:'flex',alignItems:'center',gap:4}}>Halo, {kid?.name}! <span className="animate-wave" style={{fontSize:16}}>👋</span></div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.75)',display:'flex',alignItems:'center',gap:4,marginTop:2}}>
+                <span className="animate-flame" style={{fontSize:12}}>🔥</span> Streak <strong>{kid?.streak||0} hari</strong>
+              </div>
             </div>
           </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
-          <div className="coin-badge">🪙 {kid?.coins||0}</div>
-          <button onClick={logout} style={{background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.5)',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:11}}>Keluar</button>
+          <div className="coin-badge animate-glow-pulse" style={{boxShadow:'0 0 12px rgba(255,190,26,0.4)',border:'1.5px solid rgba(255,218,74,0.6)'}}>🪙 {kid?.coins||0}</div>
+          <button onClick={logout} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.7)',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:11}}>Keluar</button>
         </div>
       </div>
 
@@ -14022,10 +14212,10 @@ function KidsDashboard() {
             {allowedAlbums.length ? (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:14}}>
                 {allowedAlbums.map(alb => (
-                  <div key={alb.id} className="album-card" onClick={()=>playAlbum(alb)} style={{padding:20}}>
-                    <div style={{fontSize:50}}>{alb.emoji}</div>
+                  <div key={alb.id} className="album-card card-interactive-lift shimmer-container" onClick={()=>playAlbum(alb)} style={{padding:20}}>
+                    <div className="animate-float-slow" style={{fontSize:50}}>{alb.emoji}</div>
                     <div style={{fontFamily:'var(--font-kids)',color:'#fff',textAlign:'center',fontSize:14,lineHeight:1.3}}>{alb.name}</div>
-                    <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{alb.videos.length} video</div>
+                    <div style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{alb.videos.length} video</div>
                     <div style={{position:'absolute',bottom:8,right:8,background:'rgba(255,190,26,0.22)',borderRadius:6,padding:'2px 6px',fontSize:10,color:'var(--coin)',fontFamily:'var(--font-display)',fontWeight:700}}>+2🪙</div>
                   </div>
                 ))}
@@ -14052,8 +14242,17 @@ function KidsDashboard() {
       </div>
 
       {/* BOTTOM NAV — position:absolute so clipped by parent overflow:hidden */}
-      <div className="kids-bottom-nav" style={{position:'absolute',bottom:0,left:0,right:0,background:'rgba(7,9,15,0.98)',borderTop:'1px solid rgba(255,255,255,0.08)',display:'flex',justifyContent:'space-around',padding:'8px 0 10px',zIndex:10}}>
-        {MENU.map(m => (<button key={m.id} onClick={()=>setPage(m.id==='videos'&&page==='player'?page:m.id)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,background:'none',border:'none',cursor:'pointer',padding:'4px 12px',borderRadius:12,transition:'all 0.2s',opacity:page===m.id||(page==='player'&&m.id==='videos')?1:0.45}}><span style={{fontSize:20}}>{m.emoji}</span><span style={{fontSize:9,color:page===m.id?'#4db8ff':'rgba(255,255,255,0.45)',fontFamily:'var(--font-display)',fontWeight:700}}>{m.label}</span></button>))}
+      <div className="kids-bottom-nav" style={{position:'absolute',bottom:0,left:0,right:0,background:'rgba(7,27,61,0.96)',borderTop:'1px solid rgba(120,168,232,0.25)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',display:'flex',justifyContent:'space-around',padding:'8px 0 10px',zIndex:10,boxShadow:'0 -10px 28px rgba(0,0,0,0.25)'}}>
+        {MENU.map(m => {
+          const isActive = page===m.id||(page==='player'&&m.id==='videos');
+          return (
+            <button key={m.id} onClick={()=>setPage(m.id==='videos'&&page==='player'?page:m.id)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,background:'none',border:'none',cursor:'pointer',padding:'5px 10px',borderRadius:14,transition:'all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',transform:isActive?'translateY(-2px) scale(1.08)':'scale(1)',opacity:isActive?1:0.55}}>
+              <span className={isActive?'animate-float-slow':''} style={{fontSize:21,filter:isActive?'drop-shadow(0 2px 8px rgba(77,184,255,0.6))':'none'}}>{m.emoji}</span>
+              <span style={{fontSize:9.5,color:isActive?'#4db8ff':'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:800,letterSpacing:'0.2px'}}>{m.label}</span>
+              {isActive && <span style={{width:16,height:3,borderRadius:2,background:'#4db8ff',boxShadow:'0 0 6px #4db8ff',marginTop:1}} />}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -14140,16 +14339,16 @@ function KidsDailyQuestsCard({ kid, onNavigate }) {
 
       {allCompleted ? (
         isClaimed ? (
-          <div style={{background:'rgba(34,197,94,0.12)',border:'1px solid rgba(34,197,94,0.3)',borderRadius:12,padding:'8px 14px',textAlign:'center',color:'var(--success)',fontSize:12,fontWeight:700}}>
-            ✅ Misi Harian Selesai! Kamu Hebat! (+15 Koin Sudah Diklaim)
+          <div className="card-interactive-lift" style={{background:'rgba(34,197,94,0.14)',border:'1px solid rgba(34,197,94,0.35)',borderRadius:14,padding:'10px 14px',textAlign:'center',color:'var(--success)',fontSize:12,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <span>✨</span> Misi Harian Selesai! Kamu Hebat! (+15 Koin Sudah Diklaim)
           </div>
         ) : (
-          <button onClick={handleClaim} style={{width:'100%',background:'linear-gradient(135deg, #f59e0b, #eab308)',border:'none',color:'#000',fontWeight:800,fontSize:13,padding:'10px 16px',borderRadius:12,cursor:'pointer',boxShadow:'0 4px 16px rgba(234,179,8,0.4)',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <span>🎁</span> Klaim Hadiah Misi Harian (+15 🪙 Koin & +1 Streak 🔥)
+          <button onClick={handleClaim} className="animate-glow-pulse card-interactive-lift shimmer-container" style={{width:'100%',background:'linear-gradient(135deg, #f59e0b, #eab308)',border:'none',color:'#000',fontWeight:800,fontSize:13,padding:'12px 16px',borderRadius:14,cursor:'pointer',boxShadow:'0 4px 20px rgba(234,179,8,0.5)',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <span className="animate-bounce">🎁</span> Klaim Hadiah Misi Harian (+15 🪙 Koin & +1 Streak 🔥)
           </button>
         )
       ) : (
-        <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',textAlign:'center'}}>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',textAlign:'center'}}>
           Selesaikan misi yang tersisa di atas untuk membuka hadiah koin!
         </div>
       )}
@@ -14168,19 +14367,23 @@ function KidsHomePage({ kid, onNavigate }) {
   return (
     <div style={{padding:'20px 20px'}}>
       {/* Streak & badges */}
-      <div className="kids-profile-card" style={{background:'linear-gradient(135deg, rgba(255,190,26,0.15), rgba(250,204,21,0.05))',border:'1.5px solid rgba(255,190,26,0.25)',borderRadius:20,padding:20,marginBottom:20}}>
+      <div className="kids-profile-card shimmer-container card-interactive-lift" style={{background:'linear-gradient(135deg, rgba(255,190,26,0.18), rgba(250,204,21,0.06), rgba(31,182,255,0.08))',border:'1.5px solid rgba(255,190,26,0.35)',borderRadius:22,padding:20,marginBottom:20,boxShadow:'0 10px 30px rgba(0,0,0,0.16)'}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div style={{fontSize:48}}>{kid?.avatar}</div>
+          <div className="animate-float-gentle" style={{fontSize:52,filter:'drop-shadow(0 6px 16px rgba(0,0,0,0.35))'}}>{kid?.avatar}</div>
           <div style={{flex:1}}>
-            <div style={{fontFamily:'var(--font-kids)',fontSize:22,color:'#fff'}}>{kid?.name} ⭐</div>
-            <div style={{display:'flex',gap:8,marginTop:6,flexWrap:'wrap'}}>
-              <span style={{background:'rgba(251,146,60,0.2)',borderRadius:20,padding:'4px 12px',fontSize:12,color:'var(--warn)',fontFamily:'var(--font-display)',fontWeight:700}}>{kid?.streak||0} Hari Streak!</span>
-              {(kid?.badges||[]).map(b => (<span key={b} style={{background:'rgba(255,255,255,0.08)',borderRadius:20,padding:'4px 10px',fontSize:12,color:'rgba(255,255,255,0.7)'}} title={BADGES[b]?.name}>{BADGES[b]?.emoji} {BADGES[b]?.name}</span>))}
+            <div style={{fontFamily:'var(--font-kids)',fontSize:23,color:'#fff',display:'flex',alignItems:'center',gap:6}}>
+              {kid?.name} <span className="animate-wave" style={{fontSize:18}}>⭐</span>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <span className="badge-live-pulse" style={{background:'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(239,68,68,0.25))',border:'1px solid rgba(249,115,22,0.5)',borderRadius:20,padding:'4px 12px',fontSize:12,color:'#ffb020',fontFamily:'var(--font-display)',fontWeight:800,boxShadow:'0 0 12px rgba(249,115,22,0.3)'}}>
+                <span className="animate-flame">🔥</span> {kid?.streak||0} Hari Streak!
+              </span>
+              {(kid?.badges||[]).map(b => (<span key={b} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.09)',border:'1px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'4px 10px',fontSize:12,color:'rgba(255,255,255,0.85)',display:'inline-flex',alignItems:'center',gap:4}} title={BADGES[b]?.name}>{BADGES[b]?.emoji} {BADGES[b]?.name}</span>))}
             </div>
           </div>
           <div style={{textAlign:'center'}}>
-            <div className="coin-badge" style={{fontSize:20}}>🪙 {kid?.coins||0}</div>
-            <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:4}}>koin kamu</div>
+            <div className="coin-badge animate-glow-pulse" style={{fontSize:21,boxShadow:'0 0 16px rgba(255,190,26,0.4)',border:'1.5px solid rgba(255,218,74,0.6)'}}>🪙 {kid?.coins||0}</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4,fontFamily:'var(--font-display)',fontWeight:600}}>koin kamu</div>
           </div>
         </div>
       </div>
@@ -14190,39 +14393,46 @@ function KidsHomePage({ kid, onNavigate }) {
 
       {/* Progress bars */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:20}}>
-          <div className="kids-stat-card" style={{background:'rgba(0,120,255,0.12)',border:'1px solid rgba(0,120,255,0.24)',borderRadius:16,padding:16}}>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:8}}>📖 Hafalan</div>
+        <div className="kids-stat-card card-interactive-lift shimmer-container" style={{background:'linear-gradient(135deg, rgba(0,120,255,0.16), rgba(0,120,255,0.06))',border:'1px solid rgba(0,120,255,0.3)',borderRadius:18,padding:16}}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:8,display:'flex',alignItems:'center',gap:4}}>
+            <span>📖</span> Hafalan
+          </div>
           <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24,color:'#fff'}}>{(kid?.hafalanDone||[]).length}<span style={{fontSize:14,opacity:0.5}}>/{HAFALAN_LIST.length}</span></div>
-          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:10,height:6,overflow:'hidden',marginTop:8}}><div style={{height:'100%',background:'var(--primary)',borderRadius:10,width:hafalanProgress+'%',transition:'width 0.5s'}}/></div>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:4}}>{hafalanProgress}% selesai</div>
+          <div style={{background:'rgba(255,255,255,0.12)',borderRadius:10,height:8,overflow:'hidden',marginTop:8}}><div style={{height:'100%',background:'linear-gradient(90deg, #0ea5e9, #0078ff)',borderRadius:10,width:hafalanProgress+'%',transition:'width 0.5s'}}/></div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4}}>{hafalanProgress}% selesai</div>
         </div>
-          <div className="kids-stat-card" style={{background:'rgba(123,220,56,0.1)',border:'1px solid rgba(123,220,56,0.22)',borderRadius:16,padding:16}}>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:8}}>🎮 Game</div>
+        <div className="kids-stat-card card-interactive-lift shimmer-container" style={{background:'linear-gradient(135deg, rgba(123,220,56,0.16), rgba(123,220,56,0.06))',border:'1px solid rgba(123,220,56,0.3)',borderRadius:18,padding:16}}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'var(--font-display)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:8,display:'flex',alignItems:'center',gap:4}}>
+            <span>🎮</span> Game
+          </div>
           <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24,color:'#fff'}}>{totalGamesCorrect}<span style={{fontSize:14,opacity:0.5}}>/{totalGamesPlayed}</span></div>
-          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:10,height:6,overflow:'hidden',marginTop:8}}><div style={{height:'100%',background:'var(--success)',borderRadius:10,width:totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100)+'%':'0%',transition:'width 0.5s'}}/></div>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:4}}>{totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100):0}% benar</div>
+          <div style={{background:'rgba(255,255,255,0.12)',borderRadius:10,height:8,overflow:'hidden',marginTop:8}}><div style={{height:'100%',background:'linear-gradient(90deg, #22c55e, #10b981)',borderRadius:10,width:totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100)+'%':'0%',transition:'width 0.5s'}}/></div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:4}}>{totalGamesPlayed>0?Math.round(totalGamesCorrect/totalGamesPlayed*100):0}% benar</div>
         </div>
       </div>
 
       {/* Quick actions */}
-      <h3 style={{fontFamily:'var(--font-kids)',color:'rgba(255,255,255,0.8)',marginBottom:12,fontSize:16}}>🚀 Mau ngapain hari ini?</h3>
+      <h3 style={{fontFamily:'var(--font-kids)',color:'#fff',marginBottom:12,fontSize:18,display:'flex',alignItems:'center',gap:6}}>
+        🚀 Mau ngapain hari ini?
+      </h3>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
         {[
-          { id:'duel', emoji:'🥊', title:'Duel Kuis Pintar', desc:'Tantang saudara atau robot AI!', color:'#f59e0b', bg:'rgba(245,158,11,0.15)' },
-          { id:'drawing', emoji:'🎨', title:'Studio Mewarnai', desc:'Mewarnai fabel & kanvas kreasi!', color:'#ec4899', bg:'rgba(236,72,153,0.15)' },
-          { id:'stories', emoji:'📚', title:'Dongeng Santai', desc:'Kisah budi pekerti & audio book', color:'#8b5cf6', bg:'rgba(139,92,246,0.15)' },
-          { id:'games', emoji:'🎮', title:'Main Game Seru', desc:'Matematika, Tebak Hewan & lainnya!', color:'#0078ff', bg:'rgba(0,120,255,0.15)' },
-          { id:'hafalan', emoji:'📖', title:'Hafalan Mengaji', desc:'Rekam bacaan sholat & surat', color:'#7bdc38', bg:'rgba(123,220,56,0.1)' },
-          { id:'videos', emoji:'🎬', title:'Tonton Video', desc:'Belajar sambil menonton', color:'#1fb6ff', bg:'rgba(31,182,255,0.1)' },
-          { id:'coins', emoji:'🪙', title:'Tukar Koin', desc:'Lihat hadiahmu!', color:'#ffbe1a', bg:'rgba(255,190,26,0.1)' },
-          { id:'photos', emoji:'📷', title:'Lihat Foto', desc:'Album kenangan keluarga', color:'#f2527b', bg:'rgba(242,82,123,0.12)' },
+          { id:'duel', emoji:'🥊', title:'Duel Kuis Pintar', desc:'Tantang saudara atau robot AI!', color:'#f59e0b', bg:'rgba(245,158,11,0.15)', tag:'POPULER ⭐', tagColor:'#f59e0b' },
+          { id:'drawing', emoji:'🎨', title:'Studio Mewarnai', desc:'Mewarnai fabel & kanvas kreasi!', color:'#ec4899', bg:'rgba(236,72,153,0.15)', tag:'KREATIF 🎨', tagColor:'#ec4899' },
+          { id:'stories', emoji:'📚', title:'Dongeng Santai', desc:'Kisah budi pekerti & audio book', color:'#8b5cf6', bg:'rgba(139,92,246,0.15)', tag:'SERU ✨', tagColor:'#8b5cf6' },
+          { id:'games', emoji:'🎮', title:'Main Game Seru', desc:'Matematika, Tebak Hewan & lainnya!', color:'#0078ff', bg:'rgba(0,120,255,0.15)', tag:'FAVORIT 🚀', tagColor:'#0078ff' },
+          { id:'hafalan', emoji:'📖', title:'Hafalan Mengaji', desc:'Rekam bacaan sholat & surat', color:'#10b981', bg:'rgba(16,185,129,0.15)', tag:'BERKAH 🌙', tagColor:'#10b981' },
+          { id:'videos', emoji:'🎬', title:'Tonton Video', desc:'Belajar sambil menonton', color:'#0ea5e9', bg:'rgba(14,165,233,0.15)', tag:'EDUKATIF 🎬', tagColor:'#0ea5e9' },
+          { id:'coins', emoji:'🪙', title:'Tukar Koin', desc:'Lihat hadiah & klaim bonus!', color:'#ffbe1a', bg:'rgba(255,190,26,0.15)', tag:'HADIAH 🎁', tagColor:'#ffbe1a' },
+          { id:'photos', emoji:'📷', title:'Lihat Foto', desc:'Album kenangan keluarga', color:'#f43f5e', bg:'rgba(244,63,94,0.15)', tag:'KENANGAN 📸', tagColor:'#f43f5e' },
         ].map(item => (
-          <div key={item.id} className="kids-action-card" onClick={()=>onNavigate(item.id)} style={{background:item.bg,border:`1.5px solid ${item.color}33`,borderRadius:16,padding:16,cursor:'pointer',transition:'all 0.2s'}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor=item.color;e.currentTarget.style.transform='translateY(-3px)';}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=item.color+'33';e.currentTarget.style.transform='translateY(0)';}}>
-            <div style={{fontSize:36,marginBottom:8}}>{item.emoji}</div>
+          <div key={item.id} className="kids-action-tile shimmer-container" onClick={()=>onNavigate(item.id)} style={{background:item.bg,borderColor:`${item.color}44`,boxShadow:`0 8px 24px ${item.color}22`}}>
+            <span className="action-badge" style={{background:`${item.tagColor}26`,color:item.tagColor,border:`1px solid ${item.tagColor}44`}}>
+              {item.tag}
+            </span>
+            <div className="animate-float-slow" style={{fontSize:38,marginBottom:8}}>{item.emoji}</div>
             <div style={{fontFamily:'var(--font-display)',fontWeight:800,color:'#fff',fontSize:14,marginBottom:4}}>{item.title}</div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>{item.desc}</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.65)',lineHeight:1.3}}>{item.desc}</div>
           </div>
         ))}
       </div>
@@ -15476,14 +15686,14 @@ function KidsLockScreen({ kid, isCurfew, onDismissCurfew }) {
     return (
       <div className="lock-screen" style={{background:'linear-gradient(180deg, #090e1f 0%, #050811 100%)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 24px',textAlign:'center'}}>
         <div className="animate-float" style={{marginBottom:24}}>
-          <div style={{fontSize:90,filter:'drop-shadow(0 0 24px rgba(255,190,26,0.6))',marginBottom:12}}>🌙</div>
+          <div className="animate-glow-pulse" style={{fontSize:90,filter:'drop-shadow(0 0 24px rgba(255,190,26,0.6))',marginBottom:12}}>🌙</div>
           <div style={{fontFamily:'var(--font-kids)',fontSize:30,color:'#fff',lineHeight:1.3}}>Waktunya Istirahat & Tidur!</div>
-          <div style={{fontSize:14,color:'rgba(255,255,255,0.7)',maxWidth:340,margin:'10px auto 0',lineHeight:1.6}}>
+          <div style={{fontSize:14,color:'rgba(255,255,255,0.75)',maxWidth:340,margin:'10px auto 0',lineHeight:1.6}}>
             Halo <strong>{kid?.name}</strong>, jadwal istirahatmu sudah aktif ({kid?.schedule?.lockStart} - {kid?.schedule?.lockEnd}). Simpan perangkatmu dan tidur nyenyak ya! ✨
           </div>
         </div>
 
-        <div style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:16,padding:'16px 20px',maxWidth:340,width:'100%',marginBottom:28,textAlign:'left'}}>
+        <div className="card-interactive-lift shimmer-container" style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.14)',borderRadius:18,padding:'16px 20px',maxWidth:340,width:'100%',marginBottom:28,textAlign:'left'}}>
           <div style={{fontSize:12,fontWeight:700,color:'var(--coin)',textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:10,fontFamily:'var(--font-display)'}}>
             ⭐ Sebelum Tidur:
           </div>
@@ -15494,7 +15704,7 @@ function KidsLockScreen({ kid, isCurfew, onDismissCurfew }) {
           </div>
         </div>
 
-        <button className="btn btn-ghost" onClick={()=>setShowPinPad(true)} style={{fontSize:12,color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.15)',padding:'8px 16px',borderRadius:20}}>
+        <button className="btn btn-ghost card-interactive-lift" onClick={()=>setShowPinPad(true)} style={{fontSize:12,color:'rgba(255,255,255,0.7)',border:'1px solid rgba(255,255,255,0.2)',padding:'8px 18px',borderRadius:20}}>
           🔒 Buka Akses Orang Tua (PIN)
         </button>
       </div>
