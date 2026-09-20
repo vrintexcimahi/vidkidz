@@ -7188,7 +7188,7 @@ function LoginScreen() {
 // ADMIN DASHBOARD
 // ============================================================
 function AdminDashboard() {
-  const { state, currentUser, logout, updateState, addLog, showNotif, isTestPreview } = useContext(AppCtx);
+  const { state, currentUser, logout, updateState, addLog, showNotif } = useContext(AppCtx);
   const [page, setPage] = useState('overview');
   const [confirm, setConfirm] = useState(null);
   const [modal, setModal] = useState(null);
@@ -7214,7 +7214,7 @@ function AdminDashboard() {
     { id:'backup', label:'Backup Database', icon:'ui:database' },
     { id:'devmode', label:'Developer Mode', icon:'ui:smartphone' },
     { id:'settings', label:'System Settings', icon:'ui:settings' },
-  ].filter(n => !isTestPreview || n.id !== 'devmode');
+  ];
 
   const { admins, families, kids } = state.users;
   const premiumFamilies = families.filter(f=>f.plan==='Premium').length;
@@ -7662,273 +7662,6 @@ function AdminUserManager({ admins, families, kids, currentUser, updateState, ad
   );
 }
 
-function getTestPreviewFit() {
-  if (typeof window === 'undefined') {
-    return { scale: 0.88, width: 390, slotWidth: 343, height: 844 };
-  }
-  const baseWidth = 390;
-  const baseHeight = 844;
-  const gap = 16;
-  const minScale = 0.3;
-  const maxScale = 1.05;
-  const availableWidth = Math.max(360, window.innerWidth - 32);
-  const availableHeight = Math.max(420, window.innerHeight - 20);
-  const widthScale = (availableWidth - gap * 2) / (baseWidth * 3);
-  const heightScale = availableHeight / baseHeight;
-  const scale = Math.max(minScale, Math.min(maxScale, widthScale, heightScale));
-  return {
-    scale: Number(scale.toFixed(3)),
-    width: baseWidth,
-    slotWidth: Math.round(baseWidth * scale),
-    height: baseHeight
-  };
-}
-
-function TestDashboard({ onExit }) {
-  const ctx = useContext(AppCtx);
-  const { state, currentUser } = ctx;
-  const [previewFit, setPreviewFit] = useState(getTestPreviewFit);
-  const [clockTime, setClockTime] = useState('09:41');
-  const [resetKeys, setResetKeys] = useState({});
-
-  const adminUser = state.users.admins[0] || currentUser;
-  const familyUser = state.users.families[0];
-  const kidUser = state.users.kids.find(k => !k.isLocked) || state.users.kids[0];
-  const previewBase = {
-    ...ctx,
-    logout: () => ctx.showNotif('Logout preview dinonaktifkan agar sesi admin utama tetap aman', 'warn'),
-  };
-  const previews = [
-    {
-      title: 'Admin',
-      role: 'GOD MODE',
-      user: { ...adminUser, role: ROLES.ADMIN },
-      component: <AdminDashboard />,
-    },
-    {
-      title: 'Orangtua',
-      role: 'Family',
-      user: familyUser ? { ...familyUser, role: ROLES.FAMILY } : null,
-      component: <FamilyDashboard />,
-    },
-    {
-      title: 'Anak',
-      role: 'Kids',
-      user: kidUser ? { ...kidUser, role: ROLES.KIDS } : null,
-      component: <KidsDashboard />,
-    },
-  ];
-
-  useEffect(() => {
-    const updateTime = () => {
-      const d = new Date();
-      setClockTime(d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'));
-    };
-    updateTime();
-    const t = setInterval(updateTime, 10000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    const updateFit = () => setPreviewFit(getTestPreviewFit());
-    updateFit();
-    window.addEventListener('resize', updateFit);
-    return () => window.removeEventListener('resize', updateFit);
-  }, []);
-
-  const handleResetPanel = (title) => {
-    setResetKeys(k => ({ ...k, [title]: (k[title] || 0) + 1 }));
-    ctx.showNotif(`Preview ${title} dimuat ulang`, 'info');
-  };
-
-  const handleResetAll = () => {
-    const next = {};
-    previews.forEach(p => { next[p.title] = (resetKeys[p.title] || 0) + 1; });
-    setResetKeys(next);
-    ctx.showNotif('Semua 3 Dashboard dimuat ulang', 'info');
-  };
-
-  return (
-    <div className="fade-in test-dashboard-page">
-      <div className="test-dashboard-header">
-        <div style={{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={onExit}
-              style={{display:'inline-flex',alignItems:'center',gap:6,borderRadius:10,fontWeight:700,background:'rgba(255,255,255,0.08)',color:'#cbd5e1'}}
-              title="Kembali ke Dual-View Workbench"
-            >
-              <UiIcon name="smartphone" size={15} color="currentColor" />
-              <span>Dual-View Workbench</span>
-            </button>
-            <button
-              className="btn btn-sm btn-primary"
-              style={{display:'inline-flex',alignItems:'center',gap:6,borderRadius:10,fontWeight:700}}
-            >
-              <UiIcon name="monitor" size={15} color="currentColor" />
-              <span>Test Dashboard (3-Device Simulator)</span>
-            </button>
-          </div>
-          <div style={{borderLeft:'1px solid rgba(255,255,255,0.15)',paddingLeft:16}}>
-            <div style={{fontSize:13,fontWeight:700,color:'var(--t1)'}}>Simulasi Live 3 Perangkat Mobile</div>
-            <div style={{fontSize:11,color:'var(--t3)'}}>Admin, Orangtua, dan Anak secara berdampingan</div>
-          </div>
-        </div>
-        <div className="test-dashboard-actions">
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={handleResetAll}
-            style={{display:'inline-flex',alignItems:'center',gap:6,borderRadius:10,fontWeight:700,background:'rgba(255,255,255,0.06)',color:'var(--t1)'}}
-            title="Muat Ulang Semua Layar"
-          >
-            <UiIcon name="refresh" size={14} />
-            <span>Muat Ulang Semua</span>
-          </button>
-          <button className="btn test-dashboard-exit" type="button" onClick={onExit} aria-label="Keluar dari Test Dashboard" title="Kembali ke Developer Workbench">
-            <span className="test-dashboard-exit-icon" style={{display:'inline-flex',alignItems:'center'}}>
-              <UiIcon name="logout" size={16} />
-            </span>
-          </button>
-        </div>
-      </div>
-      <div
-        className="test-dashboard-grid"
-        style={{
-          '--test-preview-scale': String(previewFit.scale),
-          '--test-phone-width': `${previewFit.width || 390}px`,
-          '--test-phone-height': `${previewFit.height || 844}px`,
-          '--test-phone-slot-width': `${previewFit.slotWidth || 343}px`
-        }}
-      >
-        {previews.map(item => (
-          <div className="test-dashboard-panel" key={item.title}>
-            <div
-              className="test-dashboard-phone phone-chassis"
-              onWheel={handleTestPreviewWheel}
-              onTouchStart={handleTestPreviewTouchStart}
-              onTouchMove={handleTestPreviewTouchMove}
-            >
-              <div className="phone-topbar">
-                <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                  <span style={{width:10,height:10,borderRadius:'50%',background:'#ef4444',display:'inline-block'}} />
-                  <span style={{width:10,height:10,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}} />
-                  <span style={{width:10,height:10,borderRadius:'50%',background:'#10b981',display:'inline-block'}} />
-                </div>
-
-                <div className="browser-omnibox" style={{display:'flex',alignItems:'center',gap:6,justifyContent:'center',padding:'0 10px'}}>
-                  <UiIcon name="smartphone" size={13} color="var(--primary)" />
-                  <span style={{color:'var(--t1)',fontSize:11,fontWeight:700}}>{item.title} ({item.role})</span>
-                  <span style={{color:'var(--t3)',fontSize:10}}>· {clockTime}</span>
-                </div>
-
-                <button
-                  className="btn btn-ghost btn-xs"
-                  onClick={() => handleResetPanel(item.title)}
-                  style={{padding:'2px 6px'}}
-                  title={`Muat Ulang ${item.title}`}
-                >
-                  <UiIcon name="refresh" size={13} />
-                </button>
-              </div>
-
-              <div className="phone-screen" style={{position:'relative',width:'100%',height:'100%',overflow:'hidden'}}>
-                {item.user ? (
-                  <TestDashboardPreview item={item} previewBase={previewBase} resetKey={resetKeys[item.title] || 0} />
-                ) : (
-                  <div className="test-dashboard-empty">Data {item.title} belum ada</div>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function handleTestPreviewWheel(e) {
-  const scroller = e.currentTarget.querySelector('.admin-main, .family-main, .kids-main');
-  if (!scroller || scroller.scrollHeight <= scroller.clientHeight) return;
-  const maxTop = scroller.scrollHeight - scroller.clientHeight;
-  const nextTop = scroller.scrollTop + e.deltaY;
-  if ((e.deltaY < 0 && scroller.scrollTop <= 0) || (e.deltaY > 0 && scroller.scrollTop >= maxTop)) return;
-  e.preventDefault();
-  e.stopPropagation();
-  scroller.scrollTop = Math.max(0, Math.min(maxTop, nextTop));
-}
-
-function handleTestPreviewTouchStart(e) {
-  e.currentTarget.dataset.touchY = String(e.touches?.[0]?.clientY || 0);
-}
-
-function handleTestPreviewTouchMove(e) {
-  const lastY = Number(e.currentTarget.dataset.touchY || 0);
-  const currentY = e.touches?.[0]?.clientY || lastY;
-  const deltaY = lastY - currentY;
-  if (!deltaY) return;
-  e.currentTarget.dataset.touchY = String(currentY);
-  const scroller = e.currentTarget.querySelector('.admin-main, .family-main, .kids-main');
-  if (!scroller || scroller.scrollHeight <= scroller.clientHeight) return;
-  const maxTop = scroller.scrollHeight - scroller.clientHeight;
-  const nextTop = scroller.scrollTop + deltaY;
-  if ((deltaY < 0 && scroller.scrollTop <= 0) || (deltaY > 0 && scroller.scrollTop >= maxTop)) return;
-  e.preventDefault();
-  e.stopPropagation();
-  scroller.scrollTop = Math.max(0, Math.min(maxTop, nextTop));
-}
-
-function TestDashboardPreview({ item, previewBase, resetKey = 0 }) {
-  const [previewUser, setPreviewUser] = useState(item.user);
-  const [previewKidId, setPreviewKidId] = useState(item.user.role === ROLES.KIDS ? item.user.id : null);
-
-  useEffect(() => {
-    setPreviewUser(item.user);
-    setPreviewKidId(item.user.role === ROLES.KIDS ? item.user.id : null);
-  }, [item.user.id, item.user.role, resetKey]);
-
-  const launchPreviewKidSession = useCallback((kidId) => {
-    const kid = previewBase.state.users.kids.find(k => k.id === kidId);
-    if (!kid || kid.isLocked) {
-      previewBase.showNotif(kid?.isLocked ? 'Preview Kids terkunci' : 'Data anak tidak ditemukan', 'warn');
-      return false;
-    }
-    setPreviewUser({ ...kid, role: ROLES.KIDS, demoAccess: true });
-    setPreviewKidId(kid.id);
-    return true;
-  }, [previewBase]);
-
-  const resetPreviewSession = useCallback(() => {
-    setPreviewUser(item.user);
-    setPreviewKidId(item.user.role === ROLES.KIDS ? item.user.id : null);
-    previewBase.showNotif('Preview dikembalikan ke tampilan awal', 'warn');
-  }, [item.user, previewBase]);
-
-  let component = item.component;
-  if (previewUser.role === ROLES.ADMIN) component = <AdminDashboard />;
-  if (previewUser.role === ROLES.FAMILY) component = <FamilyDashboard />;
-  if (previewUser.role === ROLES.KIDS) component = <KidsDashboard />;
-
-  return (
-    <AppCtx.Provider value={{
-      ...previewBase,
-      isTestPreview: true,
-      currentUser: previewUser,
-      currentKidId: previewKidId,
-      setCurrentKidId: setPreviewKidId,
-      launchKidSession: launchPreviewKidSession,
-      logout: resetPreviewSession,
-    }}>
-      <div style={{position:'relative',width:'100%',height:'100%',overflow:'hidden'}}>
-        <MobileNativeAppView
-          item={item}
-          previewBase={previewBase}
-          previewUser={previewUser}
-        />
-      </div>
-    </AppCtx.Provider>
-  );
-}
 
 function AdminUserDataCenter({ users, devices = [], currentUser, updateState, addLog, showNotif, setModal, setConfirm }) {
   const [activeTab, setActiveTab] = useState('users');
@@ -9672,8 +9405,7 @@ function AdminBackupDatabase({ onRestorePreview }) {
 // ============================================================
 // ADMIN: DEVELOPER MODE / DUAL-VIEW WORKBENCH
 // ============================================================
-function AdminDeveloperMode({ initialTab = 'workbench' }) {
-  const [devTab, setDevTab] = useState(initialTab);
+function AdminDeveloperMode() {
   const [currentRoute, setCurrentRoute] = useState('#kids');
   const [cacheBuster, setCacheBuster] = useState(() => Date.now());
   const [customInput, setCustomInput] = useState('');
@@ -9706,32 +9438,8 @@ function AdminDeveloperMode({ initialTab = 'workbench' }) {
     setCacheBuster(Date.now());
   };
 
-  if (devTab === 'test') {
-    return <TestDashboard onExit={() => { window.location.hash = ''; setDevTab('workbench'); }} />;
-  }
-
   return (
     <div className="fade-in" style={{height:'100%',display:'flex',flexDirection:'column'}}>
-      {/* Developer Mode Feature Switcher */}
-      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
-        <button
-          className={`btn btn-sm ${devTab==='workbench'?'btn-primary':'btn-ghost'}`}
-          onClick={()=>setDevTab('workbench')}
-          style={{display:'inline-flex',alignItems:'center',gap:8,borderRadius:10,fontWeight:700}}
-        >
-          <UiIcon name="smartphone" size={16} color="currentColor" />
-          <span>Dual-View Workbench</span>
-        </button>
-        <button
-          className={`btn btn-sm ${devTab==='test'?'btn-primary':'btn-ghost'}`}
-          onClick={()=>setDevTab('test')}
-          style={{display:'inline-flex',alignItems:'center',gap:8,borderRadius:10,fontWeight:700}}
-        >
-          <UiIcon name="monitor" size={16} color="currentColor" />
-          <span>Test Dashboard (3-Device Simulator)</span>
-        </button>
-      </div>
-
       <div style={{background:'rgba(255,255,255,0.02)',border:'1px solid var(--border)',borderRadius:12,padding:'12px 18px',marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <UiIcon name="smartphone" size={20} color="var(--primary)" />
@@ -10903,7 +10611,7 @@ function FamilyQuizTournament({ myKids }) {
 // FAMILY DASHBOARD
 // ============================================================
 function FamilyDashboard() {
-  const { state, currentUser, logout, updateState, addLog, showNotif, apiKey, setApiKey, launchKidSession, isTestPreview } = useContext(AppCtx);
+  const { state, currentUser, logout, updateState, addLog, showNotif, apiKey, setApiKey, launchKidSession } = useContext(AppCtx);
   const [page, setPage] = useState('overview');
   const [selectedKidId, setSelectedKidId] = useState(null);
   const [modal, setModal] = useState(null);
@@ -10967,21 +10675,17 @@ function FamilyDashboard() {
             <div style={{fontSize:11,color:'var(--family)',marginTop:4,fontWeight:700}}>Family Control</div>
           </div>
         </div>
-        {!isTestPreview && (
-          <>
-            <div className="nav-sep" />
-            <div className="nav-label">Pilih Anak</div>
-            {myKids.map(kid => (
-              <div key={kid.id} className={`nav-item kid-picker-item ${selectedKidId===kid.id||(!selectedKidId&&myKids[0]?.id===kid.id)?'active-family':''}`} onClick={()=>setSelectedKidId(kid.id)}>
-                <Avatar name={kid.name} size={28} color={avatarColor(kid.id)} />
-                <div style={{flex:1}}>
-                  <div style={{fontSize:12}}>{kid.name}</div>
-                  <div style={{fontSize:10,color:'var(--t3)',marginTop:1}}>Koin {kid.coins||0} {kid.isLocked?'· terkunci':''}</div>
-                </div>
-              </div>
-            ))}
-          </>
-        )}
+        <div className="nav-sep" />
+        <div className="nav-label">Pilih Anak</div>
+        {myKids.map(kid => (
+          <div key={kid.id} className={`nav-item kid-picker-item ${selectedKidId===kid.id||(!selectedKidId&&myKids[0]?.id===kid.id)?'active-family':''}`} onClick={()=>setSelectedKidId(kid.id)}>
+            <Avatar name={kid.name} size={28} color={avatarColor(kid.id)} />
+            <div style={{flex:1}}>
+              <div style={{fontSize:12}}>{kid.name}</div>
+              <div style={{fontSize:10,color:'var(--t3)',marginTop:1}}>Koin {kid.coins||0} {kid.isLocked?'· terkunci':''}</div>
+            </div>
+          </div>
+        ))}
         <div className="nav-sep" />
         <div className="nav-label">Menu</div>
         {navItems.map(n => (
@@ -15756,8 +15460,8 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  if (hash.includes('test') && state) {
-    return <AdminDeveloperMode initialTab="test" />;
+  if ((hash.includes('dev') || hash.includes('workbench')) && state) {
+    return <AdminDeveloperMode />;
   }
 
   if (appLoading && !state) {

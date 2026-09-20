@@ -742,11 +742,14 @@
 
 ### Hasil Pengujian & Verifikasi
 1. **Standalone Babel Syntax Verification (`scratch/verify_babel.js`)**:
-   - Status: **PASS (0 syntax errors, 532.884 bytes output length)**.
+   - Status: **PASS (0 syntax errors, 521.708 bytes output length)**.
 2. **Automated Regression Suite (`npm test`)**:
    - Status: **PASS — 130 passed, 0 failed** (100% pass rate di 34 grup pengujian tanpa ada regresi).
 3. **Pemeriksaan Endpoint Server Aktif (`GET /api/health`)**:
    - Status: HTTP 200 OK (`version 5.2.21`, daemon `task-928` sehat).
-4. **Git Workspace**:
-   - File termodifikasi: `public/index.html` dan `AUDIT_NOTES.md`.
+4. **Pembersihan Fitur ("Test Dashboard (3-Device Simulator)")**:
+   - Menghapus tab tombol switcher `Test Dashboard (3-Device Simulator)` dari header Developer Mode (`AdminDeveloperMode`).
+   - Membersihkan 310+ baris kode komponen simulator yang tidak lagi digunakan (`TestDashboard`, `TestDashboardPreview`, `getTestPreviewFit`, dan handler touch/wheel preview).
+   - Developer Mode kini langsung menampilkan `Developer Dual-View Responsive Workbench` (iPhone 15 Pro & Desktop Flex simulator) yang bersih dan terfokus.
+
 
