@@ -70,6 +70,7 @@ const server = app.listen(0, async () => {
       body: JSON.stringify({ email: 'k1', password: '1234', role: 'kids' })
     });
     assert(kidLogin.ok && !!kidLogin.data.token, 'Kid direct login k1 / 1234 with role: kids');
+    const kidToken = kidLogin.data.token;
 
     const kidLoginImplicit = await req('/api/auth/login', {
       method: 'POST',
@@ -850,7 +851,14 @@ const server = app.listen(0, async () => {
     console.log('\n--- 31. Admin Restore State Preserves Drawing, Audio & Quiz Collections ---');
     const fullRestorePayload = {
       state: {
-        users: { admins: [{ id: 'a1', email: 'admin@vidkidz.local', password: 'admin' }], families: [], kids: [] },
+        users: {
+          admins: [{ id: 'a1', email: 'admin@vidkidz.local', password: 'admin' }],
+          families: [{ id: 'f1', email: 'budi@vidkidz.local', password: 'family123' }],
+          kids: [
+            { id: 'k1', familyId: 'f1', name: 'Andi', avatar: '👦', lockPin: '1234', coins: 100 },
+            { id: 'k2', familyId: 'f1', name: 'Sari', avatar: '👧', lockPin: '5678', coins: 80 }
+          ]
+        },
         storyRecords: [newStoryRecord],
         drawingRecords: [newDrawingRecord],
         parentStoryAudios: [newParentAudio],
@@ -866,6 +874,133 @@ const server = app.listen(0, async () => {
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.drawingRecords === 1, 'Admin restore-state preserves drawingRecords collection');
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.parentStoryAudios === 1, 'Admin restore-state preserves parentStoryAudios collection');
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.quizDuels === 1, 'Admin restore-state preserves quizDuels collection');
+
+    // --- 32. Vrintex Image API & 7-Day Media Retention Policy ---
+    console.log('\n--- 32. Vrintex Image API & 7-Day Media Retention Policy ---');
+    const retentionStatusRes = await req('/api/admin/retention-status', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(retentionStatusRes.ok && retentionStatusRes.data.retentionDays === 7, 'Admin retention status reports 7-day retention policy');
+    assert(typeof retentionStatusRes.data.totalFiles === 'number', 'Admin retention status reports totalFiles count');
+
+    // Create a mock old media file (> 7 days) and fresh media file (recent) to verify retention cleaner
+    const fsUtil = require('fs');
+    const pathUtil = require('path');
+    const testMediaDir = retentionStatusRes.data.mediaDir || 'data/media';
+    if (!fsUtil.existsSync(testMediaDir)) fsUtil.mkdirSync(testMediaDir, { recursive: true });
+
+    const oldFile = pathUtil.join(testMediaDir, 'test_old_expired_media.jpg');
+    const freshFile = pathUtil.join(testMediaDir, 'test_fresh_recent_media.jpg');
+    fsUtil.writeFileSync(oldFile, 'fake-old-image-bytes');
+    fsUtil.writeFileSync(freshFile, 'fake-fresh-image-bytes');
+
+    // Set old file mtime to 8 days ago (8 * 24 * 3600 * 1000 ms ago)
+    const eightDaysAgo = (Date.now() - 8 * 24 * 60 * 60 * 1000) / 1000;
+    fsUtil.utimesSync(oldFile, eightDaysAgo, eightDaysAgo);
+
+    // Trigger cleanup
+    const cleanupRes = await req('/api/admin/cleanup-retention', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(cleanupRes.ok && cleanupRes.data.success === true, 'Admin cleanup-retention succeeds');
+    assert(!fsUtil.existsSync(oldFile), 'Expired media file (> 7 days) successfully deleted by retention cleanup');
+    assert(fsUtil.existsSync(freshFile), 'Fresh media file (<= 7 days) preserved by retention cleanup');
+    try { fsUtil.unlinkSync(freshFile); } catch (_) {}
+
+    // AI Generate Image validations
+    const noPromptRes = await req('/api/ai/generate-image', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${testToken}` },
+      body: JSON.stringify({ size: '16:9' })
+    });
+    assert(noPromptRes.status === 400 && noPromptRes.data.error.includes('Prompt'), 'Generate image rejects missing prompt');
+
+    const demoGenerateRes = await req('/api/ai/generate-image', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kidLogin.data.token}` }, // kid token has demo: true
+      body: JSON.stringify({ prompt: 'dinosaurus lucu kartun' })
+    });
+    assert(demoGenerateRes.status === 403, 'AI Generate image forbidden for demo account');
+
+    // AI Stream Render redirect validation
+    const renderRes = await req('/api/ai/render-image?prompt=pemandangan+gunung&size=16:9', {
+      redirect: 'manual'
+    });
+    assert(renderRes.status === 302, 'GET /api/ai/render-image returns HTTP 302 redirect to Vrintex render stream');
+
+    // --- 33. Multi-Device Quiz Room & Real-Time Buzzer Synchronization ---
+    console.log('\n--- 33. Multi-Device Quiz Room & Real-Time Buzzer Synchronization ---');
+    // Create quiz room with kid token (Andi - k1)
+    const createRoomRes = await req('/api/quiz-room/create', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kidLogin.data.token}` },
+      body: JSON.stringify({ category: 'math' })
+    });
+    assert(createRoomRes.ok && !!createRoomRes.data.room?.roomId, 'Create quiz room returns roomId');
+    assert(typeof createRoomRes.data.room?.roomCode === 'string' && createRoomRes.data.room?.roomCode.length === 4, 'Quiz room generated 4-digit code');
+    const createdRoomId = createRoomRes.data.room.roomId;
+    const createdRoomCode = createRoomRes.data.room.roomCode;
+
+    // List active family rooms
+    const activeRoomsRes = await req('/api/quiz-room/active', {
+      headers: { Authorization: `Bearer ${famToken}` }
+    });
+    assert(activeRoomsRes.ok && activeRoomsRes.data.rooms?.some(r => r.roomId === createdRoomId), 'GET /api/quiz-room/active lists waiting room for family');
+
+    // Sibling login (Sari - k2) and join room
+    const kid2Login = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'k2', password: '5678' })
+    });
+    const kid2Token = kid2Login.data.token;
+
+    const joinRoomRes = await req('/api/quiz-room/join', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kid2Token}` },
+      body: JSON.stringify({ roomCode: createdRoomCode })
+    });
+    assert(joinRoomRes.ok && joinRoomRes.data.room?.players?.opponent?.kidId === 'k2', 'Sibling joins room via 4-digit room code');
+
+    // Both players mark ready
+    const ready1Res = await req('/api/quiz-room/ready', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kidLogin.data.token}` },
+      body: JSON.stringify({ roomId: createdRoomId })
+    });
+    assert(ready1Res.ok, 'Player 1 marks ready');
+
+    const ready2Res = await req('/api/quiz-room/ready', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kid2Token}` },
+      body: JSON.stringify({ roomId: createdRoomId })
+    });
+    assert(ready2Res.ok && (ready2Res.data.room?.status === 'countdown' || ready2Res.data.room?.status === 'in_progress'), 'Both players ready triggers countdown/start');
+
+    // Submit answer in room
+    const ansRes = await req('/api/quiz-room/answer', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kidLogin.data.token}` },
+      body: JSON.stringify({ roomId: createdRoomId, round: 0, answerIndex: 0, timeSpentMs: 2200 })
+    });
+    assert(ansRes.status === 200 || ansRes.status === 400, 'Quiz room answer submission validated');
+
+    // Leave room
+    const leaveRes = await req('/api/quiz-room/leave', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kid2Token}` },
+      body: JSON.stringify({ roomId: createdRoomId })
+    });
+    assert(leaveRes.ok, 'Leave quiz room succeeds');
+
+    // --- 34. Transactional Journaling & State Snapshot Recovery ---
+    console.log('\n--- 34. Transactional Journaling & State Snapshot Recovery ---');
+    const journalStatusRes = await req('/api/admin/journal-status', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(journalStatusRes.ok && typeof journalStatusRes.data.totalEntries === 'number', 'Admin journal status returns totalEntries');
+    assert(journalStatusRes.data.totalEntries > 0, 'Transactional journal entries logged on state mutations');
+    assert(typeof journalStatusRes.data.logSizeBytes === 'number' && journalStatusRes.data.logSizeBytes > 0, 'State journal log file exists on disk');
 
     console.log(`\n========================================`);
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);

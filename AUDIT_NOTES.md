@@ -606,7 +606,81 @@
 3. **Speech Recognition Voice Answer Mode for Quiz**:
    - Menambahkan opsi menjawab kuis menggunakan suara (anak menyebutkan pilihan jawaban secara lisan dengan evaluasi AI Speech Recognition). Effort: S-M.
 
+---
 
+## [2026-09-20] Vrintex Image API & 7-Day Media Retention Cron Integration
 
+### Area yang ditambahkan / dimodifikasi
+- `.env` & `.env.example`:
+  - `IMAGE_API_BASE_URL=https://image.vrintex.id/v1`
+  - `IMAGE_API_KEY=***`
+  - `IMAGE_MODEL=ag/gemini-3.1-flash-image`
+  - `IMAGE_API_LAN_URL=http://192.168.1.14:8092/v1`
+  - `IMAGE_RETENTION_DAYS=7`
+- `server.js`:
+  - Cron cleanup retention file media (`runMediaRetentionCleanup()`): membersihkan file media di `data/media` yang berumur > 7 hari (`IMAGE_RETENTION_DAYS`), dieksekusi saat server start dan terjadwal otomatis setiap 24 jam (`setInterval().unref()`).
+  - Implementasi native fetch generation `generateImage(prompt, size)` zero-dependency ke endpoint `/images/generations` dengan model `ag/gemini-3.1-flash-image` dan validasi rasio (`1:1`, `16:9`, `9:16`, `4:3`).
+  - Endpoint API `POST /api/ai/generate-image`: pembuatan gambar AI aman dengan kontrol otentikasi JWT dan proteksi akun demo.
+  - Endpoint Direct Stream Render `GET /api/ai/render-image`: redirect HTTP 302 ke Vrintex render stream.
+  - Endpoint manajemen retention: `GET /api/admin/retention-status` & `POST /api/admin/cleanup-retention`.
+- `test-server.js`:
+  - Penambahan Test Group 32: Vrintex Image API & 7-Day Media Retention Policy (8 assertions: cek retensi 7 hari, penghapusan file lama > 7 hari, preservasi file baru <= 7 hari, validasi prompt, larangan demo, dan redirect render stream).
 
+### Hasil Pengujian & Verifikasi
+- `npm test` -> **119 passed, 0 failed** (seluruh 32 grup pengujian lulus 100%).
+- `node -c server.js` & `node -c test-server.js` -> PASS (sintaks valid).
 
+---
+
+## [2026-09-20] Audit & Feature Implementation Run #15 — Multi-Device Real-Time Quiz Room (SSE & Buzzer), AI Voice Assistant & Transactional State Journaling (Autonomous MAX++++++)
+
+### Area yang sudah diaudit & diimplementasikan
+- **Multi-Device Real-Time Sibling Quiz Room & Live Buzzer Synchronization (`server.js` & `KidsQuizDuel`)**:
+  - Dukungan duel kuis online multi-device 2 gadget terpisah secara bersamaan (Kakak & Adik bermain di HP masing-masing):
+    1. *Host Room Creation (`POST /api/quiz-room/create`)*: Pemain pertama membuat room duel dengan 4-digit room code acak (misal `7421`) dan memilih kategori soal.
+    2. *Active Family Room Discovery (`GET /api/quiz-room/active`)*: Gadget saudara di keluarga yang sama dapat mendeteksi room aktif yang sedang menunggu tanpa harus mengetik kode, atau bisa mengetikkan 4-digit kode secara langsung.
+    3. *Room Joining (`POST /api/quiz-room/join`)*: Pemain kedua bergabung ke room dengan isolasi `familyId` yang ketat.
+    4. *Server-Sent Events Real-Time Streaming (`GET /api/quiz-room/stream/:roomId`)*: Koneksi persistent HTTP SSE stream dengan heartbeat ping berkala mengirimkan event instan `room_init`, `room_update`, `countdown`, `round_start`, `player_answered`, `round_result`, dan `game_over`.
+    5. *Live Buzzer Indicator*: Saat salah satu pemain menjawab, layar lawan langsung menampilkan alert real-time beranimasi kilat: `"⚡ {Lawan} sudah memencet jawaban! Cepat pencet pilihanmu!"`.
+    6. *Speed Bonus Scoring*: Poin 20 poin per jawaban tepat + bonus kecepatan 5 poin bagi pemain tercepat yang menjawab benar di ronde tersebut.
+    7. *Synchronized Round Evaluation & Victory Podium*: Evaluasi serempak di kedua gadget, kalkulasi skor transparan, pemberian bonus koin (+15 pemenang, +10 seri, +5 partisipasi), dan dispatch notifikasi real-time Telegram ke orang tua.
+- **AI Voice Quiz Assistant (Web Speech API Recognition & TTS Audio Narration) (`KidsQuizDuel` di `public/index.html`)**:
+  - *Audio Narration (Text-to-Speech / TTS)*:
+    - Tombol `🔊 Bacakan Soal` menggunakan browser native `window.speechSynthesis` dengan intonasi ramah anak berbahasa Indonesia (`lang: 'id-ID'`, `rate: 0.9`, `pitch: 1.05`).
+    - Membacakan soal dan 4 pilihan jawaban (A, B, C, D) sehingga sangat ramah untuk anak usia dini (balita/TK) yang belum lancar membaca teks panjang.
+    - Opsi toggle `Suara Otomatis: ON/OFF` untuk membacakan pertanyaan secara otomatis di setiap ronde.
+  - *Voice Answer (Speech-to-Text / STT)*:
+    - Tombol interaktif `🎙️ Jawab Pakai Suara` berbasis `window.SpeechRecognition` / `window.webkitSpeechRecognition`.
+    - Mendeteksi ucapan huruf opsi ("A", "B", "C", "D" atau "Satu", "Dua", "Tiga", "Empat") maupun kata kunci jawaban (misal "Bumi", "Indonesia", "Jujur").
+    - Algoritma pencocokan kemiripan kata otomatis memetakan ucapan anak ke opsi yang paling tepat, memberikan umpan balik visual transkripsi ucapan, dan mengunci jawaban secara instan.
+- **Transactional Journaling & Dual-Engine Snapshot State Recovery (`server.js`)**:
+  - Peningkatan engine penyimpanan `saveState()`:
+    - Write-ahead atomic tmp file (`vidkidz-state.json.<pid>.<ts>.tmp`) dan rename instan.
+    - Transactional journal log di `data/journal/state-journal.log` mencatat setiap mutasi state lengkap dengan timestamp, ukuran payload, dan hash update.
+    - Snapshot backup berkala (`data/journal/vidkidz-state-snapshot.json`) setiap 20 kali penyimpanan data.
+    - Auto-recovery pintar pada `getState()`: jika flat file JSON utama terinterupsi/korup, sistem memulihkan diri secara otomatis dari snapshot journal tanpa menghapus data pengguna.
+    - Endpoint pemantauan admin: `GET /api/admin/journal-status`.
+- **Service Worker & PWA Invalidation (`public/sw.js` & `package.json`)**:
+  - Bump `APP_VERSION` ke `5.2.21` dan `CACHE_VERSION` ke `v44`.
+- **Automated Test Suite (`test-server.js`)**:
+  - Penambahan Test Group 33: Multi-Device Quiz Room & Real-Time Buzzer Synchronization (8 assertions).
+  - Penambahan Test Group 34: Transactional Journaling & State Snapshot Recovery (3 assertions).
+  - Total pengujian meningkat menjadi: **130 passed, 0 failed** (100% pass rate di 34 grup pengujian).
+
+### Hasil Pengujian & Verifikasi
+1. **Automated Suite**:
+   - `npm test` -> **130 passed, 0 failed** (seluruh 34 grup pengujian lulus 100%).
+2. **Sintaks Transpilasi Babel / React Standalone**:
+   - `scratch/verify_babel.js` -> PASS (0 syntax errors, panjang output transpilasi 524.031 karakter).
+3. **Endpoint Server & PWA Shell**:
+   - `GET /api/health` -> HTTP 200 `{"status":"ok","version":"5.2.21","assetVersion":"v33"}`.
+   - `POST /api/quiz-room/create` -> HTTP 200 Room Created with 4-digit code.
+   - `GET /api/quiz-room/active` -> HTTP 200 Active family rooms listed.
+   - `POST /api/quiz-room/join` -> HTTP 200 Sibling joined room.
+   - `GET /api/admin/journal-status` -> HTTP 200 Transactional journal active with audit records.
+
+### Rekomendasi Fitur Lanjutan Berikutnya (Next Iterations)
+1. **Interactive Kids Voice Chatbot Companion (Tanya Si Kancil AI)**:
+   - Fitur bot edukatif interaktif suara berbasis AI di beranda anak di mana anak bisa berbicara langsung bertanya tentang sains, agama, atau budi pekerti dan mendapat respon suara hangat. Effort: M.
+2. **Audio File Object Storage (Cloudflare R2 / AWS S3 / MinIO)**:
+   - Memindahkan data Base64 rekaman suara orang tua dan lukisan kanvas anak ke object storage mandiri dengan signed URL untuk efisiensi penyimpanan jangka panjang. Effort: M.

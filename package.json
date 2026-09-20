@@ -1,6 +1,6 @@
 {
   "name": "vidkidz",
-  "version": "5.2.20",
+  "version": "5.2.21",
   "description": "VIDKIDZ - Platform Edukasi Video Terproteksi untuk Anak",
   "main": "server.js",
   "scripts": {

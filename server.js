@@ -11,7 +11,7 @@ const os = require('os');
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'vidkidz-secret-change-in-prod';
 const JWT_EXPIRES = '30d';
-const APP_VERSION = process.env.APP_VERSION || '5.2.20';
+const APP_VERSION = process.env.APP_VERSION || '5.2.21';
 const ASSET_VERSION = 'v33';
 const ADMIN_LOGIN_ENABLED = process.env.ALLOW_ADMIN_LOGIN !== 'false';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -22,9 +22,14 @@ const DATA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-data') : p
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const MEDIA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-media') : path.join(DATA_DIR, 'media');
 if (!fs.existsSync(MEDIA_DIR)) fs.mkdirSync(MEDIA_DIR, { recursive: true });
+const JOURNAL_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-journal') : path.join(DATA_DIR, 'journal');
+if (!fs.existsSync(JOURNAL_DIR)) fs.mkdirSync(JOURNAL_DIR, { recursive: true });
+const JOURNAL_LOG_FILE = path.join(JOURNAL_DIR, 'state-journal.log');
+const SNAPSHOT_FILE = path.join(JOURNAL_DIR, 'vidkidz-state-snapshot.json');
 const STATE_FILE = path.join(DATA_DIR, 'vidkidz-state.json');
 let stateCache = null;
 let stateUpdatedAt = 0;
+let stateSaveCounter = 0;
 
 // ─── Image API & Retention Config ──────────────────────────────────────────
 const IMAGE_API_BASE_URL = process.env.IMAGE_API_BASE_URL || 'https://image.vrintex.id/v1';
@@ -236,7 +241,18 @@ function getState() {
     stateUpdatedAt = persisted.updatedAt || Date.now();
     stateCache = persisted.state || persisted;
   } catch (err) {
-    console.error('State file read error, restoring initial state:', err);
+    console.error('State file read error, attempting snapshot recovery:', err);
+    if (fs.existsSync(SNAPSHOT_FILE)) {
+      try {
+        const snap = JSON.parse(fs.readFileSync(SNAPSHOT_FILE, 'utf8'));
+        if (snap.state) {
+          console.log('✅ State successfully restored from snapshot backup');
+          saveState(snap.state);
+          return stateCache;
+        }
+      } catch (_) {}
+    }
+    console.error('Snapshot unavailable, restoring initial state:', err);
     saveState(INITIAL_STATE);
     return stateCache;
   }
@@ -277,6 +293,35 @@ function getState() {
   return stateCache;
 }
 
+function appendJournalEntry(action, sizeBytes) {
+  try {
+    const entry = JSON.stringify({
+      ts: Date.now(),
+      action,
+      size: sizeBytes,
+      updatedAt: stateUpdatedAt
+    }) + '\n';
+    fs.appendFileSync(JOURNAL_LOG_FILE, entry, 'utf8');
+
+    // Create periodic snapshot every 20 state updates
+    stateSaveCounter++;
+    if (stateSaveCounter % 20 === 0 && stateCache) {
+      fs.writeFileSync(SNAPSHOT_FILE, JSON.stringify({ snapshotAt: Date.now(), state: stateCache }), 'utf8');
+    }
+
+    // Auto-rotate journal log if > 500KB
+    try {
+      const stats = fs.statSync(JOURNAL_LOG_FILE);
+      if (stats.size > 500 * 1024) {
+        const oldLog = path.join(JOURNAL_DIR, `state-journal-${Date.now()}.log.bak`);
+        fs.renameSync(JOURNAL_LOG_FILE, oldLog);
+      }
+    } catch (_) {}
+  } catch (err) {
+    console.warn('[Journal] Warning writing journal log:', err.message);
+  }
+}
+
 function saveState(state) {
   stateCache = state;
   stateUpdatedAt = Date.now();
@@ -290,6 +335,7 @@ function saveState(state) {
       fs.writeFileSync(STATE_FILE, jsonStr, 'utf8');
       try { fs.unlinkSync(tmpFile); } catch (_) {}
     }
+    appendJournalEntry('save_state', Buffer.byteLength(jsonStr, 'utf8'));
   } catch (err) {
     fs.writeFileSync(STATE_FILE, jsonStr, 'utf8');
   }
@@ -1846,6 +1892,598 @@ app.get('/api/admin/retention-status', authMiddleware, (req, res) => {
     totalFiles,
     totalBytes,
     mediaDir: MEDIA_DIR
+  });
+});
+
+// ── MULTI-DEVICE SIBLING QUIZ ROOM & SSE ENGINE ─────────────────────────────
+const SERVER_QUIZ_BANKS = {
+  math: {
+    id: 'math',
+    title: 'Matematika Cepat',
+    emoji: '🔢',
+    color: '#0078ff',
+    desc: 'Uji kecepatan berhitung tambah, kurang & kali!',
+    questions: [
+      { q: 'Berapakah 7 + 8?', options: ['13', '14', '15', '16'], answer: 2 },
+      { q: 'Berapakah 25 - 9?', options: ['16', '15', '14', '17'], answer: 0 },
+      { q: 'Berapakah 6 × 4?', options: ['20', '24', '28', '22'], answer: 1 },
+      { q: 'Ibu beli 12 jeruk, dimakan 4. Berapa sisa jeruk?', options: ['6', '7', '8', '9'], answer: 2 },
+      { q: 'Berapakah 50 : 5?', options: ['5', '8', '10', '12'], answer: 2 },
+      { q: 'Berapakah 9 + 9 + 2?', options: ['18', '20', '19', '21'], answer: 1 },
+      { q: 'Berapakah 8 × 3?', options: ['21', '24', '27', '25'], answer: 1 },
+      { q: 'Berapakah 40 - 15?', options: ['25', '20', '35', '30'], answer: 0 },
+      { q: 'Berapakah 15 + 17?', options: ['30', '31', '32', '33'], answer: 2 },
+      { q: 'Berapakah 9 × 5?', options: ['40', '45', '50', '35'], answer: 1 }
+    ]
+  },
+  adab: {
+    id: 'adab',
+    title: 'Cerdas Budi Pekerti',
+    emoji: '🕌',
+    color: '#10b981',
+    desc: 'Latih adab sopan santun dan akhlak mulia sehari-hari',
+    questions: [
+      { q: 'Ketika bertemu orang yang lebih tua, kita sebaiknya...?', options: ['Mengabaikan', 'Menyapa & Salim dengan sopan', 'Berlari kencang', 'Berteriak'], answer: 1 },
+      { q: 'Sebelum makan dan minum, kita harus membaca doa dan menggunakan tangan...?', options: ['Kiri', 'Kanan', 'Bebas', 'Kedua tangan'], answer: 1 },
+      { q: 'Jika kita meminjam mainan teman, yang harus kita lakukan adalah...?', options: ['Membawa pulang', 'Merusaknya', 'Mengembalikan & Ucap terima kasih', 'Menyembunyikannya'], answer: 2 },
+      { q: 'Budi pekerti yang baik saat berbuat salah adalah...?', options: ['Menyalahkan orang lain', 'Meminta maaf dengan jujur', 'Pura-pura tidak tahu', 'Marah-marah'], answer: 1 },
+      { q: 'Jika melihat sampah di lantai rumah, sikap anak yang baik adalah...?', options: ['Membiarkannya', 'Membuang ke tempat sampah', 'Menendangnya', 'Menyuruh adik'], answer: 1 },
+      { q: 'Adab ketika berbicara kepada orang tua adalah...?', options: ['Lembut dan sopan', 'Membentak', 'Sambil marah', 'Menutup telinga'], answer: 0 },
+      { q: 'Ketika teman sedang beribadah atau belajar, kita sebaiknya...?', options: ['Mengganggunya', 'Menghormati & Menjaga ketenangan', 'Bercanda keras', 'Menyalakan musik kencang'], answer: 1 },
+      { q: 'Sikap kita jika ada teman yang terjatuh adalah...?', options: ['Menertawakannya', 'Segera menolong & Menanyakan keadaannya', 'Tinggal pergi', 'Memfoto'], answer: 1 }
+    ]
+  },
+  sains: {
+    id: 'sains',
+    title: 'Sains & Alam Cilik',
+    emoji: '🌿',
+    color: '#06b6d4',
+    desc: 'Petualangan seru mengenal hewan, bumi & sains!',
+    questions: [
+      { q: 'Planet tempat tinggal manusia bernama planet apa?', options: ['Mars', 'Bumi', 'Jupiter', 'Saturnus'], answer: 1 },
+      { q: 'Hewan yang bisa hidup di darat dan di air disebut hewan...?', options: ['Mamalia', 'Unggas', 'Amfibi', 'Reptil'], answer: 2 },
+      { q: 'Tumbuhan membutuhkan sinar apa untuk fotosintesis?', options: ['Sinar Lampu', 'Sinar Matahari', 'Sinar Bulan', 'Sinar Lilin'], answer: 1 },
+      { q: 'Berapakah jumlah kaki pada seekor laba-laba?', options: ['6', '8', '10', '4'], answer: 1 },
+      { q: 'Benda yang dapat ditarik oleh magnet biasanya terbuat dari...?', options: ['Plastik', 'Kayu', 'Besi', 'Kaca'], answer: 2 },
+      { q: 'Zat yang dihirup manusia saat bernapas adalah...?', options: ['Oksigen', 'Karbon', 'Nitrogen', 'Hidrogen'], answer: 0 },
+      { q: 'Hewan mamalia terbesar di lautan adalah...?', options: ['Ikan Hiu', 'Paus Biru', 'Lumba-lumba', 'Pari Manta'], answer: 1 },
+      { q: 'Air akan membeku menjadi es pada suhu...?', options: ['0 Derajat Celcius', '10 Derajat', '50 Derajat', '100 Derajat'], answer: 0 }
+    ]
+  },
+  bendera: {
+    id: 'bendera',
+    title: 'Tebak Bendera & Dunia',
+    emoji: '🚩',
+    color: '#f59e0b',
+    desc: 'Keliling dunia mengenal bendera & budaya negara!',
+    questions: [
+      { q: 'Bendera negara manakah yang berwarna Merah Putih?', options: ['Indonesia', 'Jepang', 'Singapura', 'Malaysia'], answer: 0 },
+      { q: 'Bendera putih dengan lingkaran merah di tengah adalah bendera...?', options: ['Korea', 'Jepang', 'Tiongkok', 'Vietnam'], answer: 1 },
+      { q: 'Ibu kota negara Indonesia di Kalimantan Timur adalah...?', options: ['IKN Nusantara', 'Surabaya', 'Bandung', 'Medan'], answer: 0 },
+      { q: 'Bendera negara yang memiliki simbol bulan sabit dan bintang adalah...?', options: ['Turki & Malaysia', 'Prancis', 'Jerman', 'Inggris'], answer: 0 },
+      { q: 'Menara Eiffel yang terkenal berada di negara...?', options: ['Italia', 'Prancis', 'Belanda', 'Spanyol'], answer: 1 },
+      { q: 'Hewan berkantung yang menjadi ikon benua Australia adalah...?', options: ['Panda', 'Kangguru', 'Kucing', 'Zebra'], answer: 1 },
+      { q: 'Gunung tertinggi di dunia adalah Gunung...?', options: ['Semeru', 'Fuji', 'Everest', 'Kilimanjaro'], answer: 2 },
+      { q: 'Negara kincir angin dan bunga tulip adalah julukan untuk negara...?', options: ['Belanda', 'Swiss', 'Spanyol', 'Denmark'], answer: 0 }
+    ]
+  }
+};
+
+const activeQuizRooms = new Map();
+
+function sanitizeQuizRoom(room) {
+  if (!room) return null;
+  return {
+    roomId: room.roomId,
+    roomCode: room.roomCode,
+    familyId: room.familyId,
+    category: room.category,
+    title: room.title,
+    status: room.status,
+    createdAt: room.createdAt,
+    currentRound: room.currentRound,
+    roundStartTime: room.roundStartTime,
+    players: {
+      challenger: room.players.challenger ? { ...room.players.challenger } : null,
+      opponent: room.players.opponent ? { ...room.players.opponent } : null
+    },
+    questions: (room.questions || []).map((q, idx) => {
+      const qClone = { q: q.q, options: q.options };
+      if (room.status === 'round_result' || room.status === 'finished' || idx < room.currentRound) {
+        qClone.answer = q.answer;
+      }
+      return qClone;
+    }),
+    currentQuestion: room.questions[room.currentRound] ? {
+      q: room.questions[room.currentRound].q,
+      options: room.questions[room.currentRound].options,
+      round: room.currentRound,
+      totalRounds: room.questions.length,
+      ...(room.status === 'round_result' || room.status === 'finished' ? { answer: room.questions[room.currentRound].answer } : {})
+    } : null,
+    roundResult: room.roundResult || null,
+    finalResult: room.finalResult || null
+  };
+}
+
+function broadcastQuizRoom(room, eventType, data = {}) {
+  if (!room || !Array.isArray(room.sseClients)) return;
+  const payload = { type: eventType, room: sanitizeQuizRoom(room), ...data };
+  const message = `event: ${eventType}\ndata: ${JSON.stringify(payload)}\n\n`;
+  const deadClients = [];
+  room.sseClients.forEach((client, idx) => {
+    try {
+      client.write(message);
+    } catch (_) {
+      deadClients.push(idx);
+    }
+  });
+  if (deadClients.length > 0) {
+    room.sseClients = room.sseClients.filter((_, idx) => !deadClients.includes(idx));
+  }
+}
+
+function evaluateRound(room) {
+  if (room.status !== 'in_progress') return;
+  const roundIdx = room.currentRound;
+  const currQ = room.questions[roundIdx];
+  const chAns = room.players.challenger?.answers?.find(a => a.round === roundIdx);
+  const opAns = room.players.opponent?.answers?.find(a => a.round === roundIdx);
+
+  room.status = 'round_result';
+  room.roundResult = {
+    round: roundIdx,
+    correctAnswer: currQ.answer,
+    correctOption: currQ.options[currQ.answer],
+    challenger: chAns ? { answer: chAns.answer, isCorrect: chAns.isCorrect, pointsEarned: chAns.points } : { answer: null, isCorrect: false, pointsEarned: 0 },
+    opponent: opAns ? { answer: opAns.answer, isCorrect: opAns.isCorrect, pointsEarned: opAns.points } : { answer: null, isCorrect: false, pointsEarned: 0 }
+  };
+
+  broadcastQuizRoom(room, 'round_result', { roundResult: room.roundResult });
+
+  // Schedule next round after 3.5s
+  setTimeout(() => {
+    if (!activeQuizRooms.has(room.roomId)) return;
+    if (roundIdx + 1 < room.questions.length) {
+      room.currentRound = roundIdx + 1;
+      room.status = 'in_progress';
+      room.roundStartTime = Date.now();
+      room.roundResult = null;
+      broadcastQuizRoom(room, 'round_start', { round: room.currentRound });
+    } else {
+      finalizeRoomGame(room);
+    }
+  }, 3500);
+}
+
+function finalizeRoomGame(room) {
+  room.status = 'finished';
+  const p1 = room.players.challenger;
+  const p2 = room.players.opponent;
+  let winnerId = null;
+  let winnerName = null;
+  if (p1.score > p2.score) {
+    winnerId = p1.kidId;
+    winnerName = p1.name;
+  } else if (p2.score > p1.score) {
+    winnerId = p2.kidId;
+    winnerName = p2.name;
+  } else {
+    winnerId = 'draw';
+    winnerName = 'Seri';
+  }
+
+  const duelRecord = {
+    id: `qduel_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    familyId: room.familyId,
+    category: room.category,
+    title: room.title,
+    challengerKidId: p1.kidId,
+    challengerKidName: p1.name,
+    challengerAvatar: p1.avatar,
+    challengerScore: p1.score,
+    challengerTimeSeconds: p1.answers.reduce((acc, a) => acc + Math.round((a.timeMs || 0)/1000), 0) || 40,
+    opponentKidId: p2.kidId,
+    opponentKidName: p2.name,
+    opponentAvatar: p2.avatar,
+    opponentScore: p2.score,
+    opponentTimeSeconds: p2.answers.reduce((acc, a) => acc + Math.round((a.timeMs || 0)/1000), 0) || 40,
+    winnerKidId: winnerId,
+    winnerKidName: winnerName,
+    status: 'completed',
+    createdAt: Date.now(),
+    rewardCoins: 15,
+    mode: 'online_room',
+    roomCode: room.roomCode
+  };
+
+  const state = getState();
+  if (!Array.isArray(state.quizDuels)) state.quizDuels = [];
+  state.quizDuels.unshift(duelRecord);
+
+  // Coins reward: +15 winner, +10 draw, +5 participation
+  const p1Kid = (state.users.kids || []).find(k => k.id === p1.kidId);
+  const p2Kid = (state.users.kids || []).find(k => k.id === p2.kidId);
+  if (winnerId === p1.kidId) {
+    if (p1Kid) p1Kid.coins = (p1Kid.coins || 0) + 15;
+    if (p2Kid) p2Kid.coins = (p2Kid.coins || 0) + 5;
+  } else if (winnerId === p2.kidId) {
+    if (p2Kid) p2Kid.coins = (p2Kid.coins || 0) + 15;
+    if (p1Kid) p1Kid.coins = (p1Kid.coins || 0) + 5;
+  } else {
+    if (p1Kid) p1Kid.coins = (p1Kid.coins || 0) + 10;
+    if (p2Kid) p2Kid.coins = (p2Kid.coins || 0) + 10;
+  }
+  saveState(state);
+
+  // Telegram real-time alert to parent
+  const parentFam = (state.users.families || []).find(f => f.id === room.familyId);
+  if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyQuizzes !== false) {
+    const text = `🏆 *VIDKIDZ — Duel Online Multi-Device Selesai!*\n\n` +
+      `🥊 *Kategori:* ${room.title}\n` +
+      `👦 *${p1.name}:* ${p1.score} Poin\n` +
+      `👧 *${p2.name}:* ${p2.score} Poin\n` +
+      `👑 *Hasil:* ${winnerId === 'draw' ? 'Pertandingan Seri! 🤝' : winnerName + ' Juara! 🎉'}\n` +
+      `🪙 *Koin Ditambahkan Otomatis ke Dompet Anak*\n` +
+      `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+      `👏 Kakak & Adik bermain sportif di gadget masing-masing!`;
+    sendTelegramNotification({
+      token: parentFam.telegramConfig.token,
+      chatId: parentFam.telegramConfig.chatId,
+      text
+    }).catch(() => {});
+  }
+
+  room.finalResult = {
+    winnerKidId: winnerId,
+    winnerKidName: winnerName,
+    p1Score: p1.score,
+    p2Score: p2.score,
+    duelRecordId: duelRecord.id
+  };
+
+  broadcastQuizRoom(room, 'game_over', { finalResult: room.finalResult });
+}
+
+// Inactive rooms cleanup interval (30 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, room] of activeQuizRooms.entries()) {
+    if (now - room.createdAt > 30 * 60 * 1000) {
+      if (Array.isArray(room.sseClients)) {
+        room.sseClients.forEach(c => {
+          try { c.end(); } catch (_) {}
+        });
+      }
+      activeQuizRooms.delete(id);
+    }
+  }
+}, 5 * 60 * 1000);
+
+// POST /api/quiz-room/create — Buat room duel kuis online multi-device
+app.post('/api/quiz-room/create', authMiddleware, (req, res) => {
+  const state = getState();
+  let currentKid = null;
+  if (req.user.role === 'kids') {
+    currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+  } else if (req.user.role === 'family') {
+    const kidId = req.body.kidId;
+    currentKid = (state.users.kids || []).find(k => k.familyId === req.user.id && (!kidId || k.id === kidId));
+  }
+  if (!currentKid) {
+    return res.status(403).json({ error: 'Data profil anak tidak ditemukan untuk membuat room' });
+  }
+
+  const category = (req.body.category && SERVER_QUIZ_BANKS[req.body.category]) ? req.body.category : 'math';
+  const bank = SERVER_QUIZ_BANKS[category];
+  const selectedQuestions = [...bank.questions].sort(() => 0.5 - Math.random()).slice(0, 5);
+
+  let roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+  // Ensure uniqueness
+  while (Array.from(activeQuizRooms.values()).some(r => r.roomCode === roomCode && r.status === 'waiting')) {
+    roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  const room = {
+    roomId: `room_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    roomCode,
+    familyId: currentKid.familyId,
+    category,
+    title: bank.title,
+    status: 'waiting',
+    createdAt: Date.now(),
+    currentRound: 0,
+    roundStartTime: null,
+    questions: selectedQuestions,
+    players: {
+      challenger: {
+        kidId: currentKid.id,
+        name: currentKid.name,
+        avatar: currentKid.avatar || '👦',
+        score: 0,
+        answers: [],
+        ready: false
+      },
+      opponent: null
+    },
+    roundResult: null,
+    finalResult: null,
+    sseClients: []
+  };
+
+  activeQuizRooms.set(room.roomId, room);
+  return res.json({ success: true, room: sanitizeQuizRoom(room) });
+});
+
+// GET /api/quiz-room/active — Daftar room aktif keluarga yang sedang menunggu
+app.get('/api/quiz-room/active', authMiddleware, (req, res) => {
+  const familyId = req.user.role === 'family' ? req.user.id : (req.user.familyId || '');
+  const activeRooms = [];
+  for (const room of activeQuizRooms.values()) {
+    if (room.familyId === familyId && room.status === 'waiting') {
+      activeRooms.push(sanitizeQuizRoom(room));
+    }
+  }
+  return res.json({ success: true, rooms: activeRooms });
+});
+
+// POST /api/quiz-room/join — Gabung ke room duel kuis online
+app.post('/api/quiz-room/join', authMiddleware, (req, res) => {
+  const state = getState();
+  let currentKid = null;
+  if (req.user.role === 'kids') {
+    currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+  } else if (req.user.role === 'family') {
+    const kidId = req.body.kidId;
+    currentKid = (state.users.kids || []).find(k => k.familyId === req.user.id && (!kidId || k.id === kidId));
+  }
+  if (!currentKid) {
+    return res.status(403).json({ error: 'Data profil anak tidak ditemukan untuk bergabung' });
+  }
+
+  const { roomId, roomCode } = req.body || {};
+  let targetRoom = null;
+  for (const r of activeQuizRooms.values()) {
+    if (roomId && r.roomId === roomId) { targetRoom = r; break; }
+    if (roomCode && r.roomCode === String(roomCode).trim()) { targetRoom = r; break; }
+  }
+
+  if (!targetRoom) {
+    return res.status(404).json({ error: 'Room tidak ditemukan atau sudah selesai' });
+  }
+  if (targetRoom.familyId !== currentKid.familyId) {
+    return res.status(403).json({ error: 'Room ini hanya untuk anggota keluarga yang sama' });
+  }
+  if (targetRoom.status !== 'waiting') {
+    return res.status(400).json({ error: 'Room sudah penuh atau permainan sudah berlangsung' });
+  }
+  if (targetRoom.players.challenger.kidId === currentKid.id) {
+    return res.status(400).json({ error: 'Kamu adalah pembuat room ini' });
+  }
+
+  targetRoom.players.opponent = {
+    kidId: currentKid.id,
+    name: currentKid.name,
+    avatar: currentKid.avatar || '👧',
+    score: 0,
+    answers: [],
+    ready: false
+  };
+
+  broadcastQuizRoom(targetRoom, 'room_update', { event: 'player_joined' });
+  return res.json({ success: true, room: sanitizeQuizRoom(targetRoom) });
+});
+
+// GET /api/quiz-room/stream/:roomId — Server-Sent Events (SSE) Real-Time Synchronization Stream
+app.get('/api/quiz-room/stream/:roomId', (req, res) => {
+  const { roomId } = req.params;
+  const room = activeQuizRooms.get(roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room tidak ditemukan' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  // Send initial ping and room state
+  res.write(`: ping\n\n`);
+  res.write(`event: room_init\ndata: ${JSON.stringify({ type: 'room_init', room: sanitizeQuizRoom(room) })}\n\n`);
+
+  room.sseClients.push(res);
+
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(`: ping\n\n`);
+    } catch (_) {
+      clearInterval(heartbeat);
+    }
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    room.sseClients = room.sseClients.filter(c => c !== res);
+  });
+});
+
+// POST /api/quiz-room/ready — Pemain menandai siap
+app.post('/api/quiz-room/ready', authMiddleware, (req, res) => {
+  const { roomId } = req.body || {};
+  const room = activeQuizRooms.get(roomId);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan' });
+
+  const kidId = req.user.role === 'kids' ? req.user.id : req.body.kidId;
+  let playerFound = false;
+
+  if (room.players.challenger && room.players.challenger.kidId === kidId) {
+    room.players.challenger.ready = true;
+    playerFound = true;
+  }
+  if (room.players.opponent && room.players.opponent.kidId === kidId) {
+    room.players.opponent.ready = true;
+    playerFound = true;
+  }
+  if (!playerFound) {
+    return res.status(403).json({ error: 'Pemain tidak terdaftar dalam room ini' });
+  }
+
+  // Check if both ready to start
+  if (room.players.challenger?.ready && room.players.opponent?.ready && room.status === 'waiting') {
+    room.status = 'countdown';
+    broadcastQuizRoom(room, 'countdown', { count: 3 });
+
+    setTimeout(() => {
+      if (!activeQuizRooms.has(room.roomId)) return;
+      room.status = 'in_progress';
+      room.currentRound = 0;
+      room.roundStartTime = Date.now();
+      broadcastQuizRoom(room, 'round_start', { round: 0 });
+    }, 3000);
+  } else {
+    broadcastQuizRoom(room, 'room_update', { event: 'player_ready' });
+  }
+
+  return res.json({ success: true, room: sanitizeQuizRoom(room) });
+});
+
+// POST /api/quiz-room/answer — Pemain mengirim jawaban kuis real-time
+app.post('/api/quiz-room/answer', authMiddleware, (req, res) => {
+  const { roomId, round, answerIndex, timeSpentMs = 0 } = req.body || {};
+  const room = activeQuizRooms.get(roomId);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan' });
+  if (room.status !== 'in_progress') {
+    return res.status(400).json({ error: 'Babak kuis belum dimulai atau sudah selesai' });
+  }
+  if (round !== room.currentRound) {
+    return res.status(400).json({ error: 'Nomor babak tidak cocok' });
+  }
+
+  const kidId = req.user.role === 'kids' ? req.user.id : req.body.kidId;
+  let playerKey = null;
+  if (room.players.challenger?.kidId === kidId) playerKey = 'challenger';
+  else if (room.players.opponent?.kidId === kidId) playerKey = 'opponent';
+
+  if (!playerKey) {
+    return res.status(403).json({ error: 'Pemain tidak terdaftar dalam room ini' });
+  }
+
+  const player = room.players[playerKey];
+  const existingAns = player.answers.find(a => a.round === round);
+  if (existingAns) {
+    return res.status(400).json({ error: 'Kamu sudah menjawab soal babak ini' });
+  }
+
+  const currQ = room.questions[round];
+  const isCorrect = answerIndex === currQ.answer;
+
+  // Scoring: 20 points base + 5 speed bonus for first correct answer
+  let points = isCorrect ? 20 : 0;
+  const otherKey = playerKey === 'challenger' ? 'opponent' : 'challenger';
+  const otherPlayer = room.players[otherKey];
+  const otherAns = otherPlayer?.answers?.find(a => a.round === round);
+
+  if (isCorrect && (!otherAns || !otherAns.isCorrect)) {
+    points += 5; // Speed buzzer bonus!
+  }
+
+  player.score += points;
+  player.answers.push({
+    round,
+    answer: answerIndex,
+    isCorrect,
+    points,
+    timeMs: timeSpentMs,
+    answeredAt: Date.now()
+  });
+
+  // Broadcast buzzer indicator to other player
+  broadcastQuizRoom(room, 'player_answered', {
+    buzzedPlayer: {
+      kidId: player.kidId,
+      name: player.name
+    }
+  });
+
+  // If both players have answered, evaluate round immediately
+  const p1Ans = room.players.challenger?.answers?.find(a => a.round === round);
+  const p2Ans = room.players.opponent?.answers?.find(a => a.round === round);
+
+  if (p1Ans && p2Ans) {
+    evaluateRound(room);
+  }
+
+  return res.json({
+    success: true,
+    isCorrect,
+    pointsEarned: points,
+    currentScore: player.score
+  });
+});
+
+// POST /api/quiz-room/leave — Keluar dari room
+app.post('/api/quiz-room/leave', authMiddleware, (req, res) => {
+  const { roomId } = req.body || {};
+  const room = activeQuizRooms.get(roomId);
+  if (room) {
+    broadcastQuizRoom(room, 'player_left', { leaverId: req.user.id });
+    if (room.status === 'waiting') {
+      activeQuizRooms.delete(roomId);
+    }
+  }
+  return res.json({ success: true });
+});
+
+// GET /api/quiz-room/status/:roomId — Polling status fallback
+app.get('/api/quiz-room/status/:roomId', authMiddleware, (req, res) => {
+  const { roomId } = req.params;
+  const room = activeQuizRooms.get(roomId);
+  if (!room) return res.status(404).json({ error: 'Room tidak ditemukan' });
+  return res.json({ success: true, room: sanitizeQuizRoom(room) });
+});
+
+// GET /api/admin/journal-status — Periksa status transactional journal & snapshot
+app.get('/api/admin/journal-status', authMiddleware, adminOnly, (req, res) => {
+  let logSizeBytes = 0;
+  let totalEntries = 0;
+  let lastEntry = null;
+
+  if (fs.existsSync(JOURNAL_LOG_FILE)) {
+    try {
+      const stats = fs.statSync(JOURNAL_LOG_FILE);
+      logSizeBytes = stats.size;
+      const content = fs.readFileSync(JOURNAL_LOG_FILE, 'utf8').trim();
+      if (content) {
+        const lines = content.split('\n');
+        totalEntries = lines.length;
+        try { lastEntry = JSON.parse(lines[lines.length - 1]); } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  const snapshotExists = fs.existsSync(SNAPSHOT_FILE);
+  let snapshotStats = null;
+  if (snapshotExists) {
+    try {
+      const stats = fs.statSync(SNAPSHOT_FILE);
+      snapshotStats = {
+        sizeBytes: stats.size,
+        updatedAt: stats.mtimeMs
+      };
+    } catch (_) {}
+  }
+
+  return res.json({
+    success: true,
+    journalDir: JOURNAL_DIR,
+    logFile: JOURNAL_LOG_FILE,
+    logSizeBytes,
+    totalEntries,
+    lastEntry,
+    snapshotExists,
+    snapshotStats,
+    stateSaveCounter
   });
 });
 
