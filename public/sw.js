@@ -1,5 +1,5 @@
 const APP_VERSION = '5.2.18';
-const CACHE_VERSION = 'v33';
+const CACHE_VERSION = 'v41';
 const STATIC_CACHE = `vidkidz-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `vidkidz-runtime-${CACHE_VERSION}`;
 const APP_SHELL = [
@@ -35,8 +35,8 @@ async function trimCache(cacheName, maxItems) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
   if (keys.length <= maxItems) return;
-  await cache.delete(keys[0]);
-  return trimCache(cacheName, maxItems);
+  const toDelete = keys.slice(0, keys.length - maxItems);
+  await Promise.all(toDelete.map((k) => cache.delete(k)));
 }
 
 self.addEventListener('install', (event) => {
@@ -51,7 +51,7 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(
         keys
-          .filter((key) => ![STATIC_CACHE, RUNTIME_CACHE].includes(key))
+          .filter((key) => ![STATIC_CACHE, RUNTIME_CACHE, 'vidkidz-offline-videos'].includes(key))
           .map((key) => caches.delete(key))
       ))
       .then(() => self.clients.claim())

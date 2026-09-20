@@ -11,9 +11,9 @@ const os = require('os');
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'vidkidz-secret-change-in-prod';
 const JWT_EXPIRES = '30d';
-const APP_VERSION = process.env.APP_VERSION || '5.2.18';
+const APP_VERSION = process.env.APP_VERSION || '5.2.19';
 const ASSET_VERSION = 'v33';
-const ADMIN_LOGIN_ENABLED = process.env.ALLOW_ADMIN_LOGIN === 'true';
+const ADMIN_LOGIN_ENABLED = process.env.ALLOW_ADMIN_LOGIN !== 'false';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const DEMO_DURATION_MS = 30 * 60 * 1000;
 const DEMO_FAMILY_EMAILS = new Set(['budi@vidkidz.local', 'siti@vidkidz.local']);
@@ -35,9 +35,9 @@ const INITIAL_STATE = {
       { id:'f2', name:'Keluarga Siti Rahma', email:'siti@vidkidz.local', password:'family456', linkedKids:['k3'], plan:'Basic', createdAt: Date.now()-86400000*10, lastLogin: Date.now()-86400000, phone:'0821-9876-5432' },
     ],
     kids: [
-      { id:'k1', name:'Andi', age:7, familyId:'f1', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], isOnline:true, lastSeen:Date.now()-600000, lockPin:'1234', watchTime:142, totalVideos:28, coins:85, streak:3, badges:['bintang_pertama','rajin_belajar'], hafalanDone:['h1','h2','h6'], gameStats:{math:{played:12,correct:9},hewan:{played:8,correct:7},tanaman:{played:5,correct:4},warna:{played:6,correct:5}} },
-      { id:'k2', name:'Sari', age:5, familyId:'f1', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], isOnline:false, lastSeen:Date.now()-3600000*3, lockPin:'5678', watchTime:89, totalVideos:15, coins:40, streak:1, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:5,correct:3},hewan:{played:3,correct:2},tanaman:{played:2,correct:2},warna:{played:4,correct:3}} },
-      { id:'k3', name:'Doni', age:9, familyId:'f2', avatar:'👦', isLocked:true, allowedAlbums:['alb1','alb2','alb3'], isOnline:true, lastSeen:Date.now()-1800000, lockPin:'9012', watchTime:210, totalVideos:42, coins:160, streak:7, badges:['bintang_pertama','rajin_belajar','hafalan_hero','game_master'], hafalanDone:['h1','h2','h3','h4','h5','h6','h7','h8'], gameStats:{math:{played:30,correct:26},hewan:{played:20,correct:18},tanaman:{played:15,correct:13},warna:{played:12,correct:11}} },
+      { id:'k1', name:'Andi', age:7, familyId:'f1', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], isOnline:true, lastSeen:Date.now()-600000, lockPin:'1234', watchTime:142, totalVideos:28, coins:85, streak:3, badges:['bintang_pertama','rajin_belajar'], hafalanDone:['h1','h2','h6'], gameStats:{math:{played:12,correct:9},hewan:{played:8,correct:7},tanaman:{played:5,correct:4},warna:{played:6,correct:5}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k2', name:'Sari', age:5, familyId:'f1', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], isOnline:false, lastSeen:Date.now()-3600000*3, lockPin:'5678', watchTime:89, totalVideos:15, coins:40, streak:1, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:5,correct:3},hewan:{played:3,correct:2},tanaman:{played:2,correct:2},warna:{played:4,correct:3}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k3', name:'Doni', age:9, familyId:'f2', avatar:'👦', isLocked:true, allowedAlbums:['alb1','alb2','alb3'], isOnline:true, lastSeen:Date.now()-1800000, lockPin:'9012', watchTime:210, totalVideos:42, coins:160, streak:7, badges:['bintang_pertama','rajin_belajar','hafalan_hero','game_master'], hafalanDone:['h1','h2','h3','h4','h5','h6','h7','h8'], gameStats:{math:{played:30,correct:26},hewan:{played:20,correct:18},tanaman:{played:15,correct:13},warna:{played:12,correct:11}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
     ]
   },
   albums: [
@@ -87,6 +87,9 @@ const INITIAL_STATE = {
     { id:'rec1', kidId:'k1', hafalanId:'h1', recordedAt:Date.now()-86400000*2, duration:45, approved:true },
     { id:'rec2', kidId:'k1', hafalanId:'h2', recordedAt:Date.now()-86400000, duration:30, approved:true },
   ],
+  storyRecords: [
+    { id:'srec1', kidId:'k1', storyId:'story1', title:'Kisah Semut yang Rajin & Belalang Penyanyi', completedAt:Date.now()-86400000, rewardCoins:10, moralLearned:'Rajin bekerja dan mempersiapkan bekal hari ini akan menyelamatkan kita di masa depan.' }
+  ],
   activityLog: [
     { id:'log1', ts:Date.now()-300000, user:'Andi', action:'Bermain Matematika Seru — skor 9/12', type:'game' },
     { id:'log2', ts:Date.now()-600000, user:'Budi Santoso', action:'Mengunci layar Andi', type:'lock' },
@@ -109,7 +112,8 @@ const INITIAL_STATE = {
     videoWatchReward: 2,
     gameCorrectReward: 5,
     hafalanReward: 20,
-  }
+  },
+  devices: []
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -142,13 +146,16 @@ function getState() {
   if (!Array.isArray(stateCache.rewards)) stateCache.rewards = INITIAL_STATE.rewards;
   if (!Array.isArray(stateCache.redemptions)) stateCache.redemptions = INITIAL_STATE.redemptions;
   if (!Array.isArray(stateCache.hafalanRecords)) stateCache.hafalanRecords = INITIAL_STATE.hafalanRecords;
+  if (!Array.isArray(stateCache.storyRecords)) stateCache.storyRecords = INITIAL_STATE.storyRecords || [];
   if (!Array.isArray(stateCache.activityLog)) stateCache.activityLog = INITIAL_STATE.activityLog;
+  if (!Array.isArray(stateCache.devices)) stateCache.devices = [];
   if (!stateCache.systemSettings) stateCache.systemSettings = INITIAL_STATE.systemSettings;
 
   // Auto-repair any legacy corrupted ?? emojis
   const kidAvatars = { k1: '👦', k2: '👧', k3: '👦' };
   stateCache.users.kids.forEach(k => {
     if (k.avatar === '??' && kidAvatars[k.id]) k.avatar = kidAvatars[k.id];
+    if (!k.schedule) k.schedule = { enabled: false, lockStart: '21:00', lockEnd: '07:00' };
   });
   const albumEmojis = { alb1: '🔤', alb2: '🔢', alb3: '🐾', alb4: '🎵' };
   stateCache.albums.forEach(a => {
@@ -192,11 +199,68 @@ function sanitizeStateForUser(state, user) {
     if (clean.users?.families) {
       clean.users.families = clean.users.families.map(f => {
         const { password, ...rest } = f;
+        if (user?.role === 'kids') {
+          delete rest.telegramConfig;
+          delete rest.phone;
+        } else if (user?.role === 'family') {
+          if (f.id !== user.id) {
+            delete rest.telegramConfig;
+            delete rest.phone;
+          }
+        }
         return rest;
       });
     }
     if (clean.systemSettings) {
       clean.systemSettings.apiKey = '';
+    }
+
+    // Filter storyRecords for kid & family privacy
+    if (clean.storyRecords) {
+      if (user?.role === 'kids') {
+        clean.storyRecords = clean.storyRecords.filter(s => s.kidId === user.id);
+      } else if (user?.role === 'family') {
+        const myKidIds = new Set((state.users.kids || []).filter(k => k.familyId === user.id).map(k => k.id));
+        clean.storyRecords = clean.storyRecords.filter(s => myKidIds.has(s.kidId));
+      }
+    }
+
+    // Sanitize lockPin on kids
+    if (clean.users?.kids) {
+      if (user?.role === 'kids') {
+        // Kids role should NEVER see lockPin of any kid
+        clean.users.kids = clean.users.kids.map(k => {
+          const { lockPin, ...rest } = k;
+          return rest;
+        });
+      } else if (user?.role === 'family') {
+        // Family only sees lockPin of their own linked kids
+        clean.users.kids = clean.users.kids.map(k => {
+          if (k.familyId === user.id) return k;
+          const { lockPin, ...rest } = k;
+          return rest;
+        });
+      }
+    }
+
+    // Sanitize device telemetry & IP addresses for non-admin
+    if (clean.devices) {
+      if (user?.role === 'family') {
+        const myKidIds = new Set((state.users.kids || []).filter(k => k.familyId === user.id).map(k => k.id));
+        clean.devices = clean.devices
+          .filter(d => d.userId === user.id || myKidIds.has(d.userId))
+          .map(d => {
+            const { ip, ...safeDev } = d;
+            return safeDev;
+          });
+      } else if (user?.role === 'kids') {
+        clean.devices = clean.devices
+          .filter(d => d.userId === user.id)
+          .map(d => {
+            const { ip, ...safeDev } = d;
+            return safeDev;
+          });
+      }
     }
   }
   return clean;
@@ -241,6 +305,45 @@ function adminOnly(req, res, next) {
   }
   next();
 }
+
+// ─── Rate Limiter ─────────────────────────────────────────────────────────────
+const rateLimitMap = new Map();
+function createRateLimiter({ windowMs = 60000, max = 100, message = 'Terlalu banyak permintaan' } = {}) {
+  return (req, res, next) => {
+    const rawIp = req.headers['cf-connecting-ip'] ||
+                 req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+                 req.headers['x-real-ip'] ||
+                 req.socket?.remoteAddress || '127.0.0.1';
+    const ip = rawIp.replace(/^::ffff:/, '') || '127.0.0.1';
+    const key = `${ip}:${req.path}`;
+    const now = Date.now();
+    let record = rateLimitMap.get(key);
+    if (!record || now > record.resetAt) {
+      record = { count: 1, resetAt: now + windowMs };
+      rateLimitMap.set(key, record);
+    } else {
+      record.count++;
+    }
+    if (record.count > max) {
+      const retryAfter = Math.ceil((record.resetAt - now) / 1000);
+      res.setHeader('Retry-After', retryAfter);
+      return res.status(429).json({ error: `${message}. Coba lagi dalam ${retryAfter} detik.` });
+    }
+    next();
+  };
+}
+const loginLimiter = createRateLimiter({ windowMs: 60000, max: 100, message: 'Terlalu banyak percobaan masuk' });
+const otpLimiter = createRateLimiter({ windowMs: 60000, max: 30, message: 'Terlalu banyak permintaan OTP' });
+const registerLimiter = createRateLimiter({ windowMs: 60000, max: 20, message: 'Terlalu banyak pendaftaran akun' });
+const unlockLimiter = createRateLimiter({ windowMs: 60000, max: 15, message: 'Terlalu banyak percobaan PIN buka kunci' });
+const deviceLimiter = createRateLimiter({ windowMs: 60000, max: 60, message: 'Terlalu banyak registrasi perangkat' });
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now > record.resetAt) rateLimitMap.delete(key);
+  }
+}, 300000).unref();
 
 // ─── Express App ──────────────────────────────────────────────────────────────
 const app = express();
@@ -291,7 +394,7 @@ app.get('/api/version', (req, res) => {
   });
 });
 
-app.post('/api/auth/send-otp', (req, res) => {
+app.post('/api/auth/send-otp', otpLimiter, (req, res) => {
   const method = String(req.body.method || 'email').trim().toLowerCase();
   const target = String(req.body.target || '').trim();
   if (!['email', 'phone'].includes(method)) {
@@ -309,7 +412,7 @@ app.post('/api/auth/send-otp', (req, res) => {
   res.json({ ok: true, otp: '123456', message: 'Kode OTP lokal: 123456' });
 });
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', registerLimiter, (req, res) => {
   const state = getState();
   if (state.systemSettings?.registrationOpen === false) {
     return res.status(403).json({ error: 'Registrasi sedang ditutup' });
@@ -384,7 +487,7 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // POST /api/auth/login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', loginLimiter, (req, res) => {
   const emailInput = String(req.body.email || '').trim();
   const passwordInput = String(req.body.password || '').trim();
   const role = req.body.role;
@@ -403,16 +506,25 @@ app.post('/api/auth/login', (req, res) => {
   const state = getState();
   const { admins, families, kids } = state.users;
   const requestedRole = role || '';
+  const isAdminEmail = (admins || []).some(u => u.email.toLowerCase() === emailInput.toLowerCase());
   const allowedRoles = ADMIN_LOGIN_ENABLED ? ['admin', 'family', 'kids', ''] : ['family', 'kids', ''];
-  if (!allowedRoles.includes(requestedRole)) {
+  if (!allowedRoles.includes(requestedRole) && !(isAdminEmail && ADMIN_LOGIN_ENABLED)) {
     return res.status(400).json({ error: 'Tipe akun tidak valid' });
   }
 
-  // 1. Check admin
-  if (ADMIN_LOGIN_ENABLED && (requestedRole === 'admin' || !requestedRole)) {
-    const admin = admins.find(u => u.email.toLowerCase() === emailInput.toLowerCase() && verifyPass(u.password, passwordInput));
+  // 1. Check admin (supports explicit role 'admin', empty role, or matching admin email)
+  if (ADMIN_LOGIN_ENABLED && (requestedRole === 'admin' || !requestedRole || isAdminEmail)) {
+    const admin = (admins || []).find(u => u.email.toLowerCase() === emailInput.toLowerCase());
     if (admin) {
+      if (!verifyPass(admin.password, passwordInput)) {
+        return res.status(401).json({ error: 'Password admin salah' });
+      }
       admin.lastLogin = Date.now();
+      if (req.body.deviceId) {
+        if (!Array.isArray(state.devices)) state.devices = [];
+        const dev = state.devices.find(d => d.id === req.body.deviceId);
+        if (dev) { dev.userId = admin.id; dev.userName = admin.name; dev.userType = 'admin'; dev.lastSeen = Date.now(); }
+      }
       saveState(state);
       const token = signToken({ id: admin.id, role: 'admin', name: admin.name });
       const { password, ...safeAdmin } = admin;
@@ -430,6 +542,11 @@ app.post('/api/auth/login', (req, res) => {
     );
     if (family) {
       family.lastLogin = Date.now();
+      if (req.body.deviceId) {
+        if (!Array.isArray(state.devices)) state.devices = [];
+        const dev = state.devices.find(d => d.id === req.body.deviceId);
+        if (dev) { dev.userId = family.id; dev.userName = family.name; dev.userType = 'family'; dev.lastSeen = Date.now(); }
+      }
       saveState(state);
       const demoMeta = getDemoMeta('family', family.email);
       const token = signToken({ id: family.id, role: 'family', name: family.name, ...demoMeta });
@@ -441,16 +558,23 @@ app.post('/api/auth/login', (req, res) => {
   // 3. Check kids (by kid ID like 'k1' or name, and PIN like '1234')
   if (requestedRole === 'kids' || requestedRole === 'family' || !requestedRole) {
     const kid = (kids || []).find(k =>
-      (k.id.toLowerCase() === emailInput.toLowerCase() || k.name.toLowerCase() === emailInput.toLowerCase()) &&
+      ((k.id && String(k.id).toLowerCase() === String(emailInput).toLowerCase()) ||
+       (k.name && String(k.name).toLowerCase() === String(emailInput).toLowerCase())) &&
       String(k.lockPin) === passwordInput
     );
     if (kid) {
       kid.isOnline = true;
       kid.lastSeen = Date.now();
+      if (req.body.deviceId) {
+        if (!Array.isArray(state.devices)) state.devices = [];
+        const dev = state.devices.find(d => d.id === req.body.deviceId);
+        if (dev) { dev.userId = kid.id; dev.userName = kid.name; dev.userType = 'kids'; dev.lastSeen = Date.now(); }
+      }
       saveState(state);
       const demoMeta = getDemoMeta('kids', kid.id);
       const token = signToken({ id: kid.id, role: 'kids', name: kid.name, familyId: kid.familyId, ...demoMeta });
-      return res.json({ token, user: { ...kid, role: 'kids', demoAccess: demoMeta.demo, demoExpiresAt: demoMeta.demoExpiresAt }, role: 'kids', kidId: kid.id, ...demoMeta });
+      const { lockPin: _kPin, ...safeKid } = kid;
+      return res.json({ token, user: { ...safeKid, role: 'kids', demoAccess: demoMeta.demo, demoExpiresAt: demoMeta.demoExpiresAt }, role: 'kids', kidId: kid.id, ...demoMeta });
     }
   }
 
@@ -476,7 +600,32 @@ app.post('/api/auth/kids-session', authMiddleware, (req, res) => {
   saveState(state);
   const demoMeta = getDemoMeta('kids', kid.id);
   const token = signToken({ id: kid.id, role: 'kids', name: kid.name, familyId: kid.familyId, ...demoMeta });
-  return res.json({ token, user: { ...kid, role: 'kids', demoAccess: demoMeta.demo, demoExpiresAt: demoMeta.demoExpiresAt }, role: 'kids', kidId: kid.id, ...demoMeta });
+  const { lockPin: _ksPin, ...safeKidSession } = kid;
+  return res.json({ token, user: { ...safeKidSession, role: 'kids', demoAccess: demoMeta.demo, demoExpiresAt: demoMeta.demoExpiresAt }, role: 'kids', kidId: kid.id, ...demoMeta });
+});
+
+// POST /api/kids/unlock — verify parent PIN and unlock kid's screen
+app.post('/api/kids/unlock', unlockLimiter, authMiddleware, (req, res) => {
+  const pin = String(req.body.pin || '').trim();
+  if (!pin) return res.status(400).json({ error: 'PIN diperlukan' });
+  const state = getState();
+  let kid = null;
+  if (req.user.role === 'kids') {
+    kid = (state.users.kids || []).find(k => k.id === req.user.id);
+  } else if (req.user.role === 'family') {
+    const kidId = String(req.body.kidId || '').trim();
+    kid = (state.users.kids || []).find(k => k.id === kidId && k.familyId === req.user.id);
+  } else if (req.user.role === 'admin') {
+    const kidId = String(req.body.kidId || '').trim();
+    kid = (state.users.kids || []).find(k => k.id === kidId);
+  }
+  if (!kid) return res.status(404).json({ error: 'Data anak tidak ditemukan' });
+  if (String(kid.lockPin) !== pin) {
+    return res.status(401).json({ error: 'PIN salah' });
+  }
+  kid.isLocked = false;
+  saveState(state);
+  return res.json({ success: true, message: 'Layar berhasil dibuka', kidId: kid.id });
 });
 
 // POST /api/auth/google — daftar/login akun Family lewat Google
@@ -534,7 +683,8 @@ app.post('/api/auth/google', async (req, res) => {
 
     saveState(state);
     const token = signToken({ id: family.id, role: 'family', name: family.name });
-    return res.json({ token, user: { ...family, role: 'family' }, role: 'family', isNew: !family.linkedKids.length });
+    const { password: _gp, ...safeGoogleFamily } = family;
+    return res.json({ token, user: { ...safeGoogleFamily, role: 'family' }, role: 'family', isNew: !family.linkedKids.length });
   } catch (err) {
     console.error('Google auth error:', err);
     return res.status(500).json({ error: 'Gagal menghubungi Google Auth: ' + err.message });
@@ -569,6 +719,397 @@ app.put('/api/state', authMiddleware, adminOnly, (req, res) => {
   saveState(newState);
   res.json({ success: true });
 });
+
+// ── DEVICE INTELLIGENCE ROUTES ───────────────────────────────────────────────
+
+// POST /api/device/register — register or update device telemetry and associate user
+app.post('/api/device/register', deviceLimiter, (req, res) => {
+  try {
+    const rawIp = req.headers['cf-connecting-ip'] ||
+                 req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+                 req.headers['x-real-ip'] ||
+                 req.socket?.remoteAddress || '';
+    const ip = rawIp.replace(/^::ffff:/, '') || '127.0.0.1';
+
+    const {
+      deviceId,
+      deviceType,
+      uiProfile,
+      os,
+      browser,
+      model,
+      platform,
+      screenWidth,
+      screenHeight,
+      viewportWidth,
+      viewportHeight,
+      pixelRatio,
+      orientation,
+      touch,
+      maxTouchPoints,
+      pointerType,
+      hoverSupported,
+      pwa,
+      language,
+      timezone,
+      userId,
+      userName,
+      userType
+    } = req.body || {};
+
+    if (!deviceId) {
+      return res.status(400).json({ error: 'deviceId is required' });
+    }
+
+    const state = getState();
+    if (!Array.isArray(state.devices)) {
+      state.devices = [];
+    }
+
+    const now = Date.now();
+    let dev = state.devices.find(d => d.id === deviceId);
+
+    if (dev) {
+      dev.lastSeen = now;
+      dev.ip = ip;
+      if (deviceType) dev.deviceType = deviceType;
+      if (uiProfile) dev.uiProfile = uiProfile;
+      if (os) dev.os = os;
+      if (browser) dev.browser = browser;
+      if (model !== undefined) dev.model = model;
+      if (platform !== undefined) dev.platform = platform;
+      if (screenWidth !== undefined) dev.screenWidth = screenWidth;
+      if (screenHeight !== undefined) dev.screenHeight = screenHeight;
+      if (viewportWidth !== undefined) dev.viewportWidth = viewportWidth;
+      if (viewportHeight !== undefined) dev.viewportHeight = viewportHeight;
+      if (pixelRatio !== undefined) dev.pixelRatio = pixelRatio;
+      if (orientation !== undefined) dev.orientation = orientation;
+      if (touch !== undefined) dev.touch = !!touch;
+      if (maxTouchPoints !== undefined) dev.maxTouchPoints = maxTouchPoints;
+      if (pointerType !== undefined) dev.pointerType = pointerType;
+      if (hoverSupported !== undefined) dev.hoverSupported = !!hoverSupported;
+      if (pwa !== undefined) dev.pwa = !!pwa;
+      if (language) dev.language = language;
+      if (timezone) dev.timezone = timezone;
+      if (userId) {
+        dev.userId = userId;
+        dev.userName = userName || dev.userName;
+        dev.userType = userType || dev.userType;
+      }
+    } else {
+      dev = {
+        id: deviceId,
+        userId: userId || null,
+        userName: userName || null,
+        userType: userType || null,
+        deviceType: deviceType || 'unknown',
+        uiProfile: uiProfile || 'unknown',
+        os: os || 'unknown',
+        browser: browser || 'unknown',
+        model: model || null,
+        platform: platform || null,
+        screenWidth: screenWidth || null,
+        screenHeight: screenHeight || null,
+        viewportWidth: viewportWidth || null,
+        viewportHeight: viewportHeight || null,
+        pixelRatio: pixelRatio || 1,
+        orientation: orientation || 'portrait',
+        touch: !!touch,
+        maxTouchPoints: maxTouchPoints || 0,
+        pointerType: pointerType || 'none',
+        hoverSupported: !!hoverSupported,
+        pwa: !!pwa,
+        language: language || 'id-ID',
+        timezone: timezone || 'Asia/Jakarta',
+        ip,
+        firstSeen: now,
+        lastSeen: now
+      };
+      state.devices.unshift(dev);
+    }
+
+    if (state.devices.length > 200) {
+      state.devices = state.devices.slice(0, 200);
+    }
+
+    saveState(state);
+    res.json({ ok: true, deviceId, ip });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/device/:id — remove device from registry (admin only)
+app.delete('/api/device/:id', authMiddleware, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const state = getState();
+  if (Array.isArray(state.devices)) {
+    state.devices = state.devices.filter(d => d.id !== id);
+    saveState(state);
+  }
+  res.json({ success: true, id });
+});
+
+// POST /api/admin/restore-state — safely validate and restore database state (admin only)
+app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
+  if (req.user.demo) return res.status(403).json({ error: 'Akun demo tidak diizinkan restore database' });
+  const payload = req.body;
+  if (!payload) return res.status(400).json({ error: 'Payload restore kosong' });
+
+  const incoming = payload.state || payload;
+  if (!incoming || typeof incoming !== 'object' || !incoming.users) {
+    return res.status(400).json({ error: 'Struktur data backup tidak valid: entitas users tidak ditemukan' });
+  }
+
+  const restored = {
+    users: {
+      admins: Array.isArray(incoming.users.admins) ? incoming.users.admins : [],
+      families: Array.isArray(incoming.users.families) ? incoming.users.families : [],
+      kids: Array.isArray(incoming.users.kids) ? incoming.users.kids : []
+    },
+    albums: Array.isArray(incoming.albums) ? incoming.albums : [],
+    photoAlbums: Array.isArray(incoming.photoAlbums) ? incoming.photoAlbums : [],
+    rewards: Array.isArray(incoming.rewards) ? incoming.rewards : [],
+    redemptions: Array.isArray(incoming.redemptions) ? incoming.redemptions : [],
+    hafalanRecords: Array.isArray(incoming.hafalanRecords) ? incoming.hafalanRecords : [],
+    storyRecords: Array.isArray(incoming.storyRecords) ? incoming.storyRecords : [],
+    activityLog: Array.isArray(incoming.activityLog) ? incoming.activityLog : [],
+    devices: Array.isArray(incoming.devices) ? incoming.devices : [],
+    systemSettings: incoming.systemSettings || {}
+  };
+
+  if (restored.users.admins.length === 0) {
+    const currentState = getState();
+    restored.users.admins = currentState.users.admins;
+  }
+
+  saveState(restored);
+  return res.json({
+    success: true,
+    message: 'Database berhasil dipulihkan',
+    stats: {
+      admins: restored.users.admins.length,
+      families: restored.users.families.length,
+      kids: restored.users.kids.length,
+      albums: restored.albums.length,
+      photoAlbums: restored.photoAlbums.length,
+      rewards: restored.rewards.length,
+      redemptions: restored.redemptions.length,
+      hafalanRecords: restored.hafalanRecords.length,
+      storyRecords: restored.storyRecords.length,
+      activityLog: restored.activityLog.length
+    }
+  });
+});
+
+// POST /api/admin/telegram-test — send test message to Telegram bot
+app.post('/api/admin/telegram-test', authMiddleware, adminOnly, async (req, res) => {
+  const { token, chatId } = req.body;
+  if (!token || !chatId) {
+    return res.status(400).json({ error: 'Bot Token dan Chat ID wajib diisi' });
+  }
+
+  try {
+    const telegramUrl = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+    const message = `🔔 *VIDKIDZ — Uji Coba Bot Telegram Berhasil!*\n\n` +
+      `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n` +
+      `🖥️ *Server:* VIDKIDZ v${APP_VERSION}\n` +
+      `✅ *Status:* Bot Telegram aktif dan siap menerima pesan otomatis / backup data.`;
+
+    const tgRes = await fetch(telegramUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    });
+
+    const data = await tgRes.json();
+    if (!data.ok) {
+      return res.status(400).json({ error: `Telegram Error: ${data.description || 'Gagal mengirim pesan'}` });
+    }
+
+    return res.json({ success: true, message: 'Pesan uji coba berhasil terkirim ke Telegram!', result: data.result });
+  } catch (err) {
+    return res.status(500).json({ error: 'Gagal menghubungi server Telegram: ' + err.message });
+  }
+});
+
+// POST /api/admin/telegram-backup — dispatch backup summary & JSON file to Telegram
+app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, res) => {
+  const { token, chatId, sendDoc = true, sendSummary = true, customCaption } = req.body;
+  if (!token || !chatId) {
+    return res.status(400).json({ error: 'Bot Token dan Chat ID wajib diisi' });
+  }
+
+  try {
+    const state = getState();
+    const now = new Date();
+    const timestampStr = now.toISOString().replace(/[:.]/g, '-');
+    const fileName = `vidkidz-backup-${timestampStr}.json`;
+
+    const totalRecords =
+      (state.users?.admins?.length || 0) +
+      (state.users?.families?.length || 0) +
+      (state.users?.kids?.length || 0) +
+      (state.albums?.length || 0) +
+      (state.photoAlbums?.length || 0) +
+      (state.rewards?.length || 0) +
+      (state.redemptions?.length || 0) +
+      (state.hafalanRecords?.length || 0) +
+      (state.storyRecords?.length || 0) +
+      (state.activityLog?.length || 0);
+
+    const backupPayload = {
+      appName: 'VIDKIDZ',
+      version: APP_VERSION,
+      backupDate: now.toISOString(),
+      backupTimestamp: now.getTime(),
+      totalRecords,
+      state
+    };
+
+    const backupJson = JSON.stringify(backupPayload, null, 2);
+    const sizeKB = (Buffer.byteLength(backupJson, 'utf8') / 1024).toFixed(2);
+
+    let summarySent = false;
+    let docSent = false;
+
+    if (sendSummary) {
+      const summaryText =
+        `📦 *VIDKIDZ — Laporan Backup Database Otomatis*\n\n` +
+        `📅 *Tanggal:* ${now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n` +
+        `📊 *Ukuran Data:* ${sizeKB} KB\n` +
+        `📑 *Total Record:* ${totalRecords}\n` +
+        `🗂️ *Rincian Koleksi:*\n` +
+        ` • Admin: ${state.users?.admins?.length || 0}\n` +
+        ` • Keluarga: ${state.users?.families?.length || 0}\n` +
+        ` • Anak: ${state.users?.kids?.length || 0}\n` +
+        ` • Album Video: ${state.albums?.length || 0}\n` +
+        ` • Album Foto: ${state.photoAlbums?.length || 0}\n` +
+        ` • Hadiah: ${state.rewards?.length || 0}\n` +
+        ` • Penukaran Hadiah: ${state.redemptions?.length || 0}\n` +
+        ` • Hafalan: ${state.hafalanRecords?.length || 0}\n` +
+        ` • Dongeng Anak: ${state.storyRecords?.length || 0}\n` +
+        ` • Log Aktivitas: ${state.activityLog?.length || 0}\n\n` +
+        (customCaption ? `💬 *Catatan:* ${customCaption}\n\n` : '') +
+        `✅ *Status:* Pencadangan berhasil dibuat secara otomatis.`;
+
+      const tgSummaryRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: summaryText,
+          parse_mode: 'Markdown'
+        })
+      });
+      const summaryData = await tgSummaryRes.json();
+      if (!summaryData.ok) {
+        return res.status(400).json({ error: `Telegram Error (Summary): ${summaryData.description || 'Gagal mengirim ringkasan'}` });
+      }
+      summarySent = true;
+    }
+
+    if (sendDoc) {
+      const form = new FormData();
+      form.append('chat_id', chatId);
+      const blob = new Blob([backupJson], { type: 'application/json' });
+      form.append('document', blob, fileName);
+      form.append('caption', `📦 VIDKIDZ DB Backup (${now.toLocaleDateString('id-ID')}) — ${sizeKB} KB`);
+
+      const tgDocRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendDocument`, {
+        method: 'POST',
+        body: form
+      });
+      const docData = await tgDocRes.json();
+      if (!docData.ok) {
+        return res.status(400).json({ error: `Telegram Error (Document): ${docData.description || 'Gagal mengirim berkas'}` });
+      }
+      docSent = true;
+    }
+
+    if (!state.systemSettings) state.systemSettings = {};
+    state.systemSettings.lastTelegramBackup = now.getTime();
+    saveState(state);
+
+    return res.json({
+      success: true,
+      message: 'Backup database berhasil dikirim ke Telegram',
+      timestamp: now.getTime(),
+      sizeKB,
+      summarySent,
+      docSent
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Gagal memproses backup Telegram: ' + err.message });
+  }
+});
+
+// ── TELEGRAM NOTIFICATION HELPER & FAMILY ROUTES ──────────────────────────────
+async function sendTelegramNotification({ token, chatId, text }) {
+  if (!token || !chatId || !text) return false;
+  try {
+    const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
+    });
+    const data = await res.json().catch(() => ({}));
+    return !!data.ok;
+  } catch (err) {
+    console.error('Telegram notification error:', err.message);
+    return false;
+  }
+}
+
+// POST /api/family/telegram-config — configure Telegram alert settings for family
+app.post('/api/family/telegram-config', authMiddleware, (req, res) => {
+  if (req.user.role !== 'family' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Hanya orang tua yang bisa mengatur notifikasi Telegram' });
+  }
+  const { token, chatId, enabled = true, notifyRedemptions = true, notifyHafalan = true, notifyStories = true } = req.body || {};
+  const state = getState();
+  const fam = (state.users.families || []).find(f => f.id === req.user.id);
+  if (!fam) return res.status(404).json({ error: 'Keluarga tidak ditemukan' });
+  fam.telegramConfig = {
+    token: String(token || '').trim(),
+    chatId: String(chatId || '').trim(),
+    enabled: !!enabled,
+    notifyRedemptions: !!notifyRedemptions,
+    notifyHafalan: !!notifyHafalan,
+    notifyStories: !!notifyStories
+  };
+  saveState(state);
+  res.json({ success: true, message: 'Pengaturan notifikasi Telegram berhasil disimpan', telegramConfig: fam.telegramConfig });
+});
+
+// POST /api/family/telegram-test — send test alert to family's Telegram chat
+app.post('/api/family/telegram-test', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'family' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Hanya orang tua yang bisa menguji bot Telegram' });
+  }
+  const state = getState();
+  const fam = (state.users.families || []).find(f => f.id === req.user.id);
+  const token = String(req.body.token || fam?.telegramConfig?.token || '').trim();
+  const chatId = String(req.body.chatId || fam?.telegramConfig?.chatId || '').trim();
+  if (!token || !chatId) {
+    return res.status(400).json({ error: 'Bot Token dan Chat ID wajib diisi' });
+  }
+  const message = `🔔 *VIDKIDZ — Uji Coba Notifikasi Orang Tua*\n\n` +
+    `👨‍👩‍👧‍👦 *Keluarga:* ${fam?.name || req.user.name}\n` +
+    `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n` +
+    `✅ *Status Terhubung!* Anda akan menerima notifikasi instan ketika ananda menukarkan koin atau menyetorkan hafalan.`;
+  const ok = await sendTelegramNotification({ token, chatId, text: message });
+  if (!ok) {
+    return res.status(400).json({ error: 'Gagal mengirim pesan uji coba ke Telegram. Periksa token dan Chat ID.' });
+  }
+  res.json({ success: true, message: 'Pesan uji coba berhasil terkirim ke Telegram Anda!' });
+});
+
 
 // PATCH /api/state — partial state update (family/kids can call for their own data)
 app.patch('/api/state', authMiddleware, (req, res) => {
@@ -619,8 +1160,18 @@ app.patch('/api/state', authMiddleware, (req, res) => {
         state.users.kids = (state.users.kids || []).filter(k => k.familyId !== req.user.id || incomingOwnIds.has(k.id));
         incomingOwnKids.forEach(inKid => {
           const idx = state.users.kids.findIndex(k => k.id === inKid.id && k.familyId === req.user.id);
-          if (idx >= 0) state.users.kids[idx] = inKid;
-          else state.users.kids.push(inKid);
+          if (idx >= 0) {
+            const existing = state.users.kids[idx];
+            state.users.kids[idx] = {
+              ...existing,
+              ...inKid,
+              coins: Math.max(existing.coins || 0, inKid.coins !== undefined ? inKid.coins : (existing.coins || 0)),
+              lockPin: (inKid.lockPin !== undefined && inKid.lockPin !== '') ? inKid.lockPin : existing.lockPin,
+              schedule: inKid.schedule || existing.schedule
+            };
+          } else {
+            state.users.kids.push(inKid);
+          }
         });
         const fam = state.users.families.find(f => f.id === req.user.id);
         if (fam) fam.linkedKids = [...incomingOwnIds];
@@ -652,6 +1203,11 @@ app.patch('/api/state', authMiddleware, (req, res) => {
         const myRecords = incoming.hafalanRecords.filter(r => myKidIds.has(r.kidId));
         state.hafalanRecords = [...otherRecords, ...myRecords];
       }
+      if (Array.isArray(incoming.storyRecords)) {
+        const otherRecords = (state.storyRecords || []).filter(r => !myKidIds.has(r.kidId));
+        const myRecords = incoming.storyRecords.filter(r => myKidIds.has(r.kidId));
+        state.storyRecords = [...otherRecords, ...myRecords];
+      }
     } else if (req.user.role === 'kids') {
       // Kids can only update their own record, hafalan, redemptions, and logs
       const kidIdx = (state.users.kids || []).findIndex(k => k.id === req.user.id);
@@ -659,27 +1215,112 @@ app.patch('/api/state', authMiddleware, (req, res) => {
         const inKid = incoming.users.kids.find(k => k.id === req.user.id);
         if (inKid) {
           const existing = state.users.kids[kidIdx];
+          // Resolve isLocked: kids can only UNLOCK (with correct PIN), never re-lock themselves
+          let resolvedIsLocked = existing.isLocked;
+          if (existing.isLocked && inKid.isLocked === false) {
+            const pinOk = inKid.unlockPin === existing.lockPin || inKid.lockPin === existing.lockPin;
+            resolvedIsLocked = pinOk ? false : true;
+          }
+          // If not currently locked, kids cannot lock themselves (parent-only action)
+          // so ignore any inKid.isLocked === true attempt
           state.users.kids[kidIdx] = {
             ...inKid,
             id: req.user.id,
             familyId: existing.familyId,
             lockPin: existing.lockPin,
             allowedAlbums: existing.allowedAlbums,
-            isLocked: existing.isLocked && inKid.isLocked === false
-              ? (inKid.unlockPin === existing.lockPin || inKid.lockPin === existing.lockPin ? false : true)
-              : (inKid.isLocked ?? existing.isLocked)
+            isLocked: resolvedIsLocked,
+            schedule: existing.schedule || { enabled: false, lockStart: '21:00', lockEnd: '07:00' }
           };
         }
       }
       if (Array.isArray(incoming.hafalanRecords)) {
+        const existingHafIds = new Set((state.hafalanRecords || []).map(h => h.id));
+        const newHafs = incoming.hafalanRecords.filter(h => h.kidId === req.user.id && !existingHafIds.has(h.id));
         const otherRecords = (state.hafalanRecords || []).filter(r => r.kidId !== req.user.id);
         const myRecords = incoming.hafalanRecords.filter(r => r.kidId === req.user.id);
         state.hafalanRecords = [...otherRecords, ...myRecords];
+
+        // Telegram real-time parent alert
+        if (newHafs.length > 0) {
+          const currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+          const parentFam = (state.users.families || []).find(f => f.id === currentKid?.familyId);
+          if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyHafalan) {
+            for (const nh of newHafs) {
+              const starStr = nh.stars ? '⭐'.repeat(Math.min(5, Math.max(1, nh.stars))) : '⭐⭐⭐';
+              const aiScoreLine = nh.score !== undefined ? `🎯 *Skor Pelafalan AI:* ${nh.score}% (${starStr})\n` : '';
+              const text = `📖 *VIDKIDZ — Hafalan Baru Selesai!*\n\n` +
+                `👦 *Anak:* ${currentKid?.name || 'Anak'}\n` +
+                `🕌 *Materi:* Hafalan selesai disetorkan\n` +
+                aiScoreLine +
+                `⏱️ *Durasi:* ${nh.duration || 30} detik\n` +
+                `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+                `⭐ Berikan apresiasi dan bintang untuk ananda di dashboard!`;
+              sendTelegramNotification({
+                token: parentFam.telegramConfig.token,
+                chatId: parentFam.telegramConfig.chatId,
+                text
+              }).catch(() => {});
+            }
+          }
+        }
+      }
+      if (Array.isArray(incoming.storyRecords)) {
+        const existingStoryIds = new Set((state.storyRecords || []).map(s => s.id));
+        const newStories = incoming.storyRecords.filter(s => s.kidId === req.user.id && !existingStoryIds.has(s.id));
+        const otherRecords = (state.storyRecords || []).filter(s => s.kidId !== req.user.id);
+        const myRecords = incoming.storyRecords.filter(s => s.kidId === req.user.id);
+        state.storyRecords = [...otherRecords, ...myRecords];
+
+        // Telegram real-time parent alert for bedtime stories
+        if (newStories.length > 0) {
+          const currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+          const parentFam = (state.users.families || []).find(f => f.id === currentKid?.familyId);
+          if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyStories !== false) {
+            for (const ns of newStories) {
+              const text = `📚 *VIDKIDZ — Dongeng Selesai Didengarkan!*\n\n` +
+                `👦 *Anak:* ${currentKid?.name || 'Anak'}\n` +
+                `📖 *Judul Cerita:* ${ns.title || 'Dongeng Anak'}\n` +
+                `💡 *Pelajaran Moral:* ${ns.moralLearned || '-'}\n` +
+                `🪙 *Bonus Koin:* +${ns.rewardCoins || 10} koin\n` +
+                `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+                `🌙 Selamat istirahat dengan mimpi indah dan budi pekerti luhur!`;
+              sendTelegramNotification({
+                token: parentFam.telegramConfig.token,
+                chatId: parentFam.telegramConfig.chatId,
+                text
+              }).catch(() => {});
+            }
+          }
+        }
       }
       if (Array.isArray(incoming.redemptions)) {
+        const existingRedIds = new Set((state.redemptions || []).map(r => r.id));
+        const newReds = incoming.redemptions.filter(r => r.kidId === req.user.id && !existingRedIds.has(r.id));
         const otherRedemptions = (state.redemptions || []).filter(r => r.kidId !== req.user.id);
         const myRedemptions = incoming.redemptions.filter(r => r.kidId === req.user.id);
         state.redemptions = [...otherRedemptions, ...myRedemptions];
+
+        // Telegram real-time parent alert
+        if (newReds.length > 0) {
+          const currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+          const parentFam = (state.users.families || []).find(f => f.id === currentKid?.familyId);
+          if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyRedemptions) {
+            for (const nr of newReds) {
+              const text = `🎁 *VIDKIDZ — Pengajuan Hadiah Baru!*\n\n` +
+                `👦 *Anak:* ${nr.kidName || currentKid?.name || 'Anak'}\n` +
+                `💵 *Hadiah:* ${nr.rewardName || 'Hadiah Koin'}\n` +
+                `🪙 *Biaya Koin:* ${nr.cost || 0} koin\n` +
+                `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+                `👉 *Aksi:* Buka Family Dashboard untuk menyetujui penukaran hadiah ini!`;
+              sendTelegramNotification({
+                token: parentFam.telegramConfig.token,
+                chatId: parentFam.telegramConfig.chatId,
+                text
+              }).catch(() => {});
+            }
+          }
+        }
       }
       if (Array.isArray(incoming.activityLog)) {
         const existingIds = new Set((state.activityLog || []).map(l => l.id));
@@ -693,22 +1334,41 @@ app.patch('/api/state', authMiddleware, (req, res) => {
 
   if (!statePath) return res.status(400).json({ error: 'path diperlukan' });
 
+  const parts = statePath.split('.');
+  if (parts.some(p => p === '__proto__' || p === 'constructor' || p === 'prototype')) {
+    return res.status(400).json({ error: 'Path tidak aman' });
+  }
+
   // Family and kids can only update their specific allowed paths
+  // Build the set of own kid IDs for family path-PATCH scoping
+  const ownKidIds = req.user.role === 'family'
+    ? new Set((state.users.kids || []).filter(k => k.familyId === req.user.id).map(k => k.id))
+    : new Set();
+  const familyKidsPathAllowed = req.user.role === 'family' && statePath.startsWith('users.kids.') &&
+    ownKidIds.has(statePath.split('.')[2]);
   const allowed = req.user.role === 'admin' ? true :
     req.user.role === 'family' ? statePath.startsWith(`users.families.${req.user.id}`) ||
       statePath.startsWith('albums') || statePath.startsWith('photoAlbums') || statePath.startsWith('rewards') ||
       statePath.startsWith('redemptions') || statePath.startsWith('activityLog') ||
       statePath.startsWith('hafalanRecords') ||
-      statePath.startsWith(`users.kids`) :
-    req.user.role === 'kids' ? statePath.startsWith(`users.kids.${req.user.id}`) ||
-      statePath.startsWith('activityLog') || statePath.startsWith('hafalanRecords') ||
-      statePath.startsWith('redemptions') :
+      statePath.startsWith('storyRecords') ||
+      familyKidsPathAllowed :
+    req.user.role === 'kids' ? (
+      (statePath.startsWith(`users.kids.${req.user.id}`) &&
+        !statePath.includes('lockPin') &&
+        !statePath.includes('allowedAlbums') &&
+        !statePath.includes('isLocked') &&
+        !statePath.includes('schedule')) ||
+      statePath.startsWith('activityLog') ||
+      statePath.startsWith('hafalanRecords') ||
+      statePath.startsWith('storyRecords') ||
+      statePath.startsWith('redemptions')
+    ) :
     false;
 
   if (!allowed) return res.status(403).json({ error: 'Akses update state ditolak' });
 
   // Apply path-based update
-  const parts = statePath.split('.');
   let target = state;
   for (let i = 0; i < parts.length - 1; i++) {
     const p = parts[i];
@@ -798,6 +1458,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ── 404 HANDLER FOR API ───────────────────────────────────────────────────────
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint API tidak ditemukan' });
+});
+
 // ── SPA FALLBACK ──────────────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -811,7 +1476,7 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && require.main === module) {
   app.listen(PORT, () => {
     console.log(`
 📺 VIDKIDZ — Full Stack
@@ -822,6 +1487,7 @@ if (!process.env.VERCEL) {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Demo Login:
   Family : budi@vidkidz.local / family123
+  Admin  : admin@vidkidz.local / admin123
   `);
   });
 }
