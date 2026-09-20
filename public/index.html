@@ -4315,30 +4315,85 @@ td {
   --vrintex-green: #2acb8d;
   --vrintex-amber: #ffbd2d;
 }
-.hero { position: relative; min-height: 190px; border-radius: 28px; padding: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 16px 36px rgba(37,99,235,.14); isolation: isolate; }
-.hero:after { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; right: -70px; top: -80px; background: radial-gradient(circle,rgba(255,255,255,.35),transparent 65%); z-index: -1; }
-.hero--admin { background: linear-gradient(135deg,#1d4ed8 0%,#2563eb 55%,#38bdf8 100%); color: #fff; }
-.hero--admin p { opacity: .92; }
-.hero--parent { background: linear-gradient(135deg,#e0f2fe 0%,#bae6fd 60%,#a7f3d0 100%); color: #0f172a; }
-.hero--kid { min-height: 200px; background: linear-gradient(180deg,#bae6fd 0%,#e0f2fe 50%,#d1fae5 100%); color: #0f172a; }
-.hero__copy { position: relative; z-index: 2; width: 60%; }
-.hero h1 { font-size: 22px; line-height: 1.15; margin: 8px 0; letter-spacing: -0.5px; font-weight: 900; }
-.hero p { font-size: 11px; line-height: 1.45; margin: 0; opacity: .88; }
-.hero__art { position: absolute; right: 0; bottom: -5px; width: 44%; max-height: 98%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22)); }
-.family-art { width: 48%; right: -5px; bottom: -5px; max-height: 98%; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.16)); }
-.kid-art { width: 50%; right: -5px; bottom: -5px; max-height: 98%; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.16)); }
+/* ============================================================
+   HERO BANNER - HALF-BODY CHARACTER + RICH DECORATIONS
+   ============================================================ */
+.hero { position: relative; min-height: 195px; border-radius: 28px; padding: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 18px 40px rgba(37,99,235,.18); isolation: isolate; }
 
-.eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.2); font-size: 9px; font-weight: 900; letter-spacing: .4px; color: #fff; }
+/* Decorative glow orb top-right */
+.hero::before { content: ""; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: -55px; top: -60px; background: radial-gradient(circle,rgba(255,255,255,.45),transparent 65%); z-index: 0; pointer-events: none; }
+/* Decorative glow orb bottom-left */
+.hero::after { content: ""; position: absolute; width: 140px; height: 140px; border-radius: 50%; left: -40px; bottom: -50px; background: radial-gradient(circle,rgba(255,255,255,.25),transparent 65%); z-index: 0; pointer-events: none; }
+
+.hero__copy { position: relative; z-index: 3; width: 58%; }
+.hero h1 { font-size: clamp(18px, 2.2vw, 23px); line-height: 1.18; margin: 8px 0; letter-spacing: -0.5px; font-weight: 900; }
+.hero p { font-size: 11px; line-height: 1.45; margin: 0; opacity: .9; }
+
+/* HALF-BODY CHARACTER WRAPPER - clips bottom half of full-body PNG */
+.hero__char-wrap {
+  position: absolute;
+  right: -6px;
+  bottom: 0;
+  width: 46%;
+  height: 115%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.hero__char-wrap img {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 220px;
+  object-fit: cover;
+  object-position: center top;
+  /* clip at 55% height = show upper half + chest area */
+  height: 160%;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.28));
+}
+
+/* Admin hero */
+.hero--admin { background: linear-gradient(135deg,#1a46c7 0%,#2563eb 45%,#38bdf8 100%); color: #fff; }
+.hero--admin p { color: rgba(255,255,255,0.9); opacity: 1; }
+.hero--admin .hero__char-wrap { width: 44%; right: -4px; height: 135%; }
+.hero--admin .hero__char-wrap img { max-width: 200px; height: 210%; object-position: top center; }
+
+/* Family / Parent hero */
+.hero--parent { background: linear-gradient(135deg,#e0fbff 0%,#b9f0ff 50%,#a5f3d0 100%); color: #0f172a; min-height: 210px; }
+.hero--parent .hero__char-wrap { width: 50%; right: -8px; height: 118%; }
+.hero--parent .hero__char-wrap img { max-width: 250px; height: 155%; object-position: top center; }
+
+/* Kid hero */
+.hero--kid { min-height: 210px; background: linear-gradient(160deg,#bae6fd 0%,#e0f7fa 40%,#e8fdf0 80%,#d1fae5 100%); color: #0f172a; }
+.hero--kid .hero__char-wrap { width: 46%; right: -6px; height: 140%; }
+.hero--kid .hero__char-wrap img { max-width: 230px; height: 210%; object-position: top center; }
+
+/* Floating star decoration for hero */
+.hero-star { position: absolute; z-index: 4; pointer-events: none; animation: hero-float 2.8s ease-in-out infinite alternate; }
+.hero-star-1 { top: 14px; right: 44%; font-size: 18px; animation-delay: 0s; }
+.hero-star-2 { top: 26px; right: 26%; font-size: 14px; animation-delay: 0.6s; }
+.hero-star-3 { bottom: 18px; right: 48%; font-size: 12px; animation-delay: 1.2s; }
+
+@keyframes hero-float {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-8px) rotate(15deg); }
+}
+
+.eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.2); font-size: 9px; font-weight: 900; letter-spacing: .4px; color: #fff; margin-bottom: 4px; }
 .eyebrow img { width: 13px; height: 13px; filter: brightness(0) invert(1); }
-.parent-eyebrow { color: #059669; background: #d1fae5; }
+.parent-eyebrow { color: #059669; background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.25); }
 .parent-eyebrow img { filter: none; }
 
+
+
 .hero__actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.pill { border: 0; border-radius: 999px; padding: 8px 14px; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.12); cursor: pointer; text-decoration: none; transition: transform 0.15s; }
-.pill:hover { transform: translateY(-1px); }
-.pill img { width: 14px; height: 14px; }
-.pill--gold { background: linear-gradient(#fde047,#f59e0b); color: #451a03; }
-.pill--white { background: #fff; color: #e11d48; }
+.pill { border: 0; border-radius: 999px; padding: 9px 16px; font-size: 12px; font-weight: 900; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 8px 22px rgba(0,0,0,.15); cursor: pointer; text-decoration: none; transition: transform 0.18s, box-shadow 0.18s; }
+.pill:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.2); }
+.pill img { width: 15px; height: 15px; }
+.pill--gold { background: linear-gradient(135deg,#fde047 0%,#f59e0b 100%); color: #451a03; box-shadow: 0 8px 22px rgba(245,158,11,.35); }
+.pill--white { background: #fff; color: #e11d48; box-shadow: 0 8px 22px rgba(0,0,0,.12); }
 
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .stat-card { background: #ffffff; border: 1px solid rgba(255,255,255,.9); border-radius: 20px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 24px rgba(37,99,235,.08); color: #0f172a; }
@@ -7399,15 +7454,19 @@ function AdminDashboard() {
           <div className="fade-in">
             {/* HERO 3D BANNER - SUPER ADMIN */}
             <div className="hero hero--admin" style={{marginBottom: 20}}>
+              {/* Floating star decorations */}
+              <span className="hero-star hero-star-1" aria-hidden="true">⭐</span>
+              <span className="hero-star hero-star-2" aria-hidden="true">✨</span>
+              <span className="hero-star hero-star-3" aria-hidden="true">⚡</span>
               <div className="hero__copy">
                 <span className="eyebrow">
                   <img src="/assets/icons/bolt.svg" alt="" />
                   SYSTEM CORE ONLINE • v5.2.21
                 </span>
-                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 24px)', margin: '10px 0 6px', color: '#fff', fontWeight: 900}}>
-                  Selamat datang, Super Admin 👋
+                <h1 style={{fontSize: 'clamp(19px, 2.2vw, 24px)', margin: '8px 0 6px', color: '#fff', fontWeight: 900, lineHeight: 1.15}}>
+                  Selamat datang,<br /><span style={{fontWeight:900}}>Super Admin</span> 👋
                 </h1>
-                <p style={{fontSize: 11, color: 'rgba(255,255,255,0.92)', margin: 0, maxWidth: 440, lineHeight: 1.45}}>
+                <p style={{fontSize: 11, color: 'rgba(255,255,255,0.9)', margin: 0, lineHeight: 1.45}}>
                   Kelola sistem, pantau seluruh aktivitas, dan jaga pengalaman terbaik untuk semua keluarga.
                 </p>
                 <div className="hero__actions">
@@ -7421,7 +7480,12 @@ function AdminDashboard() {
                   </button>
                 </div>
               </div>
-              <img className="hero__art" src="/assets/images/admin-hero-3d.png" onError={(e)=>{e.target.src='/assets/illustrations/admin-avatar.svg';}} alt="Admin 3D" />
+              {/* HALF-BODY CHARACTER WRAP */}
+              <div className="hero__char-wrap">
+                <img src="/assets/images/admin-hero-3d.png"
+                  onError={(e)=>{e.target.src='/assets/illustrations/admin-avatar.svg';}}
+                  alt="Admin 3D karakter" />
+              </div>
             </div>
 
             {/* 3D STATS GRID */}
@@ -11054,29 +11118,37 @@ function FamilyDashboard() {
           <div className="fade-in">
             {/* HERO 3D BANNER - FAMILY / PARENT */}
             <div className="hero hero--parent" style={{marginBottom: 20}}>
+              {/* Heart decoration */}
+              <span style={{position:'absolute',top:12,right:'52%',fontSize:20,zIndex:4,animation:'hero-float 2.2s ease-in-out infinite alternate',animationDelay:'0.4s'}} aria-hidden="true">❤️</span>
+              <span style={{position:'absolute',top:26,right:'34%',fontSize:14,zIndex:4,animation:'hero-float 2.8s ease-in-out infinite alternate',animationDelay:'1s'}} aria-hidden="true">🌟</span>
               <div className="hero__copy">
                 <span className="eyebrow parent-eyebrow">
                   <img src="/assets/icons/shield.svg" alt="" />
                   Proteksi Keluarga Aktif →
                 </span>
-                <h1 style={{fontSize: 'clamp(20px, 2.2vw, 24px)', margin: '8px 0', color: '#0f172a', fontWeight: 900}}>
-                  Selamat datang, Keluarga 👨‍👩‍👧
+                <h1 style={{fontSize: 'clamp(19px, 2.2vw, 24px)', margin: '8px 0 6px', color: '#0f172a', fontWeight: 900, lineHeight: 1.15}}>
+                  Selamat datang,<br /><span style={{fontWeight:900}}>Keluarga</span> 👨‍👩‍👧
                 </h1>
                 <p style={{fontSize: 11, color: '#334155', margin: 0, lineHeight: 1.4}}>
                   Pantau perkembangan prestasi, ibadah, dan keamanan digital anak.
                 </p>
                 <div className="hero__actions">
                   <button className="pill pill--gold" onClick={()=>setPage('control')}>
-                    <img src="/assets/icons/bolt.svg" alt="" />
+                    <span style={{fontSize:13}}>⚡</span>
                     <span>Kontrol Cepat</span>
                   </button>
                   <button className="pill pill--white" onClick={()=>setPage('kids')}>
-                    <img src="/assets/icons/3d-users.svg" alt="" style={{width:16,height:16}} />
+                    <span style={{fontSize:13}}>👦</span>
                     <span>Kelola Anak</span>
                   </button>
                 </div>
               </div>
-              <img className="hero__art family-art" src="/assets/images/family-hero-3d.png" onError={(e)=>{e.target.src='/assets/illustrations/family-hero.svg';}} alt="Family Hero 3D" />
+              {/* HALF-BODY CHARACTER WRAP - FAMILY */}
+              <div className="hero__char-wrap">
+                <img src="/assets/images/family-hero-3d.png"
+                  onError={(e)=>{e.target.src='/assets/illustrations/family-hero.svg';}}
+                  alt="Ilustrasi Keluarga 3D" />
+              </div>
             </div>
 
             {/* 3D STATS GRID - COMPACT */}
@@ -14443,19 +14515,28 @@ function KidsHomePage({ kid, onNavigate }) {
     <div style={{padding:'20px 20px'}}>
       {/* 3D HERO BANNER - MODE ANAK */}
       <div className="hero hero--kid" style={{marginBottom: 20}}>
+        {/* Floating decoration - rainbow, stars, clouds */}
+        <span style={{position:'absolute',top:10,right:'52%',fontSize:22,zIndex:4,animation:'hero-float 2.5s ease-in-out infinite alternate'}} aria-hidden="true">🌟</span>
+        <span style={{position:'absolute',top:22,right:'30%',fontSize:16,zIndex:4,animation:'hero-float 3s ease-in-out infinite alternate',animationDelay:'0.8s'}} aria-hidden="true">✨</span>
+        <span style={{position:'absolute',bottom:14,right:'50%',fontSize:14,zIndex:4,animation:'hero-float 2.2s ease-in-out infinite alternate',animationDelay:'1.4s'}} aria-hidden="true">🌈</span>
         <div className="hero__copy">
-          <span className="eyebrow" style={{background:'rgba(25,91,255,0.12)',color:'#195bff'}}>
+          <span className="eyebrow" style={{background:'rgba(25,91,255,0.12)',color:'#195bff',border:'1px solid rgba(25,91,255,0.2)'}}>
             <img src="/assets/icons/star.svg" alt="" style={{filter:'none'}} />
             Zona Belajar Ceria
           </span>
-          <h1 style={{fontSize: 'clamp(20px, 2.4vw, 24px)', margin: '8px 0', color: '#0f172a', fontWeight: 900}}>
-            Halo, {kid?.name || 'Pahlawan Kecil'}! 👋
+          <h1 style={{fontSize: 'clamp(19px, 2.4vw, 24px)', margin: '8px 0 6px', color: '#0f172a', fontWeight: 900, lineHeight: 1.15}}>
+            Halo,<br /><span style={{fontWeight:900}}>{kid?.name || 'Pahlawan Kecil'}</span>! 👋
           </h1>
           <p style={{fontSize: 11, color: '#334155', margin: 0, lineHeight: 1.4}}>
             Ayo belajar, bermain, dan jadi anak sholeh yang hebat! ✨
           </p>
         </div>
-        <img className="hero__art kid-art" src="/assets/images/kid-hero-3d.png" onError={(e)=>{e.target.src='/assets/illustrations/kid-hero.svg';}} alt="Kid Hero 3D" />
+        {/* HALF-BODY CHARACTER WRAP - KID */}
+        <div className="hero__char-wrap">
+          <img src="/assets/images/kid-hero-3d.png"
+            onError={(e)=>{e.target.src='/assets/illustrations/kid-hero.svg';}}
+            alt="Pahlawan Cilik 3D" />
+        </div>
       </div>
 
       {/* Streak & badges */}
