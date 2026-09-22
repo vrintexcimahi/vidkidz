@@ -1,1 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 32s9-15 25-15 25 15 25 15-9 15-25 15S7 32 7 32Z"/><circle cx="32" cy="32" r="6"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="ey-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#0284c7" flood-opacity="0.32"/>
+    </filter>
+    <linearGradient id="ey-sclera" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <radialGradient id="ey-iris" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="35%" stop-color="#06b6d4"/>
+      <stop offset="70%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <linearGradient id="ey-lid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#ey-shadow)">
+    <!-- Outer Contour Eyelid Frame (Curved Almond Shape) -->
+    <path d="M12 60 C26 30 94 30 108 60 C94 90 26 90 12 60 Z" fill="url(#ey-lid)"/>
+
+    <!-- Inner Eye Sclera (White) -->
+    <path d="M16 60 C28 35 92 35 104 60 C92 85 28 85 16 60 Z" fill="url(#ey-sclera)"/>
+
+    <!-- Iris (Big Pixar Eye) -->
+    <circle cx="60" cy="60" r="22" fill="url(#ey-iris)"/>
+    <!-- Iris Specular Ring -->
+    <circle cx="60" cy="60" r="21" fill="none" stroke="#a5f3fc" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Pupil -->
+    <circle cx="60" cy="60" r="12" fill="#020617"/>
+
+    <!-- Double Pixar Sparkle Catchlights -->
+    <circle cx="54" cy="53" r="5.5" fill="#ffffff"/>
+    <circle cx="67" cy="65" r="2.8" fill="#ffffff"/>
+    <circle cx="65" cy="52" r="1.5" fill="#ffffff" opacity="0.8"/>
+
+    <!-- Upper Lid Eyelash Accent / Rim -->
+    <path d="M12 60 C26 30 94 30 108 60" fill="none" stroke="#1e3a8a" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+</svg>

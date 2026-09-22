@@ -1,1 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 34h10l5-14 10 27 7-19 4 6h12"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="act-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#e11d48" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="act-heart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6584"/>
+      <stop offset="45%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#be123c"/>
+    </linearGradient>
+    <linearGradient id="act-pulse" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#a5f3fc"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#act-shadow)">
+    <!-- 3D Heart Depth Shading -->
+    <path d="M60 98 C36 82 14 62 14 42 C14 26 26 16 40 16 C50 16 56 22 60 28 C64 22 70 16 80 16 C94 16 106 26 106 42 C106 62 84 82 60 98 Z" transform="translate(0, 5)" fill="#881337"/>
+
+    <!-- Main 3D Heart Body -->
+    <path d="M60 96 C36 80 14 60 14 40 C14 24 26 14 40 14 C50 14 56 20 60 26 C64 20 70 14 80 14 C94 14 106 24 106 40 C106 60 84 80 60 96 Z" fill="url(#act-heart)"/>
+
+    <!-- Glossy Specular Highlights -->
+    <ellipse cx="38" cy="30" rx="10" ry="6" transform="rotate(-35 38 30)" fill="#ffffff" opacity="0.6"/>
+    <ellipse cx="80" cy="28" rx="6" ry="3.5" transform="rotate(25 80 28)" fill="#ffffff" opacity="0.5"/>
+    <circle cx="48" cy="24" r="3" fill="#ffffff" opacity="0.65"/>
+
+    <!-- Dynamic 3D Pulse Wave Across Heart -->
+    <!-- Dark shadow under pulse -->
+    <path d="M12 66 L36 66 L46 44 L56 78 L68 34 L78 66 L108 66" fill="none" stroke="#4c0519" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+    <!-- Glowing Pulse Line -->
+    <path d="M12 64 L36 64 L46 42 L56 76 L68 32 L78 64 L108 64" fill="none" stroke="url(#act-pulse)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 64 L36 64 L46 42 L56 76 L68 32 L78 64 L108 64" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+
+    <!-- Energy Sparks -->
+    <polygon points="68,22 70,26 74,27 70,29 68,33 66,29 62,27 66,26" fill="#38bdf8"/>
+    <polygon points="106,56 107.5,59 110.5,60 107.5,61 106,64 104.5,61 101.5,60 104.5,59" fill="#fde047"/>
+  </g>
+</svg>

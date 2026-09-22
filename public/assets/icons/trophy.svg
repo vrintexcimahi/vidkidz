@@ -1,1 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h20v12c0 10-4 16-10 16s-10-6-10-16Z"/><path d="M22 17H11c0 10 4 15 12 15M42 17h11c0 10-4 15-12 15M32 40v8M23 54h18"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="tr-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#f59e0b" flood-opacity="0.4"/>
+    </filter>
+    <linearGradient id="tr-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="25%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="tr-base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="70%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="tr-gem" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="60%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#tr-shadow)">
+    <!-- Left Handle -->
+    <path d="M34 32 C16 32 16 62 36 64 L36 56 C24 54 24 40 34 40 Z" fill="url(#tr-gold)"/>
+    <!-- Right Handle -->
+    <path d="M86 32 C104 32 104 62 84 64 L84 56 C96 54 96 40 86 40 Z" fill="url(#tr-gold)"/>
+
+    <!-- Trophy Cup Body (Bowl) -->
+    <path d="M30 24 C30 62 46 72 60 72 C74 72 90 62 90 24 Z" fill="url(#tr-gold)"/>
+
+    <!-- Cup Rim Oval -->
+    <ellipse cx="60" cy="24" rx="30" ry="8" fill="#d97706"/>
+    <ellipse cx="60" cy="22" rx="28" ry="6.5" fill="url(#tr-gold)"/>
+    <ellipse cx="60" cy="22" rx="24" ry="4" fill="#92400e" opacity="0.6"/>
+
+    <!-- Stem -->
+    <path d="M54 72 H66 V84 H54 Z" fill="url(#tr-gold)"/>
+    <ellipse cx="60" cy="84" rx="14" ry="4" fill="#b45309"/>
+
+    <!-- Pedestal Base (Layered) -->
+    <rect x="38" y="86" width="44" height="18" rx="6" fill="url(#tr-base)"/>
+    <rect x="34" y="98" width="52" height="10" rx="4" fill="#0f172a"/>
+
+    <!-- Center Blue Gem on Base -->
+    <rect x="52" y="90" width="16" height="10" rx="3" fill="url(#tr-gem)"/>
+    <rect x="54" y="92" width="12" height="2" rx="1" fill="#ffffff" opacity="0.8"/>
+
+    <!-- Embossed 3D Star on Cup Body -->
+    <polygon points="60,36 63,44 72,44 65,50 68,58 60,53 52,58 55,50 48,44 57,44" fill="#fffbeb"/>
+    <polygon points="60,36 63,44 72,44 65,50 60,53" fill="#ffffff" opacity="0.7"/>
+
+    <!-- Specular Highlight Curve on Left Cup -->
+    <path d="M34 28 C34 52 44 64 56 68 C46 64 38 52 38 30 Z" fill="#ffffff" opacity="0.65"/>
+
+    <!-- Sparkles -->
+    <polygon points="88,18 90,22 94,23 90,25 88,29 86,25 82,23 86,22" fill="#ffffff"/>
+  </g>
+</svg>

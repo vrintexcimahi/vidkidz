@@ -1,36 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
   <defs>
     <filter id="hg-shadow" x="-20%" y="-20%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#f43f5e" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#f43f5e" flood-opacity="0.35"/>
     </filter>
-    <linearGradient id="bg-bubble-pink" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff1f2"/>
-      <stop offset="100%" stop-color="#ffe4e6"/>
-    </linearGradient>
-    <linearGradient id="hg-wood" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="hg-wood-top" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#fb7185"/>
-      <stop offset="100%" stop-color="#e11d48"/>
+      <stop offset="45%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#be123c"/>
     </linearGradient>
-    <linearGradient id="sand-pink" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fda4af"/>
-      <stop offset="100%" stop-color="#f43f5e"/>
+    <linearGradient id="hg-sand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="hg-glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#e0f2fe" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#bae6fd" stop-opacity="0.5"/>
     </linearGradient>
   </defs>
+
   <g filter="url(#hg-shadow)">
-    <rect x="10" y="10" width="100" height="100" rx="30" fill="url(#bg-bubble-pink)"/>
-    <!-- Top Cap -->
-    <rect x="36" y="28" width="48" height="8" rx="4" fill="url(#hg-wood)"/>
-    <!-- Bottom Cap -->
-    <rect x="36" y="84" width="48" height="8" rx="4" fill="url(#hg-wood)"/>
-    
-    <!-- Glass Contour -->
-    <path d="M42 36 Q60 60 42 84 H78 Q60 60 78 36 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-    
-    <!-- Top Sand Cone -->
-    <path d="M46 42 Q60 52 74 42 L60 60 Z" fill="url(#sand-pink)"/>
-    <!-- Falling sand stream -->
-    <line x1="60" y1="58" x2="60" y2="76" stroke="#f43f5e" stroke-width="2" stroke-dasharray="2,2"/>
-    <!-- Bottom Sand Mound -->
-    <path d="M48 82 Q60 72 72 82 Z" fill="url(#sand-pink)"/>
+    <!-- 4 Wooden Pillar Supports (Connecting top and bottom plates) -->
+    <rect x="28" y="24" width="6" height="72" rx="3" fill="#be123c"/>
+    <rect x="86" y="24" width="6" height="72" rx="3" fill="#be123c"/>
+
+    <!-- Glass Bulb Envelope -->
+    <!-- Glass body path -->
+    <path d="M34 26 C34 50 54 58 54 60 C54 62 34 70 34 94 H86 C86 70 66 62 66 60 C66 58 86 50 86 26 Z" fill="url(#hg-glass)" stroke="#ffffff" stroke-width="2.5"/>
+
+    <!-- Top Sand Cone (Draining) -->
+    <path d="M38 32 C38 46 54 54 59 58 C64 54 82 46 82 32 Z" fill="url(#hg-sand)"/>
+
+    <!-- Sand Stream falling through neck -->
+    <line x1="60" y1="58" x2="60" y2="78" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+    <line x1="60" y1="58" x2="60" y2="78" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.8"/>
+
+    <!-- Bottom Sand Mound (Piling up) -->
+    <path d="M40 92 C42 80 52 74 60 74 C68 74 78 80 80 92 Z" fill="url(#hg-sand)"/>
+
+    <!-- Top Wooden Cap -->
+    <rect x="22" y="16" width="76" height="12" rx="6" fill="url(#hg-wood-top)"/>
+    <rect x="26" y="18" width="68" height="3" rx="1.5" fill="#ffffff" opacity="0.5"/>
+
+    <!-- Bottom Wooden Base -->
+    <rect x="22" y="92" width="76" height="12" rx="6" fill="url(#hg-wood-top)"/>
+    <rect x="26" y="94" width="68" height="3" rx="1.5" fill="#ffffff" opacity="0.4"/>
+
+    <!-- Specular Reflection on Upper Glass -->
+    <path d="M42 30 C40 38 46 46 52 50 C48 46 44 38 46 30 Z" fill="#ffffff" opacity="0.6"/>
+
+    <!-- Sparkle on Cap -->
+    <polygon points="96,16 98,20 102,21 98,23 96,27 94,23 90,21 94,20" fill="#ffffff"/>
   </g>
 </svg>

@@ -1,1 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 25c13-12 33-12 46 0M17 34c9-8 21-8 30 0M25 43c4-4 10-4 14 0M32 51h.1"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="wf-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#0284c7" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="wf-arc1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+    <linearGradient id="wf-arc2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="wf-arc3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a5f3fc"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <radialGradient id="wf-dot" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="40%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#wf-shadow)">
+    <!-- Base 3D Sphere Dot -->
+    <ellipse cx="60" cy="98" rx="14" ry="8" fill="#0f172a" opacity="0.3"/>
+    <circle cx="60" cy="92" r="14" fill="url(#wf-dot)"/>
+    <circle cx="56" cy="88" r="4.5" fill="#ffffff" opacity="0.75"/>
+
+    <!-- Small Wave Arc (Inner) -->
+    <path d="M42 74 C47 68 53 66 60 66 C67 66 73 68 78 74" fill="none" stroke="#0f172a" stroke-width="12" stroke-linecap="round" opacity="0.25" transform="translate(0, 3)"/>
+    <path d="M42 74 C47 68 53 66 60 66 C67 66 73 68 78 74" fill="none" stroke="url(#wf-arc1)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M42 74 C47 68 53 66 60 66 C67 66 73 68 78 74" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- Medium Wave Arc (Middle) -->
+    <path d="M28 52 C37 42 48 38 60 38 C72 38 83 42 92 52" fill="none" stroke="#0f172a" stroke-width="12" stroke-linecap="round" opacity="0.25" transform="translate(0, 3)"/>
+    <path d="M28 52 C37 42 48 38 60 38 C72 38 83 42 92 52" fill="none" stroke="url(#wf-arc2)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M28 52 C37 42 48 38 60 38 C72 38 83 42 92 52" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- Large Wave Arc (Outer) -->
+    <path d="M14 30 C27 16 43 10 60 10 C77 10 93 16 106 30" fill="none" stroke="#0f172a" stroke-width="12" stroke-linecap="round" opacity="0.25" transform="translate(0, 3)"/>
+    <path d="M14 30 C27 16 43 10 60 10 C77 10 93 16 106 30" fill="none" stroke="url(#wf-arc3)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M14 30 C27 16 43 10 60 10 C77 10 93 16 106 30" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- Sparkle -->
+    <polygon points="106,12 108,16 112,17 108,19 106,23 104,19 100,17 104,16" fill="#fde047"/>
+  </g>
+</svg>

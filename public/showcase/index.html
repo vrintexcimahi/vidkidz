@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=3d_pixar_v4" />
 </head>
 <body>
 
@@ -171,10 +171,16 @@
               SYSTEM CORE ONLINE
             </span>
             <h1>Selamat datang,<br><strong>Super Admin</strong> 👋</h1>
-            <p>Kelola sistem, pantau seluruh aktivitas, dan jaga pengalaman terbaik untuk semua keluarga.</p>
+            <p>Kelola sistem &amp; pantau aktivitas keluarga.</p>
             <div class="hero__actions">
-              <button class="pill pill--gold js-toast" data-message="⚡ GOD MODE Aktif!">⚡ GOD MODE</button>
-              <button class="pill pill--white js-toast" data-message="Logout berhasil">➔ Logout</button>
+              <button class="pill pill--gold js-toast" data-message="⚡ GOD MODE Aktif!">
+                <img src="./assets/icons/bolt.svg" alt="" style="width:14px;height:14px;object-fit:contain">
+                <span>GOD MODE</span>
+              </button>
+              <button class="pill pill--white js-toast" data-message="Logout berhasil">
+                <img src="./assets/icons/logout.svg" alt="" style="width:14px;height:14px;object-fit:contain">
+                <span>Logout</span>
+              </button>
             </div>
           </div>
 
@@ -206,22 +212,44 @@
           </article>
         </section>
 
+        <!-- Modul Kontrol Sistem Super Admin -->
+        <section class="kid-grid" style="margin-bottom:12px;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="kid-card sky js-toast" data-message="👥 Buka User Manager" style="min-height:120px;padding:12px">
+            <span class="tag blue-tag">SYSTEM ⚡</span>
+            <div class="kid-icon" style="height:36px;display:flex;align-items:center;margin:4px 0">
+              <img src="./assets/icons/3d-users.svg" alt="Users" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(37,99,235,0.35))">
+            </div>
+            <h3 style="font-size:12px;margin:2px 0;font-weight:800">User Manager</h3>
+            <p style="font-size:9px;color:#64748b">Kelola admin &amp; keluarga</p>
+            <i class="card-arrow" style="background:#2563eb;color:#fff">›</i>
+          </button>
+
+          <button class="kid-card mint js-toast" data-message="🛡️ Buka Backup Data" style="min-height:120px;padding:12px">
+            <span class="tag green-tag">SECURE 🔒</span>
+            <div class="kid-icon" style="height:36px;display:flex;align-items:center;margin:4px 0">
+              <img src="./assets/icons/shield.svg" alt="Backup" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(16,185,129,0.35))">
+            </div>
+            <h3 style="font-size:12px;margin:2px 0;font-weight:800">Backup Data</h3>
+            <p style="font-size:9px;color:#64748b">Snapshot otomatis</p>
+            <i class="card-arrow" style="background:#059669;color:#fff">›</i>
+          </button>
+        </section>
+
         <!-- Aktivitas Terbaru -->
         <section class="panel">
           <div class="section-title">
-            <span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"
-                   stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span style="display:flex;align-items:center;gap:6px">
+              <img src="./assets/icons/activity.svg" alt="" style="width:16px;height:16px;object-fit:contain">
               Aktivitas Terbaru
             </span>
             <button class="text-btn js-toast" data-message="Membuka semua log">Lihat Semua →</button>
           </div>
           <div class="activity-table">
             <div class="activity-row activity-head"><span>WAKTU</span><span>USER</span><span>AKSI</span></div>
-            <div class="activity-row"><span><i class="dot green-dot"></i>Hari ini 10:24</span><strong>Andi</strong><span>Bermain Matematika Seru</span></div>
-            <div class="activity-row"><span><i class="dot blue-dot"></i>Hari ini 09:18</span><strong>Budi</strong><span>Menonton Video Islami</span></div>
-            <div class="activity-row"><span><i class="dot amber-dot"></i>Kemarin 20:11</span><strong>Siti</strong><span>Upgrade ke Premium</span></div>
-            <div class="activity-row"><span><i class="dot purple-dot"></i>Kemarin 16:03</span><strong>Admin</strong><span>Menambah keluarga baru</span></div>
+            <div class="activity-row"><span><i class="dot green-dot"></i>Hari ini 10:24</span><strong>Andi</strong><span style="display:flex;align-items:center;gap:4px"><img src="./assets/icons/3d-gamepad.svg" alt="" style="width:13px;height:13px;object-fit:contain"> Main Matematika</span></div>
+            <div class="activity-row"><span><i class="dot blue-dot"></i>Hari ini 09:18</span><strong>Budi</strong><span style="display:flex;align-items:center;gap:4px"><img src="./assets/icons/3d-video-tv.svg" alt="" style="width:13px;height:13px;object-fit:contain"> Tonton Video</span></div>
+            <div class="activity-row"><span><i class="dot amber-dot"></i>Kemarin 20:11</span><strong>Siti</strong><span style="display:flex;align-items:center;gap:4px"><img src="./assets/icons/3d-crown.svg" alt="" style="width:13px;height:13px;object-fit:contain"> Upgrade Premium</span></div>
+            <div class="activity-row"><span><i class="dot purple-dot"></i>Kemarin 16:03</span><strong>Admin</strong><span style="display:flex;align-items:center;gap:4px"><img src="./assets/icons/3d-users.svg" alt="" style="width:13px;height:13px;object-fit:contain"> Tambah Keluarga</span></div>
           </div>
         </section>
 
@@ -230,7 +258,7 @@
       <!-- Bottom Nav -->
       <nav class="bottom-nav">
         <button class="nav-item active"><span><img src="./assets/icons/home.svg" alt=""></span><small>Beranda</small></button>
-        <button class="nav-item"><span><img src="./assets/icons/users.svg" alt=""></span><small>Pengguna</small></button>
+        <button class="nav-item"><span><img src="./assets/icons/3d-users.svg" alt=""></span><small>Pengguna</small></button>
         <button class="nav-item"><span><img src="./assets/icons/chart.svg" alt=""></span><small>Analitik</small></button>
         <button class="nav-item"><span class="has-badge"><img src="./assets/icons/bell.svg" alt=""><i></i></span><small>Notifikasi</small></button>
         <button class="nav-item"><span><img src="./assets/icons/settings.svg" alt=""></span><small>Pengaturan</small></button>
@@ -284,10 +312,16 @@
               Proteksi Keluarga Aktif →
             </span>
             <h1 style="color:#0f172a">Selamat datang,<br><strong>Keluarga</strong> 👨‍👩‍👧</h1>
-            <p style="color:#334155;opacity:1">Pantau perkembangan prestasi, ibadah, dan keamanan digital anak.</p>
+            <p style="color:#334155;opacity:1">Pantau prestasi &amp; keamanan digital anak.</p>
             <div class="hero__actions">
-              <button class="pill pill--gold js-toast" data-message="⚡ Kontrol Cepat dibuka">⚡ Kontrol Cepat</button>
-              <button class="pill pill--white js-toast" data-message="Halaman Kelola Anak">👦 Kelola Anak</button>
+              <button class="pill pill--gold js-toast" data-message="⚡ Kontrol Cepat dibuka">
+                <img src="./assets/icons/bolt.svg" alt="" style="width:14px;height:14px;object-fit:contain">
+                <span>Kontrol Cepat</span>
+              </button>
+              <button class="pill pill--white js-toast" data-message="Halaman Kelola Anak">
+                <img src="./assets/icons/3d-users.svg" alt="" style="width:14px;height:14px;object-fit:contain">
+                <span>Kelola Anak</span>
+              </button>
             </div>
           </div>
 
@@ -334,16 +368,34 @@
             <span class="score-chip">⭐ 85</span>
           </div>
           <div class="encourage">
-            <span style="font-size:22px">🐹</span>
+            <img src="./assets/icons/3d-smile.svg" alt="" style="width:24px;height:24px;object-fit:contain">
             <div>
               <b>Terus semangat, Andi!</b>
               <small>Kamu hebat hari ini! 💙</small>
             </div>
           </div>
           <div class="mini-metrics">
-            <div><b>🔥 3</b><span>Hari Streak</span></div>
-            <div><b>📖 3</b><span>Hafalan</span></div>
-            <div><b>⏱️ 142</b><span>Mnt Tonton</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="display:flex;align-items:center;gap:4px">
+                <img src="./assets/icons/bolt.svg" alt="" style="width:13px;height:13px;object-fit:contain">
+                <b>3</b>
+              </div>
+              <span>Hari Streak</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="display:flex;align-items:center;gap:4px">
+                <img src="./assets/icons/3d-quran.svg" alt="" style="width:13px;height:13px;object-fit:contain">
+                <b>3</b>
+              </div>
+              <span>Hafalan</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="display:flex;align-items:center;gap:4px">
+                <img src="./assets/icons/3d-hourglass.svg" alt="" style="width:13px;height:13px;object-fit:contain">
+                <b>142</b>
+              </div>
+              <span>Mnt Tonton</span>
+            </div>
           </div>
           <div class="child-actions">
             <button class="action-lock js-toast" data-message="🔒 Layar dikunci">
@@ -358,11 +410,58 @@
           </div>
         </section>
 
+        <!-- Fitur Pintas Orang Tua (Parenting Action Grid) -->
+        <section class="kid-grid" style="margin-top:14px;grid-template-columns:1fr 1fr;gap:10px">
+          <!-- 1. Kendali Layar -->
+          <button class="kid-card amber-soft js-toast" data-message="🔒 Membuka Kendali Perangkat" style="min-height:120px;padding:12px">
+            <span class="tag amber-tag">PROTEKSI ⚡</span>
+            <div class="kid-icon" style="height:36px;display:flex;align-items:center;margin:4px 0">
+              <img src="./assets/icons/lock.svg" alt="Kendali" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(245,158,11,0.35))">
+            </div>
+            <h3 style="font-size:12px;margin:2px 0;font-weight:800">Kendali Layar</h3>
+            <p style="font-size:9px;color:#64748b">Batas waktu &amp; kunci</p>
+            <i class="card-arrow" style="background:#f59e0b;color:#fff">›</i>
+          </button>
+
+          <!-- 2. Koin & Hadiah -->
+          <button class="kid-card sky js-toast" data-message="🎁 Membuka Koin & Hadiah" style="min-height:120px;padding:12px">
+            <span class="tag blue-tag" style="display:inline-flex;align-items:center;gap:4px">REWARD <img src="./assets/icons/3d-coin.svg" alt="" style="width:12px;height:12px;object-fit:contain;vertical-align:middle"></span>
+            <div class="kid-icon" style="height:36px;display:flex;align-items:center;margin:4px 0">
+              <img src="./assets/icons/3d-treasure.svg" alt="Hadiah" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(37,99,235,0.35))">
+            </div>
+            <h3 style="font-size:12px;margin:2px 0;font-weight:800">Koin &amp; Hadiah</h3>
+            <p style="font-size:9px;color:#64748b">Klaim reward anak</p>
+            <i class="card-arrow" style="background:#2563eb;color:#fff">›</i>
+          </button>
+
+          <!-- 3. Turnamen Kuis -->
+          <button class="kid-card lilac js-toast" data-message="🥊 Membuka Turnamen Kuis" style="min-height:120px;padding:12px">
+            <span class="tag violet">EDUKATIF 🎯</span>
+            <div class="kid-icon" style="height:36px;display:flex;align-items:center;margin:4px 0">
+              <img src="./assets/icons/3d-boxing-glove.svg" alt="Turnamen" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(139,92,246,0.35))">
+            </div>
+            <h3 style="font-size:12px;margin:2px 0;font-weight:800">Turnamen Kuis</h3>
+            <p style="font-size:9px;color:#64748b">Pantau duel pintar</p>
+            <i class="card-arrow" style="background:#8b5cf6;color:#fff">›</i>
+          </button>
+
+          <!-- 4. Galeri Seni -->
+          <button class="kid-card pink-soft js-toast" data-message="🎨 Membuka Galeri Seni" style="min-height:120px;padding:12px">
+            <span class="tag pink-tag">KREATIF 🎨</span>
+            <div class="kid-icon" style="height:36px;display:flex;align-items:center;margin:4px 0">
+              <img src="./assets/icons/palette.svg" alt="Galeri" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(236,72,153,0.35))">
+            </div>
+            <h3 style="font-size:12px;margin:2px 0;font-weight:800">Galeri Seni</h3>
+            <p style="font-size:9px;color:#64748b">Koleksi lukisan anak</p>
+            <i class="card-arrow" style="background:#ec4899;color:#fff">›</i>
+          </button>
+        </section>
+
       </div><!-- end scroll-area -->
 
       <nav class="bottom-nav">
         <button class="nav-item active"><span><img src="./assets/icons/home.svg" alt=""></span><small>Beranda</small></button>
-        <button class="nav-item"><span><img src="./assets/icons/users.svg" alt=""></span><small>Anak Saya</small></button>
+        <button class="nav-item"><span><img src="./assets/icons/3d-users.svg" alt=""></span><small>Anak Saya</small></button>
         <button class="nav-item"><span><img src="./assets/icons/activity.svg" alt=""></span><small>Aktivitas</small></button>
         <button class="nav-item"><span class="has-badge"><img src="./assets/icons/message.svg" alt=""><i></i></span><small>Pesan</small></button>
         <button class="nav-item"><span><img src="./assets/icons/settings.svg" alt=""></span><small>Pengaturan</small></button>
@@ -415,7 +514,7 @@
               ⭐ Zona Belajar Ceria
             </span>
             <h1 style="color:#0f172a">Halo,<br><strong>Pahlawan Kecil!</strong> 👋</h1>
-            <p style="color:#334155;opacity:1">Ayo belajar, bermain, dan jadi anak sholeh yang hebat! ✨</p>
+            <p style="color:#334155;opacity:1">Ayo belajar &amp; bermain seru hari ini! ✨</p>
           </div>
 
           <!-- HALF-BODY KID CHARACTER -->
@@ -429,7 +528,9 @@
         <!-- 6 Action Tiles — Full 3D Isometric Icons -->
         <section class="kid-grid">
           <!-- 1. Dongeng Santai -->
-          <button class="kid-card lilac js-toast" data-message="📚 Membuka Dongeng Santai">
+          <button class="kid-card lilac shimmer-container js-toast" data-message="📚 Membuka Dongeng Santai">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
             <span class="tag violet">SERU ⚡</span>
             <div class="kid-icon"><img src="./assets/icons/3d-storybooks.svg" alt="Dongeng"></div>
             <h3>Dongeng Santai</h3>
@@ -438,7 +539,9 @@
           </button>
 
           <!-- 2. Main Game Seru -->
-          <button class="kid-card sky js-toast" data-message="🎮 Membuka Main Game Seru">
+          <button class="kid-card sky shimmer-container js-toast" data-message="🎮 Membuka Main Game Seru">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
             <span class="tag blue-tag">FAVORIT</span>
             <div class="kid-icon"><img src="./assets/icons/3d-gamepad.svg" alt="Game"></div>
             <h3>Main Game Seru</h3>
@@ -447,7 +550,9 @@
           </button>
 
           <!-- 3. Hafalan Mengaji -->
-          <button class="kid-card mint js-toast" data-message="🌙 Membuka Hafalan Mengaji">
+          <button class="kid-card mint shimmer-container js-toast" data-message="🌙 Membuka Hafalan Mengaji">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
             <span class="tag green-tag">BERKAH 🌙</span>
             <div class="kid-icon"><img src="./assets/icons/3d-quran.svg" alt="Hafalan"></div>
             <h3>Hafalan Mengaji</h3>
@@ -456,7 +561,9 @@
           </button>
 
           <!-- 4. Tonton Video -->
-          <button class="kid-card blue-soft js-toast" data-message="📺 Membuka Tonton Video">
+          <button class="kid-card blue-soft shimmer-container js-toast" data-message="📺 Membuka Tonton Video">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
             <span class="tag blue-tag">EDUKATIF 📺</span>
             <div class="kid-icon"><img src="./assets/icons/3d-video-tv.svg" alt="Video"></div>
             <h3>Tonton Video</h3>
@@ -465,7 +572,9 @@
           </button>
 
           <!-- 5. Tukar Koin -->
-          <button class="kid-card amber-soft js-toast" data-message="🎁 Membuka Tukar Koin">
+          <button class="kid-card amber-soft shimmer-container js-toast" data-message="🎁 Membuka Tukar Koin">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
             <span class="tag amber-tag">HADIAH 🎁</span>
             <div class="kid-icon"><img src="./assets/icons/3d-treasure.svg" alt="Koin"></div>
             <h3>Tukar Koin</h3>
@@ -474,11 +583,35 @@
           </button>
 
           <!-- 6. Lihat Foto -->
-          <button class="kid-card pink-soft js-toast" data-message="📸 Membuka Lihat Foto">
+          <button class="kid-card pink-soft shimmer-container js-toast" data-message="📸 Membuka Lihat Foto">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
             <span class="tag pink-tag">KENANGAN 🖼️</span>
             <div class="kid-icon"><img src="./assets/icons/3d-camera.svg" alt="Foto"></div>
             <h3>Lihat Foto</h3>
             <p>Album kenangan keluarga</p>
+            <i class="card-arrow" style="background:#ec4899;color:#fff">›</i>
+          </button>
+
+          <!-- 7. Duel Kuis Pintar -->
+          <button class="kid-card amber-soft shimmer-container js-toast" data-message="🥊 Membuka Duel Kuis Pintar">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
+            <span class="tag amber-tag">POPULER ⭐</span>
+            <div class="kid-icon"><img src="./assets/icons/3d-boxing-glove.svg" alt="Duel"></div>
+            <h3>Duel Kuis Pintar</h3>
+            <p>Tantang saudara atau AI</p>
+            <i class="card-arrow" style="background:#ef4444;color:#fff">›</i>
+          </button>
+
+          <!-- 8. Studio Mewarnai -->
+          <button class="kid-card pink-soft shimmer-container js-toast" data-message="🎨 Membuka Studio Mewarnai">
+            <span class="glass-shine-beam" aria-hidden="true"></span>
+            <span class="glass-glint" aria-hidden="true">✦</span>
+            <span class="tag pink-tag">KREATIF 🎨</span>
+            <div class="kid-icon"><img src="./assets/icons/3d-palette.svg" alt="Mewarnai"></div>
+            <h3>Studio Mewarnai</h3>
+            <p>Mewarnai fabel &amp; kanvas</p>
             <i class="card-arrow" style="background:#ec4899;color:#fff">›</i>
           </button>
         </section>
@@ -487,9 +620,10 @@
 
       <nav class="bottom-nav">
         <button class="nav-item active"><span><img src="./assets/icons/home.svg" alt=""></span><small>Beranda</small></button>
-        <button class="nav-item"><span><img src="./assets/icons/game.svg" alt=""></span><small>Game</small></button>
-        <button class="nav-item"><span><img src="./assets/icons/trophy.svg" alt=""></span><small>Koleksi</small></button>
-        <button class="nav-item"><span><img src="./assets/icons/smile.svg" alt=""></span><small>Profil</small></button>
+        <button class="nav-item"><span><img src="./assets/icons/3d-clapperboard.svg" alt=""></span><small>Video</small></button>
+        <button class="nav-item"><span><img src="./assets/icons/3d-boxing-glove.svg" alt=""></span><small>Duel</small></button>
+        <button class="nav-item"><span><img src="./assets/icons/3d-palette.svg" alt=""></span><small>Mewarnai</small></button>
+        <button class="nav-item"><span><img src="./assets/icons/3d-gamepad.svg" alt=""></span><small>Game</small></button>
       </nav>
     </div>
   </section>

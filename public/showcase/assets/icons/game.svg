@@ -1,1 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 23h28c7 0 11 8 9 16l-3 10c-2 6-8 7-12 2l-4-5h-8l-4 5c-4 5-10 4-12-2L9 39c-2-8 2-16 9-16Z"/><path d="M20 34h10M25 29v10M41 31h.1M47 37h.1"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="gp-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#2563eb" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="body-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="grip-highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="thumb-grad" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="80%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#gp-shadow)">
+    <!-- Controller Body -->
+    <path d="M34 26 C20 26 10 38 12 58 C14 74 24 94 36 94 C46 94 50 82 56 82 C60 82 64 82 68 82 C74 82 78 94 88 94 C100 94 110 74 112 58 C114 38 104 26 90 26 C76 26 66 34 62 34 C58 34 48 26 34 26 Z" fill="url(#body-grad)"/>
+    
+    <!-- Specular body highlight -->
+    <path d="M34 29 C24 29 16 38 16 52 C20 36 30 31 44 31 C52 31 58 34 62 34 C66 34 72 31 80 31 C94 31 104 36 108 52 C108 38 100 29 90 29 C78 29 68 36 62 36 C56 36 46 29 34 29 Z" fill="#93c5fd" opacity="0.6"/>
+
+    <!-- Left D-Pad -->
+    <g transform="translate(32, 48)">
+      <rect x="-4" y="-12" width="8" height="24" rx="3" fill="#1e293b"/>
+      <rect x="-12" y="-4" width="24" height="8" rx="3" fill="#1e293b"/>
+      <!-- Arrows -->
+      <polygon points="0,-9 -2,-6 2,-6" fill="#94a3b8"/>
+      <polygon points="0,9 -2,6 2,6" fill="#94a3b8"/>
+      <polygon points="-9,0 -6,-2 -6,2" fill="#94a3b8"/>
+      <polygon points="9,0 6,-2 6,2" fill="#94a3b8"/>
+    </g>
+
+    <!-- Right Action Buttons -->
+    <g transform="translate(90, 48)">
+      <circle cx="0" cy="-10" r="4.5" fill="#ef4444"/> <!-- Top: Red -->
+      <circle cx="10" cy="0" r="4.5" fill="#3b82f6"/> <!-- Right: Blue -->
+      <circle cx="0" cy="10" r="4.5" fill="#10b981"/> <!-- Bottom: Green -->
+      <circle cx="-10" cy="0" r="4.5" fill="#f59e0b"/> <!-- Left: Yellow -->
+    </g>
+
+    <!-- Center LED Lightbar -->
+    <rect x="52" y="38" width="18" height="5" rx="2.5" fill="#38bdf8" opacity="0.9"/>
+
+    <!-- Dual Thumbsticks -->
+    <!-- Left stick -->
+    <circle cx="46" cy="68" r="11" fill="#1e293b"/>
+    <circle cx="46" cy="67" r="9" fill="url(#thumb-grad)"/>
+    <circle cx="46" cy="67" r="4" fill="#475569"/>
+    
+    <!-- Right stick -->
+    <circle cx="76" cy="68" r="11" fill="#1e293b"/>
+    <circle cx="76" cy="67" r="9" fill="url(#thumb-grad)"/>
+    <circle cx="76" cy="67" r="4" fill="#475569"/>
+  </g>
+</svg>

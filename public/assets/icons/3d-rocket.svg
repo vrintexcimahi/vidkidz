@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="rkt-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#3b82f6" flood-opacity="0.38"/>
+    </filter>
+    <linearGradient id="rkt-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#bae6fd"/>
+    </linearGradient>
+    <linearGradient id="rkt-nose" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fca5a5"/>
+      <stop offset="40%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <linearGradient id="rkt-fin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <radialGradient id="rkt-window" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="60%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0e7490"/>
+    </radialGradient>
+    <linearGradient id="rkt-fire" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#rkt-shadow)">
+    <!-- Thruster Fire Exhaust -->
+    <path d="M48 88 C40 98 44 114 54 116 C58 108 52 98 56 90 Z" fill="url(#rkt-fire)"/>
+    <path d="M52 90 C56 102 62 118 70 114 C68 104 60 96 60 88 Z" fill="url(#rkt-fire)"/>
+
+    <!-- Thruster Nozzle -->
+    <path d="M46 84 H68 L64 92 H50 Z" fill="#475569"/>
+    <ellipse cx="57" cy="92" rx="7" ry="2" fill="#f97316"/>
+
+    <!-- Left Wing / Fin -->
+    <path d="M40 58 C30 68 22 84 20 92 C30 92 40 88 44 78 Z" fill="url(#rkt-fin)"/>
+    <!-- Right Wing / Fin -->
+    <path d="M74 58 C84 68 92 84 94 92 C84 92 74 88 70 78 Z" fill="url(#rkt-fin)"/>
+
+    <!-- Center Body Fuse -->
+    <path d="M57 16 C40 32 36 64 42 86 C48 88 66 88 72 86 C78 64 74 32 57 16 Z" fill="url(#rkt-body)"/>
+
+    <!-- Red Nose Cone Top -->
+    <path d="M57 16 C50 23 46 32 44 42 C52 44 62 44 70 42 C68 32 64 23 57 16 Z" fill="url(#rkt-nose)"/>
+
+    <!-- Center Fin (Front Ridge) -->
+    <path d="M55 58 C55 76 53 86 51 90 H63 C61 86 59 76 59 58 Z" fill="url(#rkt-fin)"/>
+
+    <!-- Big Round Glass Porthole Window -->
+    <circle cx="57" cy="54" r="13" fill="#cbd5e1"/>
+    <circle cx="57" cy="54" r="11" fill="url(#rkt-window)"/>
+    <!-- Specular Crescent on Window -->
+    <path d="M50 48 C53 45 59 45 63 48 C60 46 54 46 50 48 Z" fill="#ffffff" opacity="0.9"/>
+    <circle cx="52" cy="50" r="2" fill="#ffffff"/>
+
+    <!-- Sparkle Stars Around Rocket -->
+    <polygon points="26,30 28,34 32,35 28,37 26,41 24,37 20,35 24,34" fill="#facc15"/>
+    <polygon points="90,40 91.5,43 95,44 91.5,45 90,48 88.5,45 85,44 88.5,43" fill="#38bdf8"/>
+  </g>
+</svg>

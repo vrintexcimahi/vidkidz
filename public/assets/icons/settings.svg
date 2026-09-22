@@ -1,1 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="8"/><path d="M32 8v7M32 49v7M8 32h7M49 32h7M15 15l5 5M44 44l5 5M49 15l-5 5M20 44l-5 5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="st-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#0284c7" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="st-gear-front" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="45%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+    <linearGradient id="st-gear-side" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0369a1"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="st-inner-recess" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="70%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <radialGradient id="st-bolt" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#cbd5e1"/>
+      <stop offset="80%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#st-shadow)">
+    <!-- 3D Gear Back / Depth (Shifted Y+6) -->
+    <g transform="translate(0, 6)" fill="url(#st-gear-side)">
+      <path d="M52 14 H68 L72 26 C76 28 80 30 84 34 L96 30 L106 42 L99 52 C100 56 100 60 99 64 L106 74 L96 86 L84 82 C80 86 76 88 72 90 L68 102 H52 L48 90 C44 88 40 86 36 82 L24 86 L14 74 L21 64 C20 60 20 56 21 52 L14 42 L24 30 L36 34 C40 30 44 28 48 26 Z"/>
+    </g>
+
+    <!-- Gear Front Face -->
+    <path d="M52 14 H68 L72 26 C76 28 80 30 84 34 L96 30 L106 42 L99 52 C100 56 100 60 99 64 L106 74 L96 86 L84 82 C80 86 76 88 72 90 L68 102 H52 L48 90 C44 88 40 86 36 82 L24 86 L14 74 L21 64 C20 60 20 56 21 52 L14 42 L24 30 L36 34 C40 30 44 28 48 26 Z" fill="url(#st-gear-front)"/>
+
+    <!-- Specular rim highlight on top teeth -->
+    <path d="M52 14 H68 L72 26 C76 28 80 30 84 34 L96 30 L104 40 L97 50" fill="none" stroke="#bae6fd" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- Inner Recessed Well -->
+    <circle cx="60" cy="58" r="26" fill="url(#st-inner-recess)"/>
+    <!-- Outer Inset Ring -->
+    <circle cx="60" cy="58" r="26" fill="none" stroke="#0284c7" stroke-width="3"/>
+    <circle cx="60" cy="58" r="24" fill="none" stroke="#0f172a" stroke-width="2"/>
+
+    <!-- Center 3D Chrome Bolt / Hub -->
+    <circle cx="60" cy="58" r="14" fill="url(#st-bolt)"/>
+    <!-- Central Hex / Dot -->
+    <circle cx="60" cy="58" r="6" fill="#0f172a"/>
+    <circle cx="58" cy="56" r="2.5" fill="#ffffff" opacity="0.8"/>
+  </g>
+</svg>

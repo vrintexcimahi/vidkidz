@@ -1202,7 +1202,126 @@ app.post('/api/admin/telegram-test', authMiddleware, adminOnly, async (req, res)
   }
 });
 
-// POST /api/admin/telegram-backup — dispatch backup summary & JSON file to Telegram
+// Helper: Core Telegram Backup Dispatcher (Reusable for manual & cron)
+async function executeTelegramBackup({ token, chatId, sendDoc = true, sendSummary = true, customCaption = '', source = 'manual' }) {
+  if (!token || !chatId) {
+    throw new Error('Bot Token dan Chat ID wajib diisi');
+  }
+
+  const state = getState();
+  const now = new Date();
+  const timestampStr = now.toISOString().replace(/[:.]/g, '-');
+  const fileName = `vidkidz-backup-${timestampStr}.json`;
+
+  const totalRecords =
+    (state.users?.admins?.length || 0) +
+    (state.users?.families?.length || 0) +
+    (state.users?.kids?.length || 0) +
+    (state.albums?.length || 0) +
+    (state.photoAlbums?.length || 0) +
+    (state.rewards?.length || 0) +
+    (state.redemptions?.length || 0) +
+    (state.hafalanRecords?.length || 0) +
+    (state.storyRecords?.length || 0) +
+    (state.drawingRecords?.length || 0) +
+    (state.parentStoryAudios?.length || 0) +
+    (state.quizDuels?.length || 0) +
+    (state.activityLog?.length || 0);
+
+  const backupPayload = {
+    appName: 'VIDKIDZ',
+    version: APP_VERSION,
+    backupDate: now.toISOString(),
+    backupTimestamp: now.getTime(),
+    totalRecords,
+    source,
+    state
+  };
+
+  const backupJson = JSON.stringify(backupPayload, null, 2);
+  const sizeKB = (Buffer.byteLength(backupJson, 'utf8') / 1024).toFixed(2);
+
+  let summarySent = false;
+  let docSent = false;
+
+  if (sendSummary) {
+    const summaryText =
+      `📦 *VIDKIDZ — Laporan Backup Database ${source === 'cron' ? 'Otomatis (Cron)' : 'Manual'}*\n\n` +
+      `📅 *Tanggal:* ${now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n` +
+      `📊 *Ukuran Data:* ${sizeKB} KB\n` +
+      `📑 *Total Record:* ${totalRecords}\n` +
+      `🗂️ *Rincian Koleksi:*\n` +
+      ` • Admin: ${state.users?.admins?.length || 0}\n` +
+      ` • Keluarga: ${state.users?.families?.length || 0}\n` +
+      ` • Anak: ${state.users?.kids?.length || 0}\n` +
+      ` • Album Video: ${state.albums?.length || 0}\n` +
+      ` • Album Foto: ${state.photoAlbums?.length || 0}\n` +
+      ` • Hadiah: ${state.rewards?.length || 0}\n` +
+      ` • Penukaran Hadiah: ${state.redemptions?.length || 0}\n` +
+      ` • Hafalan: ${state.hafalanRecords?.length || 0}\n` +
+      ` • Dongeng Anak: ${state.storyRecords?.length || 0}\n` +
+      ` • Galeri Seni Anak: ${state.drawingRecords?.length || 0}\n` +
+      ` • Rekaman Audio Orang Tua: ${state.parentStoryAudios?.length || 0}\n` +
+      ` • Kuis Duel Anak: ${state.quizDuels?.length || 0}\n` +
+      ` • Log Aktivitas: ${state.activityLog?.length || 0}\n\n` +
+      (customCaption ? `💬 *Catatan:* ${customCaption}\n\n` : '') +
+      `✅ *Status:* Pencadangan berhasil dibuat (${source === 'cron' ? 'Otomatis' : 'Manual'}).`;
+
+    const tgSummaryRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: summaryText,
+        parse_mode: 'Markdown'
+      })
+    });
+    const summaryData = await tgSummaryRes.json();
+    if (!summaryData.ok) {
+      throw new Error(`Telegram Error (Summary): ${summaryData.description || 'Gagal mengirim ringkasan'}`);
+    }
+    summarySent = true;
+  }
+
+  if (sendDoc) {
+    const form = new FormData();
+    form.append('chat_id', chatId);
+    const blob = new Blob([backupJson], { type: 'application/json' });
+    form.append('document', blob, fileName);
+    form.append('caption', `📦 VIDKIDZ DB Backup (${now.toLocaleDateString('id-ID')}) — ${sizeKB} KB [${source.toUpperCase()}]`);
+
+    const tgDocRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendDocument`, {
+      method: 'POST',
+      body: form
+    });
+    const docData = await tgDocRes.json();
+    if (!docData.ok) {
+      throw new Error(`Telegram Error (Document): ${docData.description || 'Gagal mengirim berkas'}`);
+    }
+    docSent = true;
+  }
+
+  if (!state.systemSettings) state.systemSettings = {};
+  state.systemSettings.lastTelegramBackup = now.getTime();
+  if (source === 'cron' && state.systemSettings.telegramBackupSchedule) {
+    state.systemSettings.telegramBackupSchedule.lastRun = now.getTime();
+    state.systemSettings.telegramBackupSchedule.lastStatus = 'success';
+    state.systemSettings.telegramBackupSchedule.lastError = null;
+  }
+  saveState(state);
+
+  return {
+    success: true,
+    message: 'Backup database berhasil dikirim ke Telegram',
+    timestamp: now.getTime(),
+    sizeKB,
+    summarySent,
+    docSent,
+    source
+  };
+}
+
+// POST /api/admin/telegram-backup — dispatch backup summary & JSON file to Telegram (admin only)
 app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, res) => {
   const { token, chatId, sendDoc = true, sendSummary = true, customCaption } = req.body;
   if (!token || !chatId) {
@@ -1210,114 +1329,104 @@ app.post('/api/admin/telegram-backup', authMiddleware, adminOnly, async (req, re
   }
 
   try {
-    const state = getState();
-    const now = new Date();
-    const timestampStr = now.toISOString().replace(/[:.]/g, '-');
-    const fileName = `vidkidz-backup-${timestampStr}.json`;
-
-    const totalRecords =
-      (state.users?.admins?.length || 0) +
-      (state.users?.families?.length || 0) +
-      (state.users?.kids?.length || 0) +
-      (state.albums?.length || 0) +
-      (state.photoAlbums?.length || 0) +
-      (state.rewards?.length || 0) +
-      (state.redemptions?.length || 0) +
-      (state.hafalanRecords?.length || 0) +
-      (state.storyRecords?.length || 0) +
-      (state.drawingRecords?.length || 0) +
-      (state.parentStoryAudios?.length || 0) +
-      (state.quizDuels?.length || 0) +
-      (state.activityLog?.length || 0);
-
-    const backupPayload = {
-      appName: 'VIDKIDZ',
-      version: APP_VERSION,
-      backupDate: now.toISOString(),
-      backupTimestamp: now.getTime(),
-      totalRecords,
-      state
-    };
-
-    const backupJson = JSON.stringify(backupPayload, null, 2);
-    const sizeKB = (Buffer.byteLength(backupJson, 'utf8') / 1024).toFixed(2);
-
-    let summarySent = false;
-    let docSent = false;
-
-    if (sendSummary) {
-      const summaryText =
-        `📦 *VIDKIDZ — Laporan Backup Database Otomatis*\n\n` +
-        `📅 *Tanggal:* ${now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n` +
-        `📊 *Ukuran Data:* ${sizeKB} KB\n` +
-        `📑 *Total Record:* ${totalRecords}\n` +
-        `🗂️ *Rincian Koleksi:*\n` +
-        ` • Admin: ${state.users?.admins?.length || 0}\n` +
-        ` • Keluarga: ${state.users?.families?.length || 0}\n` +
-        ` • Anak: ${state.users?.kids?.length || 0}\n` +
-        ` • Album Video: ${state.albums?.length || 0}\n` +
-        ` • Album Foto: ${state.photoAlbums?.length || 0}\n` +
-        ` • Hadiah: ${state.rewards?.length || 0}\n` +
-        ` • Penukaran Hadiah: ${state.redemptions?.length || 0}\n` +
-        ` • Hafalan: ${state.hafalanRecords?.length || 0}\n` +
-        ` • Dongeng Anak: ${state.storyRecords?.length || 0}\n` +
-        ` • Galeri Seni Anak: ${state.drawingRecords?.length || 0}\n` +
-        ` • Rekaman Audio Orang Tua: ${state.parentStoryAudios?.length || 0}\n` +
-        ` • Kuis Duel Anak: ${state.quizDuels?.length || 0}\n` +
-        ` • Log Aktivitas: ${state.activityLog?.length || 0}\n\n` +
-        (customCaption ? `💬 *Catatan:* ${customCaption}\n\n` : '') +
-        `✅ *Status:* Pencadangan berhasil dibuat secara otomatis.`;
-
-      const tgSummaryRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: summaryText,
-          parse_mode: 'Markdown'
-        })
-      });
-      const summaryData = await tgSummaryRes.json();
-      if (!summaryData.ok) {
-        return res.status(400).json({ error: `Telegram Error (Summary): ${summaryData.description || 'Gagal mengirim ringkasan'}` });
-      }
-      summarySent = true;
-    }
-
-    if (sendDoc) {
-      const form = new FormData();
-      form.append('chat_id', chatId);
-      const blob = new Blob([backupJson], { type: 'application/json' });
-      form.append('document', blob, fileName);
-      form.append('caption', `📦 VIDKIDZ DB Backup (${now.toLocaleDateString('id-ID')}) — ${sizeKB} KB`);
-
-      const tgDocRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendDocument`, {
-        method: 'POST',
-        body: form
-      });
-      const docData = await tgDocRes.json();
-      if (!docData.ok) {
-        return res.status(400).json({ error: `Telegram Error (Document): ${docData.description || 'Gagal mengirim berkas'}` });
-      }
-      docSent = true;
-    }
-
-    if (!state.systemSettings) state.systemSettings = {};
-    state.systemSettings.lastTelegramBackup = now.getTime();
-    saveState(state);
-
-    return res.json({
-      success: true,
-      message: 'Backup database berhasil dikirim ke Telegram',
-      timestamp: now.getTime(),
-      sizeKB,
-      summarySent,
-      docSent
+    const result = await executeTelegramBackup({
+      token,
+      chatId,
+      sendDoc,
+      sendSummary,
+      customCaption,
+      source: 'manual'
     });
+    return res.json(result);
   } catch (err) {
-    return res.status(500).json({ error: 'Gagal memproses backup Telegram: ' + err.message });
+    return res.status(400).json({ error: 'Gagal memproses backup Telegram: ' + err.message });
   }
 });
+
+// POST /api/admin/telegram-schedule — configure automated backup cron schedule (admin only)
+app.post('/api/admin/telegram-schedule', authMiddleware, adminOnly, (req, res) => {
+  const { enabled, intervalHours = 24, token, chatId, sendDoc = true, sendSummary = true, customCaption = '' } = req.body;
+  const state = getState();
+  if (!state.systemSettings) state.systemSettings = {};
+  const prev = state.systemSettings.telegramBackupSchedule || {};
+  state.systemSettings.telegramBackupSchedule = {
+    enabled: typeof enabled === 'boolean' ? enabled : (prev.enabled || false),
+    intervalHours: Math.max(1, parseInt(intervalHours, 10) || 24),
+    token: token !== undefined ? token : (prev.token || ''),
+    chatId: chatId !== undefined ? chatId : (prev.chatId || ''),
+    sendDoc: typeof sendDoc === 'boolean' ? sendDoc : (prev.sendDoc ?? true),
+    sendSummary: typeof sendSummary === 'boolean' ? sendSummary : (prev.sendSummary ?? true),
+    customCaption: customCaption !== undefined ? customCaption : (prev.customCaption || ''),
+    lastRun: prev.lastRun || 0,
+    lastStatus: prev.lastStatus || 'none',
+    lastError: prev.lastError || null
+  };
+  saveState(state);
+  res.json({ success: true, schedule: state.systemSettings.telegramBackupSchedule });
+});
+
+// GET /api/admin/telegram-schedule — inspect automated backup cron schedule (admin only)
+app.get('/api/admin/telegram-schedule', authMiddleware, adminOnly, (req, res) => {
+  const state = getState();
+  const schedule = state.systemSettings?.telegramBackupSchedule || {
+    enabled: false,
+    intervalHours: 24,
+    token: '',
+    chatId: '',
+    sendDoc: true,
+    sendSummary: true,
+    lastRun: 0,
+    lastStatus: 'none',
+    lastError: null
+  };
+  res.json({ success: true, schedule });
+});
+
+// Auto-backup cron runner function
+async function runTelegramBackupCron() {
+  try {
+    const state = getState();
+    const schedule = state.systemSettings?.telegramBackupSchedule;
+    if (!schedule || !schedule.enabled || !schedule.token || !schedule.chatId) return;
+
+    const now = Date.now();
+    const intervalMs = (schedule.intervalHours || 24) * 60 * 60 * 1000;
+    const lastRun = schedule.lastRun || 0;
+
+    if (now - lastRun >= intervalMs) {
+      console.log(`[Cron] Menjalankan auto-backup Telegram (interval ${schedule.intervalHours} jam)...`);
+      try {
+        await executeTelegramBackup({
+          token: schedule.token,
+          chatId: schedule.chatId,
+          sendDoc: schedule.sendDoc,
+          sendSummary: schedule.sendSummary,
+          customCaption: schedule.customCaption || 'Auto-Backup Terjadwal Sistem VIDKIDZ',
+          source: 'cron'
+        });
+        console.log(`[Cron] Auto-backup Telegram berhasil dikirim ke ${schedule.chatId}.`);
+      } catch (backupErr) {
+        console.error('[Cron] Gagal kirim auto-backup Telegram:', backupErr.message);
+        const freshState = getState();
+        if (!freshState.systemSettings) freshState.systemSettings = {};
+        if (freshState.systemSettings.telegramBackupSchedule) {
+          freshState.systemSettings.telegramBackupSchedule.lastRun = now;
+          freshState.systemSettings.telegramBackupSchedule.lastStatus = 'error';
+          freshState.systemSettings.telegramBackupSchedule.lastError = backupErr.message;
+          saveState(freshState);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Cron] Error cek auto-backup Telegram:', err.message);
+  }
+}
+
+// Check cron schedule every 15 minutes
+const telegramBackupTimer = setInterval(runTelegramBackupCron, 15 * 60 * 1000);
+if (telegramBackupTimer && typeof telegramBackupTimer.unref === 'function') {
+  telegramBackupTimer.unref();
+}
 
 // ── TELEGRAM NOTIFICATION HELPER & FAMILY ROUTES ──────────────────────────────
 async function sendTelegramNotification({ token, chatId, text }) {
@@ -1393,6 +1502,26 @@ app.patch('/api/state', authMiddleware, (req, res) => {
   // records the current role owns, then return before path-based handling.
   if (incoming) {
     if (req.user.role === 'admin') {
+      if (incoming.users) {
+        if (Array.isArray(incoming.users.admins)) {
+          incoming.users.admins = incoming.users.admins.map(inAdm => {
+            const existing = (state.users?.admins || []).find(a => a.id === inAdm.id);
+            if (!inAdm.password && existing?.password) {
+              return { ...inAdm, password: existing.password };
+            }
+            return inAdm;
+          });
+        }
+        if (Array.isArray(incoming.users.families)) {
+          incoming.users.families = incoming.users.families.map(inFam => {
+            const existing = (state.users?.families || []).find(f => f.id === inFam.id);
+            if (!inFam.password && existing?.password) {
+              return { ...inFam, password: existing.password };
+            }
+            return inFam;
+          });
+        }
+      }
       Object.assign(state, incoming);
     } else if (req.user.role === 'family') {
       // 1. Photo albums: family only owns albums matching their familyId
@@ -1704,6 +1833,9 @@ app.patch('/api/state', authMiddleware, (req, res) => {
       statePath.startsWith('redemptions') || statePath.startsWith('activityLog') ||
       statePath.startsWith('hafalanRecords') ||
       statePath.startsWith('storyRecords') ||
+      statePath.startsWith('drawingRecords') ||
+      statePath.startsWith('parentStoryAudios') ||
+      statePath.startsWith('quizDuels') ||
       familyKidsPathAllowed :
     req.user.role === 'kids' ? (
       (statePath.startsWith(`users.kids.${req.user.id}`) &&
@@ -1714,6 +1846,8 @@ app.patch('/api/state', authMiddleware, (req, res) => {
       statePath.startsWith('activityLog') ||
       statePath.startsWith('hafalanRecords') ||
       statePath.startsWith('storyRecords') ||
+      statePath.startsWith('drawingRecords') ||
+      statePath.startsWith('quizDuels') ||
       statePath.startsWith('redemptions')
     ) :
     false;

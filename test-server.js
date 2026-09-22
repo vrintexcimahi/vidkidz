@@ -1002,7 +1002,151 @@ const server = app.listen(0, async () => {
     assert(journalStatusRes.data.totalEntries > 0, 'Transactional journal entries logged on state mutations');
     assert(typeof journalStatusRes.data.logSizeBytes === 'number' && journalStatusRes.data.logSizeBytes > 0, 'State journal log file exists on disk');
 
-    console.log(`\n========================================`);
+    // --- 35. Creative Collections in Path-Based PATCH ---
+    console.log('\n--- 35. Creative Collections in Path-Based PATCH ---');
+    // Non-demo Kid submits drawingRecord via path-based PATCH
+    const kidDrawPathRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistKidToken}` },
+      body: JSON.stringify({
+        path: 'drawingRecords.draw_path_test',
+        value: { id: 'draw_path_test', kidId: artistKidId, templateId: 'kancil', title: 'Si Kancil', createdAt: Date.now(), rewardCoins: 10 }
+      })
+    });
+    assert(kidDrawPathRes.ok, 'Kid drawingRecords accepted via path-based PATCH');
+
+    // Non-demo Family submits parentStoryAudios via path-based PATCH
+    const famAudioPathRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}` },
+      body: JSON.stringify({
+        path: 'parentStoryAudios.audio_path_test',
+        value: { id: 'audio_path_test', familyId: artistFamId, storyId: 'story1', storyTitle: 'Semut', duration: 25, recordedAt: Date.now() }
+      })
+    });
+    assert(famAudioPathRes.ok, 'Family parentStoryAudios accepted via path-based PATCH');
+
+    // Non-demo Family submits quizDuels via path-based PATCH
+    const famDuelPathRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}` },
+      body: JSON.stringify({
+        path: 'quizDuels.qduel_path_test',
+        value: { id: 'qduel_path_test', familyId: artistFamId, category: 'math', title: 'Duel Matematika', challengerKidId: artistKidId, opponentKidId: 'k2', winnerKidId: artistKidId, status: 'completed', createdAt: Date.now() }
+      })
+    });
+    assert(famDuelPathRes.ok, 'Family quizDuels accepted via path-based PATCH');
+
+    // --- 36. Password Preservation in Admin State Sync ---
+    console.log('\n--- 36. Password Preservation in Admin State Sync ---');
+    // Fetch state with admin token (sanitized state where passwords may be omitted or sanitized)
+    const adminStateGet = await req('/api/state', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(adminStateGet.ok, 'Admin GET /api/state succeeded');
+    // Prepare a state update payload where user objects omit the password property
+    const sanitizedAdminUsers = {
+      admins: (adminStateGet.data.users.admins || []).map(a => { const { password: _p, ...rest } = a; return rest; }),
+      families: (adminStateGet.data.users.families || []).map(f => { const { password: _p, ...rest } = f; return rest; }),
+      kids: adminStateGet.data.users.kids
+    };
+    const adminSyncRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ state: { users: sanitizedAdminUsers } })
+    });
+    assert(adminSyncRes.ok, 'Admin PATCH /api/state with password-less users accepted');
+
+    // Verify admin can still login with restored password ('admin')
+    const adminReLogin = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'admin@vidkidz.local', password: 'admin', role: 'admin' })
+    });
+    assert(adminReLogin.ok && adminReLogin.data.token, 'Admin can still log in after password-less state sync');
+
+    // Verify family can still login with original password
+    const familyReLogin = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'budi@vidkidz.local', password: 'family123', role: 'family' })
+    });
+    assert(familyReLogin.ok && familyReLogin.data.token, 'Family can still log in after password-less state sync');
+
+    console.log('\n--- 37. Admin Auth Integrity & Telegram/Backup Bearer Protection ---');
+    // Verify endpoints strictly reject unauthenticated requests without Bearer token
+    const noAuthRestore = await req('/api/admin/restore-state', {
+      method: 'POST',
+      body: JSON.stringify({ state: { users: {} } })
+    });
+    assert(noAuthRestore.status === 401, 'Unauthenticated restore-state rejected with HTTP 401');
+
+    const noAuthTgTest = await req('/api/admin/telegram-test', {
+      method: 'POST',
+      body: JSON.stringify({ token: 'test', chatId: '123' })
+    });
+    assert(noAuthTgTest.status === 401, 'Unauthenticated telegram-test rejected with HTTP 401');
+
+    const noAuthTgBackup = await req('/api/admin/telegram-backup', {
+      method: 'POST',
+      body: JSON.stringify({ token: 'test', chatId: '123' })
+    });
+    assert(noAuthTgBackup.status === 401, 'Unauthenticated telegram-backup rejected with HTTP 401');
+
+    // Verify authenticated requests with valid admin token pass authMiddleware
+    const authTgTest = await req('/api/admin/telegram-test', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ token: '', chatId: '' })
+    });
+    assert(authTgTest.status === 400, 'Authenticated telegram-test validates empty token/chatId with HTTP 400');
+
+    const authTgBackup = await req('/api/admin/telegram-backup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ token: '', chatId: '' })
+    });
+    assert(authTgBackup.status === 400, 'Authenticated telegram-backup validates empty token/chatId with HTTP 400');
+
+    console.log('\n--- 38. Automated Telegram Backup Scheduling (Cron Mode) ---');
+    // Non-admin forbidden from telegram-schedule
+    const nonAdminSched = await req('/api/admin/telegram-schedule', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${famToken}` },
+      body: JSON.stringify({ enabled: true, intervalHours: 12 })
+    });
+    assert(nonAdminSched.status === 403, 'Non-admin forbidden from telegram-schedule');
+
+    // Admin configure automated schedule
+    const adminSchedRes = await req('/api/admin/telegram-schedule', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        enabled: true,
+        intervalHours: 12,
+        token: 'bot12345:TEST_TOKEN',
+        chatId: '-100987654321',
+        sendDoc: true,
+        sendSummary: true,
+        customCaption: 'Cron automated test run'
+      })
+    });
+    assert(adminSchedRes.ok && adminSchedRes.data.schedule.enabled === true, 'Admin configure telegram auto-backup schedule succeeded');
+    assert(adminSchedRes.data.schedule.intervalHours === 12, 'Schedule interval set to 12 hours');
+
+    // GET /api/admin/telegram-schedule inspect
+    const getSchedRes = await req('/api/admin/telegram-schedule', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(getSchedRes.ok && getSchedRes.data.schedule.enabled === true, 'GET /api/admin/telegram-schedule returns active schedule');
+    assert(getSchedRes.data.schedule.token === 'bot12345:TEST_TOKEN', 'Schedule bot token saved properly');
+
+    // Admin toggle pause/disable schedule
+    const disableSchedRes = await req('/api/admin/telegram-schedule', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ enabled: false })
+    });
+    assert(disableSchedRes.ok && disableSchedRes.data.schedule.enabled === false, 'Admin disable telegram auto-backup succeeded');
+
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
     console.log(`========================================`);
   } catch (err) {

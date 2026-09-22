@@ -1,1 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15c9-3 15-1 20 4v32c-5-5-11-7-20-4Zm40 0c-9-3-15-1-20 4v32c5-5 11-7 20-4Z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="bk-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#047857" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="bk-cover" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="40%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <linearGradient id="bk-pages" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="bk-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#bk-shadow)">
+    <!-- Back Cover (Bottom Layer) -->
+    <rect x="22" y="32" width="76" height="74" rx="10" fill="#064e3b"/>
+
+    <!-- Pages Block (Thick Cream Pages) -->
+    <path d="M28 28 H94 C96 28 98 30 98 32 V96 C98 98 96 100 94 100 H28 Z" fill="url(#bk-pages)"/>
+    <!-- Page Lines Texture -->
+    <line x1="96" y1="36" x2="96" y2="94" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+    <line x1="93" y1="36" x2="93" y2="94" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="34" y1="98" x2="92" y2="98" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Front Cover (Angled slightly open or thick front cover) -->
+    <rect x="20" y="24" width="74" height="74" rx="10" fill="url(#bk-cover)"/>
+
+    <!-- Thick Rounded Spine on Left -->
+    <rect x="20" y="24" width="14" height="74" rx="7" fill="#047857"/>
+    <line x1="26" y1="28" x2="26" y2="94" stroke="#10b981" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- Gold Corner Protectors -->
+    <polygon points="84,24 94,24 94,34" fill="url(#bk-gold)"/>
+    <polygon points="84,98 94,98 94,88" fill="url(#bk-gold)"/>
+
+    <!-- Red Bookmark Ribbon Falling Out -->
+    <path d="M52 24 V108 L58 102 L64 108 V24 Z" fill="#ef4444"/>
+    <path d="M54 24 V104 L58 100 L62 104 V24 Z" fill="#dc2626"/>
+
+    <!-- Gold Embossed Crest on Cover -->
+    <circle cx="58" cy="60" r="16" fill="none" stroke="url(#bk-gold)" stroke-width="2.5"/>
+    <polygon points="58,48 61,56 70,56 63,61 66,70 58,64 50,70 53,61 46,56 55,56" fill="url(#bk-gold)"/>
+
+    <!-- Specular Highlight Curve on Spine -->
+    <path d="M22 28 V94" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- Magic Star Twinkles -->
+    <polygon points="102,18 104,22 108,23 104,25 102,29 100,25 96,23 100,22" fill="#fde047"/>
+    <polygon points="14,48 15.5,51 18.5,52 15.5,53 14,56 12.5,53 9.5,52 12.5,51" fill="#38bdf8"/>
+  </g>
+</svg>

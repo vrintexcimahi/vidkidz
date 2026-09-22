@@ -1,1 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="28" width="36" height="27" rx="7"/><path d="M22 28v-7c0-7 4-12 10-12s10 5 10 12v7M32 39v7"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="lk-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#f59e0b" flood-opacity="0.38"/>
+    </filter>
+    <linearGradient id="lk-body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="35%" stop-color="#f59e0b"/>
+      <stop offset="85%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <linearGradient id="lk-shackle" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="30%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <radialGradient id="lk-rim" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#lk-shadow)">
+    <!-- Sturdy Steel Shackle (Arch) -->
+    <path d="M38 52 V36 C38 22 46 14 60 14 C74 14 82 22 82 36 V52" fill="none" stroke="url(#lk-shackle)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M38 52 V36 C38 22 46 14 60 14 C74 14 82 22 82 36 V52" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- 3D Lock Body Depth (Y+6) -->
+    <rect x="24" y="52" width="72" height="56" rx="16" fill="#78350f"/>
+
+    <!-- Main Brass Lock Body -->
+    <rect x="24" y="46" width="72" height="56" rx="16" fill="url(#lk-body)"/>
+
+    <!-- Top Rim Highlight -->
+    <rect x="28" y="48" width="64" height="6" rx="3" fill="#ffffff" opacity="0.45"/>
+
+    <!-- Keyhole Bevel Circle -->
+    <circle cx="60" cy="70" r="10" fill="url(#lk-rim)"/>
+    <circle cx="60" cy="70" r="8" fill="#1e293b"/>
+    <!-- Keyhole Slot -->
+    <circle cx="60" cy="68" r="4" fill="#0f172a"/>
+    <polygon points="57,69 63,69 64,79 56,79" fill="#0f172a"/>
+
+    <!-- Specular Highlight Streak -->
+    <path d="M30 60 L38 52 L36 94 L30 92 Z" fill="#ffffff" opacity="0.4"/>
+
+    <!-- Star Sparkle on Shackle -->
+    <polygon points="76,14 78,18 82,19 78,21 76,25 74,21 70,19 74,18" fill="#ffffff"/>
+  </g>
+</svg>

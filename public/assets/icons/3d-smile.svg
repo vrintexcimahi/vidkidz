@@ -1,28 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
   <defs>
     <filter id="sm-shadow" x="-20%" y="-20%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#059669" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#f59e0b" flood-opacity="0.4"/>
     </filter>
-    <linearGradient id="bg-bubble-green" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f0fdf4"/>
-      <stop offset="100%" stop-color="#d1fae5"/>
-    </linearGradient>
-    <linearGradient id="smile-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="100%" stop-color="#059669"/>
-    </linearGradient>
+    <radialGradient id="sm-face" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="25%" stop-color="#fef08a"/>
+      <stop offset="65%" stop-color="#fbbf24"/>
+      <stop offset="90%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </radialGradient>
+    <radialGradient id="sm-gloss" cx="35%" cy="25%" r="45%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
   </defs>
+
   <g filter="url(#sm-shadow)">
-    <rect x="10" y="10" width="100" height="100" rx="30" fill="url(#bg-bubble-green)"/>
-    <circle cx="60" cy="60" r="32" fill="url(#smile-grad)"/>
-    
-    <!-- Eyes -->
-    <circle cx="48" cy="54" r="4.5" fill="#ffffff"/>
-    <circle cx="72" cy="54" r="4.5" fill="#ffffff"/>
-    <!-- Cheerful Smile Curve -->
-    <path d="M46 68 Q60 82 74 68" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
-    <!-- Rosy Cheeks -->
-    <circle cx="41" cy="64" r="3.5" fill="#f43f5e" opacity="0.5"/>
-    <circle cx="79" cy="64" r="3.5" fill="#f43f5e" opacity="0.5"/>
+    <!-- 3D Emoji Sphere Depth (Y+6) -->
+    <circle cx="60" cy="66" r="46" fill="#78350f"/>
+
+    <!-- Main Emoji Sphere -->
+    <circle cx="60" cy="60" r="46" fill="url(#sm-face)"/>
+
+    <!-- Specular Highlight Dome -->
+    <circle cx="60" cy="60" r="46" fill="url(#sm-gloss)"/>
+
+    <!-- Left Eye (Happy curved arc or big shiny pupil) -->
+    <ellipse cx="44" cy="50" rx="6" ry="9" fill="#1e293b"/>
+    <circle cx="42" cy="46" r="2.8" fill="#ffffff"/>
+    <circle cx="45" cy="53" r="1.5" fill="#ffffff"/>
+
+    <!-- Right Eye -->
+    <ellipse cx="76" cy="50" rx="6" ry="9" fill="#1e293b"/>
+    <circle cx="74" cy="46" r="2.8" fill="#ffffff"/>
+    <circle cx="77" cy="53" r="1.5" fill="#ffffff"/>
+
+    <!-- Cheerful Open Pixar Smile -->
+    <!-- Mouth Well -->
+    <path d="M38 66 C38 88 82 88 82 66 Z" fill="#78350f"/>
+    <!-- Cute Pink Tongue -->
+    <path d="M46 76 C52 70 68 70 74 76 C72 86 48 86 46 76 Z" fill="#fb7185"/>
+    <!-- Top White Teeth Bar -->
+    <path d="M42 66 H78 C76 71 44 71 42 66 Z" fill="#ffffff"/>
+
+    <!-- Rosy Airbrushed Cheeks -->
+    <circle cx="32" cy="64" r="7" fill="#f43f5e" opacity="0.45"/>
+    <circle cx="88" cy="64" r="7" fill="#f43f5e" opacity="0.45"/>
+
+    <!-- Star Twinkle -->
+    <polygon points="96,26 98,30 102,31 98,33 96,37 94,33 90,31 94,30" fill="#ffffff"/>
   </g>
 </svg>

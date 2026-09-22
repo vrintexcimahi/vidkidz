@@ -1,1 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="14" width="46" height="36" rx="6"/><path d="m28 24 14 8-14 8Z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="tv-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#6366f1" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="tv-casing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="tv-screen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="70%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="play-btn-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#tv-shadow)">
+    <!-- Antennas -->
+    <line x1="60" y1="36" x2="36" y2="16" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="36" cy="16" r="4" fill="#38bdf8"/>
+    <line x1="60" y1="36" x2="84" y2="16" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="84" cy="16" r="4" fill="#38bdf8"/>
+
+    <!-- Stand Legs -->
+    <polygon points="34,98 26,108 34,108 40,98" fill="#475569"/>
+    <polygon points="86,98 94,108 86,108 80,98" fill="#475569"/>
+
+    <!-- TV Main Casing -->
+    <rect x="18" y="32" width="84" height="66" rx="18" fill="url(#tv-casing)"/>
+    <rect x="18" y="32" width="84" height="14" rx="14" fill="#a5b4fc" opacity="0.4"/>
+
+    <!-- Inner Bezel & Screen -->
+    <rect x="25" y="39" width="56" height="52" rx="12" fill="url(#tv-screen)"/>
+    
+    <!-- Screen Glare -->
+    <path d="M28 42 L65 42 L38 88 L28 88 Z" fill="#ffffff" opacity="0.08"/>
+
+    <!-- Glowing Play Triangle -->
+    <polygon points="46,53 66,65 46,77" fill="#ffffff" filter="drop-shadow(0 4px 8px rgba(56,189,248,0.5))"/>
+
+    <!-- Right Controls Panel -->
+    <circle cx="91" cy="48" r="4.5" fill="#f8fafc"/>
+    <circle cx="91" cy="62" r="4.5" fill="#f8fafc"/>
+    <!-- Speaker Grille -->
+    <line x1="86" y1="74" x2="96" y2="74" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="86" y1="80" x2="96" y2="80" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="86" y1="86" x2="96" y2="86" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,1 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18h40M12 32h40M12 46h40"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="mn-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#0284c7" flood-opacity="0.32"/>
+    </filter>
+    <linearGradient id="mn-bar1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+    <linearGradient id="mn-bar2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="mn-bar3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="50%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#be123c"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#mn-shadow)">
+    <!-- BAR 1 (Top - Cyan) -->
+    <rect x="20" y="27" width="80" height="18" rx="9" fill="#0c4a6e"/>
+    <rect x="20" y="24" width="80" height="18" rx="9" fill="url(#mn-bar1)"/>
+    <rect x="26" y="26" width="68" height="5" rx="2.5" fill="#ffffff" opacity="0.6"/>
+
+    <!-- BAR 2 (Middle - Gold) -->
+    <rect x="20" y="55" width="80" height="18" rx="9" fill="#78350f"/>
+    <rect x="20" y="52" width="80" height="18" rx="9" fill="url(#mn-bar2)"/>
+    <rect x="26" y="54" width="68" height="5" rx="2.5" fill="#ffffff" opacity="0.6"/>
+
+    <!-- BAR 3 (Bottom - Coral) -->
+    <rect x="20" y="83" width="80" height="18" rx="9" fill="#881337"/>
+    <rect x="20" y="80" width="80" height="18" rx="9" fill="url(#mn-bar3)"/>
+    <rect x="26" y="82" width="68" height="5" rx="2.5" fill="#ffffff" opacity="0.6"/>
+  </g>
+</svg>

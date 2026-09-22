@@ -1,1 +1,95 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="8"/><circle cx="43" cy="27" r="6"/><path d="M9 52c2-10 8-14 15-14s13 4 15 14M36 51c1-7 5-11 11-11 5 0 9 3 10 9"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="us-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#2563eb" flood-opacity="0.35"/>
+    </filter>
+    <!-- Skin Tone -->
+    <radialGradient id="us-skin" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffedd5"/>
+      <stop offset="60%" stop-color="#fed7aa"/>
+      <stop offset="100%" stop-color="#fba86d"/>
+    </radialGradient>
+    <!-- Boy Hair -->
+    <linearGradient id="us-hair-boy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#92400e"/>
+      <stop offset="60%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+    <!-- Girl Hair -->
+    <linearGradient id="us-hair-girl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b45309"/>
+      <stop offset="60%" stop-color="#854d0e"/>
+      <stop offset="100%" stop-color="#3f2305"/>
+    </linearGradient>
+    <!-- Boy Shirt -->
+    <linearGradient id="us-shirt-boy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <!-- Girl Shirt -->
+    <linearGradient id="us-shirt-girl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6"/>
+      <stop offset="50%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#us-shadow)">
+    <!-- GIRL (Right Character, slightly behind) -->
+    <g transform="translate(68, 48)">
+      <!-- Ponytail Bun -->
+      <circle cx="16" cy="-12" r="10" fill="url(#us-hair-girl)"/>
+      <circle cx="12" cy="-4" r="5" fill="#f43f5e"/> <!-- Coral hair tie -->
+
+      <!-- Body / Shoulder -->
+      <path d="M-18 48 C-18 28 -4 20 12 20 C28 20 42 28 42 48 Z" fill="url(#us-shirt-girl)"/>
+
+      <!-- Head Base -->
+      <circle cx="12" cy="0" r="18" fill="url(#us-skin)"/>
+
+      <!-- Eyes & Smile -->
+      <ellipse cx="6" cy="-1" rx="2.5" ry="3.5" fill="#1e293b"/>
+      <ellipse cx="18" cy="-1" rx="2.5" ry="3.5" fill="#1e293b"/>
+      <circle cx="5" cy="-2.5" r="1" fill="#ffffff"/>
+      <circle cx="17" cy="-2.5" r="1" fill="#ffffff"/>
+      <path d="M7 6 Q12 11 17 6" fill="none" stroke="#be123c" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="3" cy="4" r="3" fill="#fb7185" opacity="0.5"/>
+      <circle cx="21" cy="4" r="3" fill="#fb7185" opacity="0.5"/>
+
+      <!-- Girl Hair Front Fringe -->
+      <path d="M-4 -6 C-4 -20 28 -20 28 -6 C22 -14 2 -14 -4 -6 Z" fill="url(#us-hair-girl)"/>
+    </g>
+
+    <!-- BOY (Left Character, in front) -->
+    <g transform="translate(38, 54)">
+      <!-- Body / Shoulder -->
+      <path d="M-22 46 C-22 24 -6 16 12 16 C30 16 46 24 46 46 Z" fill="url(#us-shirt-boy)"/>
+      <!-- Collar -->
+      <polygon points="12,18 4,28 20,28" fill="#ffffff"/>
+
+      <!-- Head -->
+      <circle cx="12" cy="-4" r="21" fill="url(#us-skin)"/>
+
+      <!-- Ears -->
+      <circle cx="-9" cy="-4" r="5" fill="url(#us-skin)"/>
+      <circle cx="33" cy="-4" r="5" fill="url(#us-skin)"/>
+
+      <!-- Boy Hair Cap -->
+      <path d="M-9 -8 C-9 -28 33 -28 33 -8 C25 -14 0 -14 -9 -8 Z" fill="url(#us-hair-boy)"/>
+      <ellipse cx="12" cy="-20" rx="14" ry="6" fill="#b45309" opacity="0.4"/> <!-- Hair highlight -->
+
+      <!-- Eyes -->
+      <ellipse cx="5" cy="-4" rx="3" ry="4" fill="#1e293b"/>
+      <ellipse cx="19" cy="-4" rx="3" ry="4" fill="#1e293b"/>
+      <circle cx="4" cy="-6" r="1.3" fill="#ffffff"/>
+      <circle cx="18" cy="-6" r="1.3" fill="#ffffff"/>
+
+      <!-- Cute Smile -->
+      <path d="M6 5 Q12 12 18 5" fill="none" stroke="#9a3412" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Rosy Cheeks -->
+      <circle cx="1" cy="3" r="3.5" fill="#f43f5e" opacity="0.45"/>
+      <circle cx="23" cy="3" r="3.5" fill="#f43f5e" opacity="0.45"/>
+    </g>
+  </g>
+</svg>

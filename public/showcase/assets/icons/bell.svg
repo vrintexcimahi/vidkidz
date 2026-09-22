@@ -1,1 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 28c0-9 5-15 14-15s14 6 14 15v9l5 7H13l5-7Z"/><path d="M27 49c1 4 9 4 10 0"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="bl-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#f59e0b" flood-opacity="0.4"/>
+    </filter>
+    <linearGradient id="bl-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="25%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="bl-rim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <radialGradient id="bl-clapper" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#bl-shadow)">
+    <!-- Top Hanging Cap Ring -->
+    <path d="M50 24 C50 14 70 14 70 24" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="60" cy="24" rx="10" ry="4" fill="#d97706"/>
+
+    <!-- Bell Clapper (underneath) -->
+    <circle cx="60" cy="88" r="13" fill="url(#bl-clapper)"/>
+    <ellipse cx="60" cy="97" rx="8" ry="3" fill="#451a03" opacity="0.6"/>
+
+    <!-- Bell Main Body (Curved organic 3D bell shape) -->
+    <path d="M38 46 C38 28 82 28 82 46 C82 62 94 76 96 82 C96 85 92 88 88 88 L32 88 C28 88 24 85 24 82 C26 76 38 62 38 46 Z" fill="url(#bl-gold)"/>
+
+    <!-- Flared Lower Rim / Lip -->
+    <ellipse cx="60" cy="87" rx="38" ry="9" fill="url(#bl-rim)"/>
+    <ellipse cx="60" cy="85" rx="36" ry="7" fill="url(#bl-gold)"/>
+
+    <!-- Specular Highlight Arc -->
+    <path d="M42 42 C40 54 34 68 30 78 C33 76 39 64 42 54 C44 46 44 42 42 42 Z" fill="#ffffff" opacity="0.65"/>
+    <ellipse cx="50" cy="36" rx="6" ry="3" transform="rotate(-30 50 36)" fill="#ffffff" opacity="0.7"/>
+
+    <!-- Sparkle Stars -->
+    <polygon points="98,32 100,36 104,38 100,40 98,44 96,40 92,38 96,36" fill="#fbbf24"/>
+    <polygon points="98,34 99.5,36.5 102,38 99.5,39.5 98,42 96.5,39.5 94,38 96.5,36.5" fill="#ffffff"/>
+  </g>
+</svg>

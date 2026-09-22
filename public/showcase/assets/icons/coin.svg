@@ -1,1 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="22"/><path d="M38 23c-2-2-5-3-8-3-5 0-8 2-8 6 0 9 18 4 18 13 0 4-4 7-9 7-4 0-8-1-11-4M32 16v32"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="coin-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#f59e0b" flood-opacity="0.4"/>
+    </filter>
+    <linearGradient id="coin-edge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <radialGradient id="coin-face" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="35%" stop-color="#fde047"/>
+      <stop offset="70%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+  </defs>
+  <g filter="url(#coin-shadow)">
+    <!-- 3D Coin Depth Cylinder -->
+    <ellipse cx="60" cy="65" rx="46" ry="46" fill="#b45309"/>
+    <ellipse cx="60" cy="62" rx="46" ry="46" fill="#d97706"/>
+    <circle cx="60" cy="58" r="46" fill="url(#coin-edge)"/>
+    <!-- Coin Inner Inset Face -->
+    <circle cx="60" cy="58" r="38" fill="url(#coin-face)"/>
+    <!-- Outer Raised Rim -->
+    <circle cx="60" cy="58" r="38" fill="none" stroke="#fef08a" stroke-width="3"/>
+    
+    <!-- Coin Center Symbol ($ and Star) -->
+    <text x="60" y="72" font-family="Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle" fill="#78350f">$</text>
+    <text x="59" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle" fill="#ffffff" opacity="0.9">$</text>
+
+    <!-- Star Shines -->
+    <polygon points="34,36 36,42 42,44 36,46 34,52 32,46 26,44 32,42" fill="#ffffff" opacity="0.9"/>
+    <polygon points="86,68 87.5,72 92,73.5 87.5,75 86,79 84.5,75 80,73.5 84.5,72" fill="#ffffff" opacity="0.8"/>
+  </g>
+</svg>

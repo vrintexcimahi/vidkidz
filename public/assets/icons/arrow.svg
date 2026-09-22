@@ -1,1 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 32h40M38 18l14 14-14 14"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="ar-shadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#2563eb" flood-opacity="0.38"/>
+    </filter>
+    <linearGradient id="ar-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="ar-side" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#ar-shadow)">
+    <!-- 3D Arrow Depth (Shifted Y+6) -->
+    <path d="M22 52 H64 V32 C64 28 69 26 72 29 L104 57 C106 59 106 63 104 65 L72 93 C69 96 64 94 64 90 V70 H22 C18 70 16 66 16 61 V61 C16 56 18 52 22 52 Z" transform="translate(0, 6)" fill="url(#ar-side)"/>
+
+    <!-- Arrow Body Face -->
+    <path d="M22 52 H64 V32 C64 28 69 26 72 29 L104 57 C106 59 106 63 104 65 L72 93 C69 96 64 94 64 90 V70 H22 C18 70 16 66 16 61 V61 C16 56 18 52 22 52 Z" fill="url(#ar-grad)"/>
+
+    <!-- Specular Highlight Ridge on Top Edge -->
+    <path d="M22 52 H64 V32 L104 57" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- Sparkle on Tip -->
+    <polygon points="106,46 107.5,49 110.5,50 107.5,51 106,54 104.5,51 101.5,50 104.5,49" fill="#ffffff"/>
+  </g>
+</svg>
