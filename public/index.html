@@ -7957,24 +7957,39 @@ function LoginScreen() {
   const [googleClientId, setGoogleClientId] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminUnlocked, setAdminUnlocked] = useState(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashStr = window.location.hash || '';
+      return (
+        searchParams.get('role') === 'admin' ||
+        searchParams.get('preview_role') === 'admin' ||
+        hashStr.includes('admin') ||
+        sessionStorage.getItem('vidkidz_admin_unlocked') === 'true'
+      );
+    } catch (e) {
+      return false;
+    }
+  });
   const [adminClickCount, setAdminClickCount] = useState(0);
 
-  const handleLoginScreenClick = () => {
+  const handleLoginScreenClick = (e) => {
     if (adminUnlocked) return;
     setAdminClickCount((count) => {
       const next = count + 1;
-      if (next >= 9) {
+      if (next >= 15) {
         setAdminUnlocked(true);
+        try { sessionStorage.setItem('vidkidz_admin_unlocked', 'true'); } catch (e) {}
         setMode('login');
         setLoginRole(ROLES.ADMIN);
         fillDemoCredentials(ROLES.ADMIN);
-        showNotif('Login admin terbuka', 'warn');
-      } else if (next >= 5) {
-        const remaining = 9 - next;
-        showNotif(`Klik ${remaining} kali lagi untuk membuka login admin`, 'warn');
+        showNotif('🎉 Selamat! Mode Developer & Akses Admin terbuka!', 'warn');
+        return 15;
+      } else if (next >= 6) {
+        const remaining = 15 - next;
+        showNotif(`Tinggal ${remaining} langkah lagi untuk membuka akses Admin`, 'warn');
       }
-      return Math.min(next, 9);
+      return next;
     });
   };
 
@@ -8041,7 +8056,7 @@ function LoginScreen() {
   const handleAccountChange = (val) => {
     setAccount(val);
     const trimmed = val.trim().toLowerCase();
-    if (trimmed === 'admin@vidkidz.local' || (trimmed.startsWith('admin') && trimmed.includes('@'))) {
+    if (adminUnlocked && (trimmed === 'admin@vidkidz.local' || (trimmed.startsWith('admin') && trimmed.includes('@')))) {
       if (loginRole !== ROLES.ADMIN) {
         setLoginRole(ROLES.ADMIN);
         if (!password || password === 'family123') setPassword('admin123');
@@ -8170,16 +8185,16 @@ function LoginScreen() {
         <div className="mobile-status-bar" />
         <div className="mobile-auth-content auth-form-layout">
         <div className="login-hero">
-          <div className="login-logo-wrap">
+          <div className="login-logo-wrap" onClick={handleLoginScreenClick} style={{cursor:'pointer'}}>
             <img className="brand-logo" src="/logo.png" alt="VIDKIDZ" />
           </div>
-          <p className="login-tagline">Belajar lewat Video, Game, dan Hadiah</p>
+          <p className="login-tagline" onClick={handleLoginScreenClick} style={{cursor:'pointer',userSelect:'none'}}>Belajar lewat Video, Game, dan Hadiah</p>
           <p className="login-subtitle">Platform Edukasi Menyenangkan untuk Anak</p>
         </div>
 
         <div className="auth-entry-card fade-in" onClick={e=>e.stopPropagation()}>
-          <img className="auth-card-logo" src="/icon96.png" alt="VIDKIDZ" />
-          <p className="auth-card-tagline">Belajar lewat Video, Game, dan Hadiah</p>
+          <img className="auth-card-logo" src="/icon96.png" alt="VIDKIDZ" onClick={handleLoginScreenClick} style={{cursor:'pointer'}} />
+          <p className="auth-card-tagline" onClick={handleLoginScreenClick} style={{cursor:'pointer',userSelect:'none'}}>Belajar lewat Video, Game, dan Hadiah</p>
           <div className="auth-tabs">
             <button className={`auth-tab ${authMethod==='phone'?'active':''}`} onClick={()=>setAuthMethod('phone')}>Telepon</button>
             <span className="auth-tab-separator" />
@@ -8249,22 +8264,24 @@ function LoginScreen() {
             </>
           ) : (
             <>
-              <div className="auth-role-tabs">
-                <button
-                  type="button"
-                  className={`auth-role-tab-btn ${loginRole===ROLES.FAMILY?'active-family':''}`}
-                  onClick={()=>selectLoginRole(ROLES.FAMILY)}
-                >
-                  👨‍👩‍👧‍👦 Family
-                </button>
-                <button
-                  type="button"
-                  className={`auth-role-tab-btn ${loginRole===ROLES.ADMIN?'active-admin':''}`}
-                  onClick={()=>selectLoginRole(ROLES.ADMIN)}
-                >
-                  🛡️ Admin
-                </button>
-              </div>
+              {adminUnlocked && (
+                <div className="auth-role-tabs fade-in">
+                  <button
+                    type="button"
+                    className={`auth-role-tab-btn ${loginRole===ROLES.FAMILY?'active-family':''}`}
+                    onClick={()=>selectLoginRole(ROLES.FAMILY)}
+                  >
+                    👨‍👩‍👧‍👦 Family
+                  </button>
+                  <button
+                    type="button"
+                    className={`auth-role-tab-btn ${loginRole===ROLES.ADMIN?'active-admin':''}`}
+                    onClick={()=>selectLoginRole(ROLES.ADMIN)}
+                  >
+                    🛡️ Admin
+                  </button>
+                </div>
+              )}
 
               <form onSubmit={handleLogin} autoComplete="on" className="auth-form-inner">
                 <div className="auth-field">
@@ -8317,24 +8334,26 @@ function LoginScreen() {
                 }}
                 title="Klik untuk mengisi otomatis akun & kata sandi demo"
               >
-                <span>⚡ <strong>Isi Otomatis Demo:</strong> {loginRole===ROLES.ADMIN ? 'admin@vidkidz.local / admin123' : 'budi@vidkidz.local / family123'}</span>
+                <span>⚡ <strong>Isi Otomatis Demo:</strong> {adminUnlocked && loginRole===ROLES.ADMIN ? 'admin@vidkidz.local / admin123' : 'budi@vidkidz.local / family123'}</span>
               </div>
 
-              <div style={{display:'flex',justifyContent:'center',marginTop:2}}>
-                <button
-                  type="button"
-                  style={{fontSize:'10px',color:'var(--t3)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}
-                  onClick={()=>selectLoginRole(loginRole===ROLES.ADMIN ? ROLES.FAMILY : ROLES.ADMIN)}
-                >
-                  {loginRole===ROLES.ADMIN ? '← Masuk sebagai Family (Orang Tua)' : 'Masuk sebagai Portal Admin →'}
-                </button>
-              </div>
+              {adminUnlocked && (
+                <div style={{display:'flex',justifyContent:'center',marginTop:2}}>
+                  <button
+                    type="button"
+                    style={{fontSize:'10px',color:'var(--t3)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}
+                    onClick={()=>selectLoginRole(loginRole===ROLES.ADMIN ? ROLES.FAMILY : ROLES.ADMIN)}
+                  >
+                    {loginRole===ROLES.ADMIN ? '← Masuk sebagai Family (Orang Tua)' : 'Masuk sebagai Portal Admin →'}
+                  </button>
+                </div>
+              )}
 
               <div className="auth-footer">Belum punya akun? <button className="auth-tab active" onClick={()=>switchMode('register')}>Daftar</button></div>
             </>
           )}
         </div>
-        <p className="auth-bottom-caption">VIDKIDZ · Video edukasi aman untuk anak</p>
+        <p className="auth-bottom-caption" onClick={handleLoginScreenClick} style={{cursor:'pointer',userSelect:'none'}}>VIDKIDZ · Video edukasi aman untuk anak</p>
       </div>
       </div>
     </div>
