@@ -2102,11 +2102,81 @@ select option {
   color: #0c8a70;
   box-shadow: 0 2px 8px rgba(22,198,163,0.25);
 }
+.auth-role-tab-btn.active-kids {
+  background: #fff7ed;
+  color: #c2410c;
+  box-shadow: 0 2px 8px rgba(251,146,60,0.3);
+}
 .auth-role-tab-btn.active-admin {
   background: #ffb92f;
   color: #4a2e00;
   box-shadow: 0 2px 8px rgba(255,185,47,0.35);
 }
+/* Login Role Selector (Family / Kids) */
+.login-role-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.login-role-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(8,118,174,0.06);
+  font-family: var(--font-display);
+  -webkit-tap-highlight-color: transparent;
+}
+.login-role-card:hover {
+  background: rgba(8,118,174,0.12);
+  transform: translateY(-1px);
+}
+.login-role-card:active { transform: scale(0.97); }
+.login-role-card .lrc-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+.login-role-card .lrc-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--t2);
+}
+.login-role-card .lrc-sub {
+  font-size: 9.5px;
+  color: var(--t3);
+  text-align: center;
+  line-height: 1.3;
+}
+.login-role-card.active-family {
+  background: rgba(12,138,112,0.1);
+  border-color: #0c8a70;
+}
+.login-role-card.active-family .lrc-label { color: #0c8a70; }
+.login-role-card.active-kids {
+  background: rgba(251,146,60,0.12);
+  border-color: #f97316;
+}
+.login-role-card.active-kids .lrc-label { color: #c2410c; }
+.kids-login-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(251,146,60,0.1);
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: 10px;
+  font-size: 10.5px;
+  color: var(--t2);
+  line-height: 1.45;
+}
+.kids-login-notice strong { color: #c2410c; }
 .auth-form-inner {
   width: 100%;
   display: flex;
@@ -7942,7 +8012,7 @@ function GoogleMark() {
 // LOGIN SCREEN
 // ============================================================
 function LoginScreen() {
-  const { login, registerFamily, googleSignup, showNotif } = useContext(AppCtx);
+  const { login, registerFamily, googleSignup, showNotif, launchKidSession } = useContext(AppCtx);
   const [mode, setMode] = useState('login');
   const [authMethod, setAuthMethod] = useState('email');
   const [loginRole, setLoginRole] = useState(ROLES.FAMILY);
@@ -8069,8 +8139,16 @@ function LoginScreen() {
 
   const selectLoginRole = (role) => {
     setLoginRole(role);
-    fillDemoCredentials(role);
-    showNotif(`Mode ${role === ROLES.ADMIN ? 'Admin' : 'Family'} aktif & kredensial terisi otomatis`, 'info');
+    if (role === ROLES.KIDS) {
+      // Kids login: gunakan kredensial orang tua
+      setAuthMethod('email');
+      setAccount('budi@vidkidz.local');
+      setPassword('family123');
+      showNotif('Mode Anak aktif — masukkan akun orang tua', 'info');
+    } else {
+      fillDemoCredentials(role);
+      showNotif(`Mode ${role === ROLES.ADMIN ? 'Admin' : 'Family'} aktif & kredensial terisi otomatis`, 'info');
+    }
   };
 
   const handleSendOtp = async () => {
@@ -8135,12 +8213,40 @@ function LoginScreen() {
       return;
     }
     setLoading(true);
-    const result = await login(cleanAccount, cleanPass, loginRole);
-    setLoading(false);
-    if (!result || !result.ok) {
-      showNotif(result?.error || 'Akun atau kata sandi salah', 'error');
+    if (loginRole === ROLES.KIDS) {
+      // Kids: login sebagai family dulu, lalu launch kids session
+      const result = await login(cleanAccount, cleanPass, ROLES.FAMILY);
+      if (!result || !result.ok) {
+        setLoading(false);
+        showNotif(result?.error || 'Akun atau kata sandi orang tua salah', 'error');
+        return;
+      }
+      // Ambil kid pertama dari session state
+      try {
+        const freshState = await apiFetch('/api/state');
+        const kids = freshState?.users?.kids || freshState?.kids || [];
+        if (kids.length === 0) {
+          setLoading(false);
+          showNotif('Belum ada profil anak terdaftar di akun ini', 'warn');
+          return;
+        }
+        // Jika hanya 1 anak, langsung launch. Jika lebih, pilih yang pertama (bisa dikembangkan)
+        const targetKid = kids[0];
+        const ok = await launchKidSession(targetKid.id);
+        setLoading(false);
+        if (ok) showNotif(`Berhasil masuk sebagai ${targetKid.name || 'Anak'} 🌟`, 'coin');
+      } catch(err) {
+        setLoading(false);
+        showNotif(err.message || 'Gagal masuk ke mode anak', 'error');
+      }
     } else {
-      showNotif(`Berhasil masuk sebagai ${result.role === 'admin' ? 'Admin' : result.role === 'kids' ? 'Anak' : 'Family'}`);
+      const result = await login(cleanAccount, cleanPass, loginRole);
+      setLoading(false);
+      if (!result || !result.ok) {
+        showNotif(result?.error || 'Akun atau kata sandi salah', 'error');
+      } else {
+        showNotif(`Berhasil masuk sebagai ${result.role === 'admin' ? 'Admin' : result.role === 'kids' ? 'Anak' : 'Family'}`);
+      }
     }
   };
 
@@ -8264,14 +8370,38 @@ function LoginScreen() {
             </>
           ) : (
             <>
+              {/* Role Selector: Family / Kids — selalu terlihat */}
+              <div className="login-role-selector">
+                <div
+                  className={`login-role-card ${loginRole===ROLES.FAMILY||loginRole===ROLES.ADMIN?'active-family':''}`}
+                  onClick={()=>selectLoginRole(ROLES.FAMILY)}
+                  title="Masuk sebagai Orang Tua / Family"
+                >
+                  <span className="lrc-icon">👨‍👩‍👧</span>
+                  <span className="lrc-label">Orang Tua</span>
+                  <span className="lrc-sub">Kelola & pantau anak</span>
+                </div>
+                <div
+                  className={`login-role-card ${loginRole===ROLES.KIDS?'active-kids':''}`}
+                  onClick={()=>selectLoginRole(ROLES.KIDS)}
+                  title="Masuk sebagai Anak"
+                >
+                  <span className="lrc-icon">🧒</span>
+                  <span className="lrc-label">Anak (Kids)</span>
+                  <span className="lrc-sub">Belajar & bermain</span>
+                </div>
+              </div>
+
+              {/* Tab Admin — tersembunyi, hanya muncul setelah easter egg */}
               {adminUnlocked && (
                 <div className="auth-role-tabs fade-in">
                   <button
                     type="button"
-                    className={`auth-role-tab-btn ${loginRole===ROLES.FAMILY?'active-family':''}`}
-                    onClick={()=>selectLoginRole(ROLES.FAMILY)}
+                    className={`auth-role-tab-btn ${loginRole===ROLES.FAMILY?'active-family':loginRole===ROLES.KIDS?'active-kids':''}`}
+                    onClick={()=>selectLoginRole(loginRole===ROLES.KIDS?ROLES.KIDS:ROLES.FAMILY)}
+                    style={{pointerEvents:'none',opacity:0.7}}
                   >
-                    👨‍👩‍👧‍👦 Family
+                    {loginRole===ROLES.KIDS?'🧒 Anak':'👨‍👩‍👧 Orang Tua'}
                   </button>
                   <button
                     type="button"
@@ -8311,8 +8441,19 @@ function LoginScreen() {
                     {showPass ? 'Sembunyi' : 'Lihat'}
                   </button>
                 </div>
-                <button type="submit" className="btn auth-submit" disabled={loading}>
-                  {loading ? 'Masuk...' : `Masuk ${loginRole===ROLES.ADMIN ? 'Admin' : 'Family'}`}
+                {loginRole === ROLES.KIDS && (
+                  <div className="kids-login-notice">
+                    <span style={{fontSize:16}}>ℹ️</span>
+                    <span>Masukkan <strong>akun orang tua</strong>. Setelah berhasil, profil anak akan otomatis dibuka.</span>
+                  </div>
+                )}
+                <button type="submit" className="btn auth-submit" disabled={loading} style={loginRole===ROLES.KIDS?{background:'linear-gradient(135deg,#fb923c,#f97316)',boxShadow:'0 8px 22px rgba(249,115,22,0.35)'}:{}}>
+                  {loading
+                    ? (loginRole===ROLES.KIDS ? 'Membuka mode anak...' : 'Masuk...')
+                    : loginRole===ROLES.ADMIN ? 'Masuk Admin'
+                    : loginRole===ROLES.KIDS ? '🧒 Masuk sebagai Anak'
+                    : 'Masuk Family'
+                  }
                 </button>
               </form>
 
@@ -8330,11 +8471,11 @@ function LoginScreen() {
                 className="auth-demo-hint clickable"
                 onClick={() => {
                   fillDemoCredentials(loginRole);
-                  showNotif(`Kredensial demo ${loginRole===ROLES.ADMIN ? 'Admin' : 'Family'} otomatis terisi`, 'info');
+                  showNotif(`Kredensial demo ${loginRole===ROLES.ADMIN ? 'Admin' : loginRole===ROLES.KIDS ? 'Anak (via parent)' : 'Family'} otomatis terisi`, 'info');
                 }}
                 title="Klik untuk mengisi otomatis akun & kata sandi demo"
               >
-                <span>⚡ <strong>Isi Otomatis Demo:</strong> {adminUnlocked && loginRole===ROLES.ADMIN ? 'admin@vidkidz.local / admin123' : 'budi@vidkidz.local / family123'}</span>
+                <span>⚡ <strong>Isi Otomatis Demo:</strong> {adminUnlocked && loginRole===ROLES.ADMIN ? 'admin@vidkidz.local / admin123' : 'budi@vidkidz.local / family123'}{loginRole===ROLES.KIDS ? ' (akun orang tua → mode anak)' : ''}</span>
               </div>
 
               {adminUnlocked && (
@@ -8344,7 +8485,7 @@ function LoginScreen() {
                     style={{fontSize:'10px',color:'var(--t3)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}
                     onClick={()=>selectLoginRole(loginRole===ROLES.ADMIN ? ROLES.FAMILY : ROLES.ADMIN)}
                   >
-                    {loginRole===ROLES.ADMIN ? '← Masuk sebagai Family (Orang Tua)' : 'Masuk sebagai Portal Admin →'}
+                    {loginRole===ROLES.ADMIN ? '← Kembali ke Family / Kids' : 'Masuk sebagai Portal Admin →'}
                   </button>
                 </div>
               )}
