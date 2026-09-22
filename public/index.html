@@ -4486,16 +4486,17 @@ td {
 .dev-workbench-split {
   display: flex;
   gap: 24px;
-  height: calc(100vh - 200px);
-  min-height: 640px;
+  height: calc(100vh - 180px);
+  min-height: 700px;
 }
 .phone-chassis {
   width: 410px;
   max-width: 100%;
   height: 100%;
+  min-height: 680px;
   background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
+  border-radius: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -4512,10 +4513,12 @@ td {
   justify-content: space-between;
   padding: 0 14px;
   gap: 10px;
+  flex-shrink: 0;
 }
 .phone-screen {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   background: #070d18;
   position: relative;
   overflow: hidden;
@@ -6898,11 +6901,56 @@ function DeviceViewShell({ children }) {
 // ============================================================
 const AppCtx = createContext(null);
 
+function getPreviewRoleFromUrl() {
+  try {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashStr = window.location.hash || '';
+    let r = searchParams.get('preview_role') || searchParams.get('role');
+    if (!r && hashStr.includes('?')) {
+      const hashParams = new URLSearchParams(hashStr.split('?')[1]);
+      r = hashParams.get('preview_role') || hashParams.get('role');
+    }
+    if (!r && typeof window !== 'undefined' && window.self !== window.top) {
+      if (hashStr.startsWith('#kids')) r = 'kids';
+      else if (hashStr.startsWith('#overview') || hashStr.startsWith('#family')) r = 'family';
+      else if (hashStr.startsWith('#admin')) r = 'admin';
+      else if (hashStr.startsWith('#login')) r = 'login';
+    }
+    return r || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function resolvePreviewUserData(role, stateObj) {
+  const s = stateObj || loadState();
+  if (role === 'admin') {
+    const admin = (s.users?.admins || [])[0] || { id: 'admin-1', name: 'Super Admin', role: 'admin', permissions: ['all'] };
+    return { user: { ...admin, role: 'admin', demoAccess: true }, kidId: null };
+  }
+  if (role === 'family') {
+    const family = (s.users?.families || [])[0] || { id: 'fam-1', name: 'Keluarga Budi Santoso', role: 'family' };
+    const linkedKidId = family.linkedKids?.[0] || (s.users?.kids?.find(k => k.familyId === family.id)?.id) || 'k1';
+    return { user: { ...family, role: 'family', demoAccess: true }, kidId: linkedKidId };
+  }
+  if (role === 'kids') {
+    const kid = (s.users?.kids || [])[0] || { id: 'k1', name: 'Andi', role: 'kids', coins: 85 };
+    return { user: { ...kid, role: 'kids', demoAccess: true }, kidId: kid.id };
+  }
+  return { user: null, kidId: null };
+}
+
 function AppProvider({ children }) {
-  const [state, setState] = useState(null);
-  const [appLoading, setAppLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [currentKidId, setCurrentKidId] = useState(null);
+  const initialForcedRole = useMemo(() => getPreviewRoleFromUrl(), []);
+  const initialPreview = useMemo(() => {
+    if (!initialForcedRole || initialForcedRole === 'login') return null;
+    return resolvePreviewUserData(initialForcedRole, null);
+  }, [initialForcedRole]);
+
+  const [state, setState] = useState(() => (initialPreview ? loadState() : null));
+  const [appLoading, setAppLoading] = useState(() => !initialPreview);
+  const [currentUser, setCurrentUser] = useState(() => initialPreview?.user || null);
+  const [currentKidId, setCurrentKidId] = useState(() => initialPreview?.kidId || null);
   const [notif, setNotif] = useState(null);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -6954,36 +7002,17 @@ function AppProvider({ children }) {
         setState(s);
         setApiKey(s.systemSettings?.apiKey || '');
         // Check for role preview parameter (for Developer Workbench / 3 Mobile)
-        const searchParams = new URLSearchParams(window.location.search);
-        const hashStr = window.location.hash || '';
-        let forcedRole = searchParams.get('preview_role') || searchParams.get('role');
-        if (!forcedRole && hashStr.includes('?')) {
-          const hashParams = new URLSearchParams(hashStr.split('?')[1]);
-          forcedRole = hashParams.get('preview_role') || hashParams.get('role');
-        }
-        if (!forcedRole && window.self !== window.top) {
-          if (hashStr.startsWith('#kids')) forcedRole = 'kids';
-          else if (hashStr.startsWith('#overview') || hashStr.startsWith('#family')) forcedRole = 'family';
-          else if (hashStr.startsWith('#admin')) forcedRole = 'admin';
-          else if (hashStr.startsWith('#login')) forcedRole = 'login';
-        }
+        const forcedRole = getPreviewRoleFromUrl();
 
         if (forcedRole === 'login') {
           setCurrentUser(null);
           setCurrentKidId(null);
-        } else if (forcedRole === 'admin') {
-          const admin = (s.users.admins || [])[0] || { id: 'admin-1', name: 'Super Admin', role: 'admin', permissions: ['all'] };
-          setCurrentUser({ ...admin, role: 'admin', demoAccess: true });
-          setCurrentKidId(null);
-        } else if (forcedRole === 'family') {
-          const family = (s.users.families || [])[0] || { id: 'fam-1', name: 'Keluarga Budi', role: 'family' };
-          setCurrentUser({ ...family, role: 'family', demoAccess: true });
-          const linkedKidId = family.linkedKids?.[0] || (s.users.kids?.find(k => k.familyId === family.id)?.id);
-          if (linkedKidId) setCurrentKidId(linkedKidId);
-        } else if (forcedRole === 'kids') {
-          const kid = (s.users.kids || [])[0] || { id: 'kid-1', name: 'Budi Jr', role: 'kids', coins: 150 };
-          setCurrentUser({ ...kid, role: 'kids', demoAccess: true });
-          setCurrentKidId(kid.id);
+        } else if (forcedRole) {
+          const preview = resolvePreviewUserData(forcedRole, s);
+          if (preview.user) {
+            setCurrentUser(preview.user);
+            if (preview.kidId) setCurrentKidId(preview.kidId);
+          }
         } else {
           if (restoredPayload?.demoExpiresAt) setDemoExpiresAt(restoredPayload.demoExpiresAt);
           if (restoredPayload?.role === 'admin') {
@@ -7003,7 +7032,18 @@ function AppProvider({ children }) {
           }
         }
       })
-      .catch(() => setState(loadState()))
+      .catch(() => {
+        const s = loadState();
+        setState(s);
+        const forcedRole = getPreviewRoleFromUrl();
+        if (forcedRole && forcedRole !== 'login') {
+          const preview = resolvePreviewUserData(forcedRole, s);
+          if (preview.user) {
+            setCurrentUser(preview.user);
+            if (preview.kidId) setCurrentKidId(preview.kidId);
+          }
+        }
+      })
       .finally(() => {
         setAppLoading(false);
         registerCurrentDevice();
@@ -11244,26 +11284,34 @@ function AdminDeveloperMode({ initialTab } = {}) {
           gap: 18,
           overflowX: 'auto',
           overflowY: 'hidden',
-          paddingBottom: 12,
+          paddingBottom: 14,
           alignItems: 'stretch',
-          justifyContent: 'flex-start'
-        } : undefined}
+          justifyContent: 'flex-start',
+          height: 'calc(100vh - 180px)',
+          minHeight: 720
+        } : {
+          height: 'calc(100vh - 180px)',
+          minHeight: 680
+        }}
       >
         {layoutMode === 'three_mobile' && (
-          <div style={{display:'flex',gap:20,margin:'0 auto',minWidth:'min-content',height:'100%',alignItems:'stretch'}}>
+          <div style={{display:'flex',gap:20,margin:'0 auto',minWidth:'min-content',height:'100%',minHeight:700,alignItems:'stretch'}}>
             {/* PHONE 1: SUPER ADMIN */}
             <div
               className="phone-chassis"
               style={{
                 width: 375,
-                minWidth: 350,
+                minWidth: 360,
                 maxWidth: 390,
                 height: '100%',
-                borderRadius: 18,
+                minHeight: 700,
+                maxHeight: 860,
+                borderRadius: 22,
                 border: '1px solid rgba(239,68,68,0.35)',
                 boxShadow: '0 20px 45px rgba(239,68,68,0.14), 0 8px 30px rgba(0,0,0,0.5)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                flexShrink: 0
               }}
             >
               <div className="phone-topbar" style={{background:'#16131d',borderBottom:'1px solid rgba(239,68,68,0.22)'}}>
@@ -11284,7 +11332,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
                 </button>
               </div>
 
-              <div style={{background:'linear-gradient(90deg, rgba(239,68,68,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#fecaca',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{background:'linear-gradient(90deg, rgba(239,68,68,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#fecaca',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0}}>
                 <span style={{display:'inline-flex',alignItems:'center',gap:6}}>
                   <span style={{fontSize:13}}>👑</span>
                   <span>ROLE 1: SUPER ADMIN</span>
@@ -11295,10 +11343,11 @@ function AdminDeveloperMode({ initialTab } = {}) {
                 </span>
               </div>
 
-              <div className="phone-screen">
+              <div className="phone-screen" style={{flex:'1 1 auto',height:'100%',minHeight:0,position:'relative',overflow:'hidden'}}>
                 <iframe
                   title="Admin Dashboard Live Preview"
                   src={`${origin}/?preview_role=admin&tab=overview#overview&_cb=${adminCb}`}
+                  style={{width:'100%',height:'100%',border:'none',display:'block'}}
                 />
               </div>
             </div>
@@ -11308,14 +11357,17 @@ function AdminDeveloperMode({ initialTab } = {}) {
               className="phone-chassis"
               style={{
                 width: 375,
-                minWidth: 350,
+                minWidth: 360,
                 maxWidth: 390,
                 height: '100%',
-                borderRadius: 18,
+                minHeight: 700,
+                maxHeight: 860,
+                borderRadius: 22,
                 border: '1px solid rgba(16,185,129,0.35)',
                 boxShadow: '0 20px 45px rgba(16,185,129,0.14), 0 8px 30px rgba(0,0,0,0.5)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                flexShrink: 0
               }}
             >
               <div className="phone-topbar" style={{background:'#0e1919',borderBottom:'1px solid rgba(16,185,129,0.22)'}}>
@@ -11336,7 +11388,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
                 </button>
               </div>
 
-              <div style={{background:'linear-gradient(90deg, rgba(16,185,129,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#a7f3d0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{background:'linear-gradient(90deg, rgba(16,185,129,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#a7f3d0',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0}}>
                 <span style={{display:'inline-flex',alignItems:'center',gap:6}}>
                   <span style={{fontSize:13}}>👨‍👩‍👧</span>
                   <span>ROLE 2: ORANG TUA</span>
@@ -11347,10 +11399,11 @@ function AdminDeveloperMode({ initialTab } = {}) {
                 </span>
               </div>
 
-              <div className="phone-screen">
+              <div className="phone-screen" style={{flex:'1 1 auto',height:'100%',minHeight:0,position:'relative',overflow:'hidden'}}>
                 <iframe
                   title="Family Dashboard Live Preview"
-                  src={`${origin}/?preview_role=family#overview&_cb=${familyCb}`}
+                  src={`${origin}/?preview_role=family&tab=overview#overview&_cb=${familyCb}`}
+                  style={{width:'100%',height:'100%',border:'none',display:'block'}}
                 />
               </div>
             </div>
@@ -11360,14 +11413,17 @@ function AdminDeveloperMode({ initialTab } = {}) {
               className="phone-chassis"
               style={{
                 width: 375,
-                minWidth: 350,
+                minWidth: 360,
                 maxWidth: 390,
                 height: '100%',
-                borderRadius: 18,
+                minHeight: 700,
+                maxHeight: 860,
+                borderRadius: 22,
                 border: '1px solid rgba(14,165,233,0.35)',
                 boxShadow: '0 20px 45px rgba(14,165,233,0.14), 0 8px 30px rgba(0,0,0,0.5)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                flexShrink: 0
               }}
             >
               <div className="phone-topbar" style={{background:'#0c1724',borderBottom:'1px solid rgba(14,165,233,0.22)'}}>
@@ -11388,7 +11444,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
                 </button>
               </div>
 
-              <div style={{background:'linear-gradient(90deg, rgba(14,165,233,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#bae6fd',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{background:'linear-gradient(90deg, rgba(14,165,233,0.2), rgba(15,23,42,0.85))',padding:'6px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:10,fontWeight:700,color:'#bae6fd',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0}}>
                 <span style={{display:'inline-flex',alignItems:'center',gap:6}}>
                   <span style={{fontSize:13}}>🌟</span>
                   <span>ROLE 3: MODE ANAK</span>
@@ -11399,10 +11455,11 @@ function AdminDeveloperMode({ initialTab } = {}) {
                 </span>
               </div>
 
-              <div className="phone-screen">
+              <div className="phone-screen" style={{flex:'1 1 auto',height:'100%',minHeight:0,position:'relative',overflow:'hidden'}}>
                 <iframe
                   title="Kids Dashboard Live Preview"
-                  src={`${origin}/?preview_role=kids#kids&_cb=${kidsCb}`}
+                  src={`${origin}/?preview_role=kids&tab=home#kids&_cb=${kidsCb}`}
+                  style={{width:'100%',height:'100%',border:'none',display:'block'}}
                 />
               </div>
             </div>
@@ -11410,7 +11467,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
         )}
 
         {(layoutMode === 'split' || layoutMode === 'mobile') && (
-          <div className="phone-chassis" style={{width: layoutMode === 'mobile' ? 420 : 393, margin: layoutMode === 'mobile' ? '0 auto' : undefined}}>
+          <div className="phone-chassis" style={{width: layoutMode === 'mobile' ? 420 : 393, margin: layoutMode === 'mobile' ? '0 auto' : undefined, height: '100%', minHeight: 680, display: 'flex', flexDirection: 'column'}}>
             <div className="phone-topbar">
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 <span style={{width:10,height:10,borderRadius:'50%',background:'#ef4444',display:'inline-block'}} />
@@ -11420,7 +11477,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
 
               <div className="browser-omnibox" style={{display:'flex',alignItems:'center',gap:6,justifyContent:'center',padding:'0 10px'}}>
                 <UiIcon name="smartphone" size={13} color="var(--primary)" />
-                <span style={{color:'var(--t1)',fontSize:11,fontWeight:700}}>Mobile (393px)</span>
+                <span style={{color:'var(--t1)',fontSize:11,fontWeight:700}}>Mobile ({layoutMode === 'mobile' ? '420px' : '393px'})</span>
                 <span style={{color:'var(--t3)',fontSize:10}}>· {clockTime}</span>
               </div>
 
@@ -11429,10 +11486,11 @@ function AdminDeveloperMode({ initialTab } = {}) {
               </button>
             </div>
 
-            <div className="phone-screen">
+            <div className="phone-screen" style={{flex:'1 1 auto',height:'100%',minHeight:0,position:'relative',overflow:'hidden'}}>
               <iframe
                 title="Mobile Live Preview"
                 src={fullTargetUrl}
+                style={{width:'100%',height:'100%',border:'none',display:'block'}}
               />
             </div>
           </div>
