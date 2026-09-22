@@ -2822,12 +2822,12 @@ select option {
   color: var(--t2);
 }
 .install-prompt {
-  bottom: 24px !important;
-  right: 24px !important;
-  left: auto !important;
+  bottom: 88px !important;
+  left: 50% !important;
+  right: auto !important;
   top: auto !important;
-  transform: none !important;
-  width: min(324px, calc(100vw - 48px)) !important;
+  transform: translateX(-50%) !important;
+  width: min(324px, calc(100% - 32px)) !important;
   min-height: 46px !important;
   padding: 7px 9px !important;
   gap: 8px !important;
@@ -2889,7 +2889,7 @@ select option {
 }
 @media (max-width: 640px) {
   .install-prompt {
-    bottom: 84px !important;
+    bottom: 88px !important;
     top: auto !important;
     left: 50% !important;
     right: auto !important;
