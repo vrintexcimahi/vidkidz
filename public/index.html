@@ -15777,35 +15777,21 @@ function KidsDashboard() {
       <div className="kids-bubble-decor" style={{width:90,height:90,top:'42%',right:'-30px',animationDelay:'2.5s'}} />
       <div className="kids-bubble-decor" style={{width:70,height:70,bottom:'15%',left:'8%',animationDelay:'4.5s'}} />
 
-      {/* HEADER */}
-      <div className="kids-header" style={{flexShrink:0}}>
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
-          {page==='player' && (<button onClick={()=>setPage('videos')} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.12)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Kembali</button>)}
-          {(page==='games'||page==='hafalan'||page==='photos'||page==='stories'||page==='drawing'||page==='duel') && (<button onClick={()=>setPage('home')} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.12)',border:'none',color:'#fff',borderRadius:10,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>{"<"} Beranda</button>)}
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <img src="/logo-mark.png" alt="VIDKIDZ" style={{width:34,height:34,objectFit:'contain'}} />
-            <div className="animate-float-slow" style={{width:38,height:38,borderRadius:'50%',overflow:'hidden',background:'radial-gradient(circle at 35% 30%, #e0f2fe, #bae6fd)',border:'2px solid #38bdf8',boxShadow:'0 4px 12px rgba(0,0,0,0.25), inset 0 2px 3px #fff',display:'grid',placeItems:'center',flexShrink:0}}>
-              <img src="/assets/images/andi-avatar-3d.png" onError={(e)=>{e.target.src='/assets/icons/3d-andi-avatar.svg';}} alt={kid?.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
-            </div>
-            <div>
-              <div style={{fontFamily:'var(--font-kids)',fontSize:18,color:'#fff',lineHeight:1.2,display:'flex',alignItems:'center',gap:4}}>Halo, {kid?.name}! <span className="animate-wave" style={{fontSize:16}}>👋</span></div>
-              <div style={{fontSize:11,color:'rgba(255,255,255,0.75)',display:'flex',alignItems:'center',gap:4,marginTop:2}}>
-                <img src="/assets/icons/3d-flame.svg" alt="streak" style={{width:16,height:16,objectFit:'contain',verticalAlign:'middle'}} className="animate-flame" /> Streak <strong>{kid?.streak||0} hari</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
-          <div className="coin-badge animate-glow-pulse" style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 12px',borderRadius:20,background:'linear-gradient(135deg, #fffbeb, #fef3c7)',boxShadow:'0 4px 14px rgba(245,158,11,0.35), inset 0 1px 0 #fff',border:'2px solid #f59e0b',color:'#78350f',fontWeight:900,fontSize:13}}>
-            <img src="/assets/icons/3d-coin.svg" alt="koin" style={{width:18,height:18,objectFit:'contain'}} />
-            <span>{kid?.coins||0}</span>
-          </div>
-          <button onClick={logout} className="card-interactive-lift" style={{background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.7)',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:11}}>Keluar</button>
-        </div>
-      </div>
+      {/* FLOATING LOGOUT BUTTON */}
+      <button className="floating-logout-btn" onClick={logout} aria-label="Keluar" title="Keluar">
+        <UiIcon name="logout" size={17} color="currentColor" />
+        <span className="nav-label-popup">Keluar</span>
+      </button>
 
-      {/* CONTENT — scrollable, sits between header and bottom nav */}
+      {/* CONTENT — scrollable, sits above bottom nav */}
       <div className="kids-main kids-content" style={{flex:'1 1 auto',overflowY:'auto',overflowX:'hidden',paddingBottom:80,minHeight:0}}>
+        {page!=='home' && page!=='player' && (
+          <div style={{padding:'16px 20px 0',display:'flex',alignItems:'center'}}>
+            <button onClick={()=>setPage('home')} className="card-interactive-lift" style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.14)',border:'1px solid rgba(255,255,255,0.2)',color:'#fff',borderRadius:10,padding:'6px 12px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700}}>
+              {"<"} Beranda
+            </button>
+          </div>
+        )}
         {page==='home' && <KidsHomePage kid={kid} onNavigate={setPage} />}
         {page==='videos' && page!=='player' && (
           <div style={{padding:'20px 20px'}}>
@@ -15836,7 +15822,7 @@ function KidsDashboard() {
           </div>
         )}
         {page==='player' && (selectedAlb && selectedVideo ? (
-          <KidsVideoPlayer selectedAlb={selectedAlb} selectedVideo={selectedVideo} albumVideos={albumVideos} videoIndex={videoIndex} setVideoIndex={setVideoIndex} setSelectedVideo={setSelectedVideo} kid={kid} />
+          <KidsVideoPlayer selectedAlb={selectedAlb} selectedVideo={selectedVideo} albumVideos={albumVideos} videoIndex={videoIndex} setVideoIndex={setVideoIndex} setSelectedVideo={setSelectedVideo} kid={kid} onBack={()=>setPage('videos')} />
         ) : (
           <div style={{textAlign:'center',padding:'60px 20px',color:'rgba(255,255,255,0.7)'}}>
             <div style={{fontSize:48,marginBottom:12}}>🎬</div>
@@ -16259,7 +16245,7 @@ function KidsPhotoGallery({ kid }) {
 // ============================================================
 // KIDS VIDEO PLAYER
 // ============================================================
-function KidsVideoPlayer({ selectedAlb, selectedVideo, albumVideos, videoIndex, setVideoIndex, setSelectedVideo, kid }) {
+function KidsVideoPlayer({ selectedAlb, selectedVideo, albumVideos, videoIndex, setVideoIndex, setSelectedVideo, kid, onBack }) {
   const { addCoins, addLog, showNotif } = useContext(AppCtx);
   const [earned, setEarned] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -16388,6 +16374,11 @@ function KidsVideoPlayer({ selectedAlb, selectedVideo, albumVideos, videoIndex, 
 
   return (
     <div style={{padding:'16px 16px'}}>
+      {onBack && (
+        <button onClick={onBack} className="card-interactive-lift" style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.14)',border:'1px solid rgba(255,255,255,0.2)',color:'#fff',borderRadius:10,padding:'6px 14px',cursor:'pointer',fontSize:12,fontFamily:'var(--font-display)',fontWeight:700,marginBottom:12}}>
+          {"<"} Kembali ke Daftar Video
+        </button>
+      )}
       <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:16}}>
         <div>
           <div className="video-wrap" style={{marginBottom:12,borderRadius:16,overflow:'hidden',boxShadow:'0 8px 32px rgba(0,0,0,0.5)',position:'relative'}}>
