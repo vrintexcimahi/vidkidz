@@ -2041,37 +2041,6 @@ select option {
   font-size: 9px;
   color: var(--t2) !important;
 }
-.auth-demo-hint {
-  margin-top: 10px;
-  color: var(--t3);
-  font-size: 9px;
-  text-align: center;
-}
-.auth-demo-hint.clickable {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(10,140,255,0.08);
-  border: 1px dashed rgba(10,140,255,0.38);
-  color: var(--primary);
-  font-size: 9.5px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-.auth-demo-hint.clickable:hover {
-  background: rgba(10,140,255,0.16);
-  border-color: var(--primary);
-  transform: translateY(-1px);
-}
-.auth-demo-hint.clickable:active {
-  transform: translateY(0);
-}
 .auth-role-tabs {
   display: flex;
   background: rgba(8,118,174,0.08);
@@ -2897,12 +2866,12 @@ select option {
   right: auto !important;
   top: auto !important;
   transform: translateX(-50%) !important;
-  width: min(324px, calc(100% - 32px)) !important;
-  min-height: 46px !important;
-  padding: 7px 9px !important;
-  gap: 8px !important;
-  border-radius: 12px !important;
-  background: rgba(255,255,255,0.94);
+  width: min(420px, calc(100vw - 24px)) !important;
+  min-height: 52px !important;
+  padding: 9px 14px !important;
+  gap: 10px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,0.96);
   border-color: rgba(8,118,174,0.2);
   box-shadow: 0 18px 42px rgba(5,89,143,0.18), inset 0 1px 0 rgba(255,255,255,0.85);
   animation: installPromptIn 0.25s ease forwards !important;
@@ -2964,11 +2933,11 @@ select option {
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
-    width: min(324px, calc(100vw - 32px)) !important;
-    min-height: 46px !important;
-    padding: 7px 9px !important;
-    border-radius: 12px !important;
-    gap: 8px !important;
+    width: min(420px, calc(100vw - 24px)) !important;
+    min-height: 52px !important;
+    padding: 9px 14px !important;
+    border-radius: 16px !important;
+    gap: 10px !important;
     animation: installPromptIn 0.25s ease forwards !important;
     z-index: 9998 !important;
   }
@@ -8466,17 +8435,6 @@ function LoginScreen() {
                   </button>
                 </>
               )}
-
-              <div
-                className="auth-demo-hint clickable"
-                onClick={() => {
-                  fillDemoCredentials(loginRole);
-                  showNotif(`Kredensial demo ${loginRole===ROLES.ADMIN ? 'Admin' : loginRole===ROLES.KIDS ? 'Anak (via parent)' : 'Family'} otomatis terisi`, 'info');
-                }}
-                title="Klik untuk mengisi otomatis akun & kata sandi demo"
-              >
-                <span>⚡ <strong>Isi Otomatis Demo:</strong> {adminUnlocked && loginRole===ROLES.ADMIN ? 'admin@vidkidz.local / admin123' : 'budi@vidkidz.local / family123'}{loginRole===ROLES.KIDS ? ' (akun orang tua → mode anak)' : ''}</span>
-              </div>
 
               {adminUnlocked && (
                 <div style={{display:'flex',justifyContent:'center',marginTop:2}}>
