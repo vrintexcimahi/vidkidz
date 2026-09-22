@@ -1388,7 +1388,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 }
 @media (max-width: 640px) {
   .device-view-root:has(.family-app-shell) .install-prompt {
-    display: flex !important;
+    display: none !important;
   }
   .app-mobile-frame,
   .family-app-shell {
@@ -1576,23 +1576,15 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
   color: var(--coin);
 }
 .install-prompt {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
   position: fixed;
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
-  z-index: 9998;
-  width: min(420px, calc(100vw - 28px));
-  background: rgba(7,27,61,0.92);
-  border: 1px solid rgba(120,168,232,0.28);
-  border-radius: 16px;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 18px 44px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.08);
-  backdrop-filter: blur(16px);
-  animation: installPromptIn 0.25s ease forwards;
-}
+  z-index: -1;
 .install-prompt-logo {
   width: 44px;
   height: 44px;
@@ -2869,6 +2861,7 @@ select option {
   color: var(--t2);
 }
 .install-prompt {
+  display: none !important;
   bottom: 88px !important;
   left: 50% !important;
   right: auto !important;
@@ -6923,44 +6916,22 @@ function AppProvider({ children }) {
   useEffect(() => {
     const stopRepair = startIconRepairObserver();
     const stopUpdater = registerBackgroundUpdater(showNotif);
-    const refreshInstallPromptVisibility = () => {
-      if (isPwaStandalone()) {
-        setShowInstallPrompt(false);
-        setInstallPrompt(null);
-        localStorage.setItem('vidkidzPwaInstalled', '1');
-        return;
-      }
-      localStorage.removeItem('vidkidzInstallDismissed');
-      localStorage.removeItem('vidkidzPwaInstalled');
-      setShowInstallPrompt(true);
-    };
     const onBeforeInstall = (event) => {
       event.preventDefault();
       setInstallPrompt(event);
-      setShowInstallPrompt(true);
+      // Popup install disembunyikan agar tidak mengganggu
     };
     const onInstalled = () => {
       setShowInstallPrompt(false);
       setInstallPrompt(null);
-      localStorage.removeItem('vidkidzInstallDismissed');
       localStorage.setItem('vidkidzPwaInstalled', '1');
       showNotif('VIDKIDZ berhasil dipasang sebagai aplikasi');
     };
-    refreshInstallPromptVisibility();
-    const onVisibilityChange = () => {
-      if (!document.hidden) refreshInstallPromptVisibility();
-    };
-    const reminder = window.setInterval(refreshInstallPromptVisibility, INSTALL_REMINDER_MS);
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
     window.addEventListener('appinstalled', onInstalled);
-    window.addEventListener('focus', refreshInstallPromptVisibility);
-    document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
-      window.clearInterval(reminder);
       window.removeEventListener('beforeinstallprompt', onBeforeInstall);
       window.removeEventListener('appinstalled', onInstalled);
-      window.removeEventListener('focus', refreshInstallPromptVisibility);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
       stopRepair?.();
       stopUpdater?.();
     };
@@ -7256,19 +7227,7 @@ function AppProvider({ children }) {
           <div className="demo-timer"> <span>Demo berakhir dalam</span> <strong>{formatDemoTime(demoRemaining)}</strong>
           </div>
         )}
-        {showInstallPrompt && (
-          <div className="install-prompt">
-            <div className="install-prompt-logo"><img src="/logo-mark.png" alt="VIDKIDZ" /></div>
-            <div className="install-prompt-text">
-              <div className="install-prompt-title">Install VIDKIDZ</div>
-              <div className="install-prompt-sub">Akses cepat tanpa buka browser</div>
-            </div>
-            <div className="install-prompt-actions">
-              <button className="install-dismiss" onClick={dismissInstallPrompt}>Nanti</button>
-              <button className="btn btn-primary btn-sm" onClick={installApp}>Install</button>
-            </div>
-          </div>
-        )}
+        {/* Popup install disembunyikan agar tidak mengganggu tampilan */}
         {notif && (
           <div className="notif" style={{
             borderLeft: '3px solid '+(notif.type==='error'?'var(--danger)':notif.type==='warn'?'var(--warn)':notif.type==='coin'?'var(--coin)':'var(--success)'),
