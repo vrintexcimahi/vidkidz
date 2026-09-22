@@ -5463,10 +5463,22 @@ html[data-input="touch"] .btn-icon {
 
 .admin-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
   gap: clamp(16px, 1.8vw, 24px);
   align-items: start;
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .admin-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.phone-screen .admin-overview-grid,
+.phone-chassis .admin-overview-grid,
+.app-mobile-frame .admin-overview-grid {
+  grid-template-columns: 1fr !important;
 }
 
 .admin-filter-bar {
@@ -8335,6 +8347,7 @@ function LoginScreen() {
 function AdminDashboard() {
   const { state, currentUser, logout, updateState, addLog, showNotif } = useContext(AppCtx);
   const validPages = ['overview', 'families', 'userdata', 'monitoring', 'backup', 'devmode', 'test', 'settings'];
+  const isPreviewMode = (typeof window !== 'undefined' && window.self !== window.top) || (typeof window !== 'undefined' && window.location.search.includes('preview_role'));
 
   const getInitialPage = () => {
     try {
@@ -8342,11 +8355,19 @@ function AdminDashboard() {
       const queryPage = searchParams.get('tab') || searchParams.get('page');
       if (queryPage && validPages.includes(queryPage)) return queryPage;
 
-      const hash = (window.location.hash || '').replace('#', '');
-      if (validPages.includes(hash)) return hash;
+      let hash = (window.location.hash || '').replace('#', '');
+      if (hash.includes('?')) hash = hash.split('?')[0];
+      if (hash === 'admin' || hash === 'admin-overview' || hash === '') return 'overview';
+      if (validPages.includes(hash)) {
+        if (isPreviewMode && (hash === 'devmode' || hash === 'test')) return 'overview';
+        return hash;
+      }
 
-      const saved = sessionStorage.getItem('vidkidz_admin_page');
-      if (saved && validPages.includes(saved)) return saved;
+      // Do NOT read sessionStorage in preview/iframe mode to prevent pollution from top-level window
+      if (!isPreviewMode) {
+        const saved = sessionStorage.getItem('vidkidz_admin_page');
+        if (saved && validPages.includes(saved)) return saved;
+      }
     } catch (e) {}
     return 'overview';
   };
@@ -8356,26 +8377,31 @@ function AdminDashboard() {
   const [modal, setModal] = useState(null);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem('vidkidz_admin_page', page);
-    } catch (e) {}
-    if (typeof window !== 'undefined' && window.history && window.history.replaceState && !window.location.search.includes('preview_role')) {
-      const url = new URL(window.location.href);
-      url.hash = page;
-      window.history.replaceState(null, '', url.toString());
+    if (!isPreviewMode) {
+      try {
+        sessionStorage.setItem('vidkidz_admin_page', page);
+      } catch (e) {}
+      if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+        const url = new URL(window.location.href);
+        url.hash = page;
+        window.history.replaceState(null, '', url.toString());
+      }
     }
-  }, [page]);
+  }, [page, isPreviewMode]);
 
   useEffect(() => {
     const handleHash = () => {
-      const h = (window.location.hash || '').replace('#', '');
+      let h = (window.location.hash || '').replace('#', '');
+      if (h.includes('?')) h = h.split('?')[0];
+      if (h === 'admin' || h === 'admin-overview' || h === '') h = 'overview';
+      if (isPreviewMode && (h === 'devmode' || h === 'test')) h = 'overview';
       if (validPages.includes(h) && h !== page) {
         setPage(h);
       }
     };
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
-  }, [page]);
+  }, [page, isPreviewMode]);
 
   const navItems = [
     { id:'overview', label:'Overview', icon:'/assets/icons/home.svg' },
@@ -8541,7 +8567,7 @@ function AdminDashboard() {
                 </div>
               </div>
             </div>
-            <div className="admin-overview-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(520px, 1fr))',gap:'clamp(14px, 1.6vw, 24px)',alignItems:'start',marginBottom:24}}>
+            <div className="admin-overview-grid" style={{gap:'clamp(14px, 1.6vw, 24px)',alignItems:'start',marginBottom:24}}>
               <div className="card card-interactive-lift shimmer-container" style={{border:'1px solid var(--border)'}}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 style={{color:'var(--t1)',display:'flex',alignItems:'center',gap:8}}>
@@ -8549,22 +8575,24 @@ function AdminDashboard() {
                   </h3>
                   <button className="btn btn-ghost btn-sm" onClick={()=>setPage('monitoring')}>Lihat Semua</button>
                 </div>
-                <table>
-                  <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Tipe</th></tr></thead>
-                  <tbody>
-                    {state.activityLog.slice(0,6).map(log => {
-                      const logIcon = log.type==='coin'?'/assets/icons/3d-coin.svg':log.type==='lock'||log.type==='unlock'?'/assets/icons/lock.svg':log.type==='admin'?'/assets/icons/shield.svg':log.type==='game'?'/assets/icons/3d-gamepad.svg':log.type==='hafalan'?'/assets/icons/3d-quran.svg':'/assets/icons/3d-clapperboard.svg';
-                      return (
-                        <tr key={log.id} style={{transition:'background 0.15s'}}>
-                          <td style={{color:'var(--t3)',fontSize:11}}>{timeAgo(log.ts)}</td>
-                          <td><span style={{fontWeight:600,color:'var(--t1)'}}>{log.user}</span></td>
-                          <td>{log.action}</td>
-                          <td><span className={`badge badge-${log.type==='coin'?'coin':log.type==='lock'||log.type==='unlock'?'warn':log.type==='admin'?'admin':'primary'}`} style={{display:'inline-flex',alignItems:'center',gap:5}}><img src={logIcon} alt="" style={{width:13,height:13,objectFit:'contain'}} /> {log.type}</span></td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div style={{overflowX:'auto',width:'100%',WebkitOverflowScrolling:'touch'}}>
+                  <table>
+                    <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Tipe</th></tr></thead>
+                    <tbody>
+                      {state.activityLog.slice(0,6).map(log => {
+                        const logIcon = log.type==='coin'?'/assets/icons/3d-coin.svg':log.type==='lock'||log.type==='unlock'?'/assets/icons/lock.svg':log.type==='admin'?'/assets/icons/shield.svg':log.type==='game'?'/assets/icons/3d-gamepad.svg':log.type==='hafalan'?'/assets/icons/3d-quran.svg':'/assets/icons/3d-clapperboard.svg';
+                        return (
+                          <tr key={log.id} style={{transition:'background 0.15s'}}>
+                            <td style={{color:'var(--t3)',fontSize:11}}>{timeAgo(log.ts)}</td>
+                            <td><span style={{fontWeight:600,color:'var(--t1)'}}>{log.user}</span></td>
+                            <td>{log.action}</td>
+                            <td><span className={`badge badge-${log.type==='coin'?'coin':log.type==='lock'||log.type==='unlock'?'warn':log.type==='admin'?'admin':'primary'}`} style={{display:'inline-flex',alignItems:'center',gap:5}}><img src={logIcon} alt="" style={{width:13,height:13,objectFit:'contain'}} /> {log.type}</span></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <div className="card card-interactive-lift shimmer-container" style={{border:'1px solid var(--border)'}}>
                 <div className="flex items-center justify-between mb-4">
@@ -8573,20 +8601,22 @@ function AdminDashboard() {
                   </h3>
                   <button className="btn btn-ghost btn-sm" onClick={()=>setPage('families')}>Kelola Users</button>
                 </div>
-                <table>
-                  <thead><tr><th>Nama</th><th>Email</th><th>Plan</th><th>Anak</th><th>Bergabung</th></tr></thead>
-                  <tbody>
-                    {families.slice(0,5).map(f => (
-                      <tr key={f.id} style={{transition:'background 0.15s'}}>
-                        <td><div className="flex items-center gap-2"><Avatar name={f.name} size={30} /><span style={{fontWeight:600,color:'var(--t1)'}}>{f.name}</span></div></td>
-                        <td>{f.email}</td>
-                        <td><span className={`badge ${f.plan==='Premium'?'badge-admin':'badge-primary'}`}>{f.plan}</span></td>
-                        <td>{f.linkedKids?.length||0} anak</td>
-                        <td style={{fontSize:11}}>{formatTs(f.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div style={{overflowX:'auto',width:'100%',WebkitOverflowScrolling:'touch'}}>
+                  <table>
+                    <thead><tr><th>Nama</th><th>Email</th><th>Plan</th><th>Anak</th><th>Bergabung</th></tr></thead>
+                    <tbody>
+                      {families.slice(0,5).map(f => (
+                        <tr key={f.id} style={{transition:'background 0.15s'}}>
+                          <td><div className="flex items-center gap-2"><Avatar name={f.name} size={30} /><span style={{fontWeight:600,color:'var(--t1)'}}>{f.name}</span></div></td>
+                          <td>{f.email}</td>
+                          <td><span className={`badge ${f.plan==='Premium'?'badge-admin':'badge-primary'}`}>{f.plan}</span></td>
+                          <td>{f.linkedKids?.length||0} anak</td>
+                          <td style={{fontSize:11}}>{formatTs(f.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -8622,8 +8652,33 @@ function AdminDashboard() {
 
         {page==='monitoring' && <AdminLogMonitoring activityLog={state.activityLog} onShowDetail={(log) => setModal({ type:'logDetail', data: log })} />}
         {page==='backup' && <AdminBackupDatabase onRestorePreview={(pkg) => setModal({ type:'restorePreview', data: pkg })} />}
-        {page==='devmode' && <AdminDeveloperMode />}
-        {page==='test' && <AdminDeveloperMode initialTab="test" />}
+        {page==='devmode' && (
+          isPreviewMode ? (
+            <div className="card fade-in" style={{padding:28,textAlign:'center',maxWidth:440,margin:'30px auto',border:'1px solid var(--border)'}}>
+              <div style={{fontSize:36,marginBottom:12}}>⚡</div>
+              <h3 style={{color:'var(--t1)',fontSize:16,fontWeight:800,marginBottom:6}}>Developer Mode Aktif</h3>
+              <p style={{fontSize:12,color:'var(--t3)',lineHeight:1.6,marginBottom:18}}>
+                Simulator Developer Workbench sedang berjalan pada jendela utama simulator. Mode ini tidak dapat disimulasikan secara bersarang di dalam perangkat mini.
+              </p>
+              <button className="btn btn-admin btn-sm" onClick={()=>setPage('overview')} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                <UiIcon name="home" size={14} />
+                <span>Kembali ke Overview</span>
+              </button>
+            </div>
+          ) : <AdminDeveloperMode />
+        )}
+        {page==='test' && (
+          isPreviewMode ? (
+            <div className="card fade-in" style={{padding:28,textAlign:'center',maxWidth:440,margin:'30px auto',border:'1px solid var(--border)'}}>
+              <div style={{fontSize:36,marginBottom:12}}>🧪</div>
+              <h3 style={{color:'var(--t1)',fontSize:16,fontWeight:800,marginBottom:6}}>Test Suite Simulator</h3>
+              <p style={{fontSize:12,color:'var(--t3)',lineHeight:1.6,marginBottom:18}}>
+                Pengujian otomatis dijalankan pada lingkungan workbench utama.
+              </p>
+              <button className="btn btn-admin btn-sm" onClick={()=>setPage('overview')}>Kembali ke Overview</button>
+            </div>
+          ) : <AdminDeveloperMode initialTab="test" />
+        )}
         {page==='settings' && <AdminSettings />}
       </div>
 
@@ -10787,6 +10842,17 @@ function AdminBackupDatabase({ onRestorePreview }) {
 // ADMIN: DEVELOPER MODE / DUAL-VIEW WORKBENCH
 // ============================================================
 function AdminDeveloperMode({ initialTab } = {}) {
+  // Anti-recursion guard: Never render developer workbench inside an iframe
+  if (typeof window !== 'undefined' && window.self !== window.top) {
+    return (
+      <div style={{padding:24,textAlign:'center',background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',margin:16}}>
+        <div style={{fontSize:28,marginBottom:8}}>⚡</div>
+        <div style={{fontSize:15,fontWeight:800,color:'var(--t1)'}}>Developer Workbench</div>
+        <div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>Simulator Multi-Role aktif pada window utama.</div>
+      </div>
+    );
+  }
+
   const [currentRoute, setCurrentRoute] = useState(() => {
     try {
       return sessionStorage.getItem('vidkidz_dev_route') || '#kids';
@@ -10838,7 +10904,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
     { label: 'Login Screen', route: '#login', icon: 'ui:lock', role: 'login' },
     { label: 'Video Albums', route: '#albums', icon: 'ui:play', role: 'family' },
     { label: 'Koin & Hadiah', route: '#rewards', icon: 'ui:coin', role: 'kids' },
-    { label: 'Portal Admin', route: '#admin', icon: 'ui:zap', role: 'admin' },
+    { label: 'Portal Admin', route: '#overview', icon: 'ui:zap', role: 'admin' },
   ];
 
   const activeRouteObj = routes.find(r => r.route === currentRoute) || routes[0];
@@ -10996,7 +11062,7 @@ function AdminDeveloperMode({ initialTab } = {}) {
               <div className="phone-screen">
                 <iframe
                   title="Admin Dashboard Live Preview"
-                  src={`${origin}/?preview_role=admin#admin&_cb=${adminCb}`}
+                  src={`${origin}/?preview_role=admin&tab=overview#overview&_cb=${adminCb}`}
                 />
               </div>
             </div>
