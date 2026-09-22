@@ -1147,6 +1147,38 @@ const server = app.listen(0, async () => {
     });
     assert(disableSchedRes.ok && disableSchedRes.data.schedule.enabled === false, 'Admin disable telegram auto-backup succeeded');
 
+    // --- 39. 9Router AI Gateway Configuration & Admin Test Endpoint ---
+    console.log('\n--- 39. 9Router AI Gateway Configuration & Admin Test Endpoint ---');
+    // Non-admin rejected from /api/ai/test
+    const nonAdminAiTest = await req('/api/ai/test', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${testToken}` },
+      body: JSON.stringify({ baseUrl: 'http://127.0.0.1:20128/v1' })
+    });
+    assert(nonAdminAiTest.status === 403, 'Non-admin forbidden from /api/ai/test');
+
+    // Admin calling /api/ai/test (will return 502 connection refused if local gateway offline, but valid JSON without crash)
+    const adminAiTest = await req('/api/ai/test', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ baseUrl: 'http://127.0.0.1:20128/v1', apiKey: 'test-key' })
+    });
+    assert(adminAiTest.status === 200 || adminAiTest.status === 502, 'Admin /api/ai/test returns structured response');
+    assert(typeof adminAiTest.data === 'object' && ('error' in adminAiTest.data || 'ok' in adminAiTest.data), 'Admin /api/ai/test returns error or ok format');
+
+    // Verify 9Router settings in state
+    const stateWith9Router = await req('/api/state', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(stateWith9Router.ok && stateWith9Router.data.systemSettings.aiProvider === '9router', 'Admin sees aiProvider set to 9router');
+    assert(stateWith9Router.data.systemSettings.nineRouterBaseUrl.includes('20128'), 'Admin sees 9Router default base URL');
+
+    // Verify non-admin has nineRouterApiKey stripped
+    const kidStateAi = await req('/api/state', {
+      headers: { Authorization: `Bearer ${kidLogin.data.token}` }
+    });
+    assert(kidStateAi.ok && !kidStateAi.data.systemSettings.nineRouterApiKey, 'Non-admin has nineRouterApiKey stripped in GET /api/state');
+
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
     console.log(`========================================`);
   } catch (err) {

@@ -216,7 +216,10 @@ const INITIAL_STATE = {
     gpsEnabled: true,
     cameraMonitorEnabled: true,
     maintenanceMode: false,
-    registrationOpen: true,
+    aiProvider: '9router',
+    nineRouterBaseUrl: process.env.NINEROUTER_BASE_URL || 'http://127.0.0.1:20128/v1',
+    nineRouterApiKey: process.env.NINEROUTER_API_KEY || '',
+    nineRouterModel: process.env.AI_MODEL_SMART || process.env.AI_MODEL_FAST || 'openai/gpt-4o-mini',
     apiKey: '',
     dailyLoginBonus: 10,
     videoWatchReward: 2,
@@ -228,7 +231,12 @@ const INITIAL_STATE = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getState() {
-  if (stateCache) return stateCache;
+  if (stateCache) {
+    if (!stateCache.systemSettings?.nineRouterBaseUrl) {
+      stateCache.systemSettings = Object.assign({}, INITIAL_STATE.systemSettings, stateCache.systemSettings || {});
+    }
+    return stateCache;
+  }
 
   if (!fs.existsSync(STATE_FILE)) {
     saveState(INITIAL_STATE);
@@ -273,7 +281,7 @@ function getState() {
   if (!Array.isArray(stateCache.quizDuels)) stateCache.quizDuels = INITIAL_STATE.quizDuels || [];
   if (!Array.isArray(stateCache.activityLog)) stateCache.activityLog = INITIAL_STATE.activityLog;
   if (!Array.isArray(stateCache.devices)) stateCache.devices = [];
-  if (!stateCache.systemSettings) stateCache.systemSettings = INITIAL_STATE.systemSettings;
+  stateCache.systemSettings = Object.assign({}, INITIAL_STATE.systemSettings, stateCache.systemSettings || {});
 
   // Auto-repair any legacy corrupted ?? emojis
   const kidAvatars = { k1: '👦', k2: '👧', k3: '👦' };
@@ -367,6 +375,7 @@ function sanitizeStateForUser(state, user) {
     }
     if (clean.systemSettings) {
       clean.systemSettings.apiKey = '';
+      clean.systemSettings.nineRouterApiKey = '';
     }
 
     // Filter storyRecords for kid & family privacy
@@ -1137,7 +1146,7 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
     quizDuels: Array.isArray(incoming.quizDuels) ? incoming.quizDuels : [],
     activityLog: Array.isArray(incoming.activityLog) ? incoming.activityLog : [],
     devices: Array.isArray(incoming.devices) ? incoming.devices : [],
-    systemSettings: incoming.systemSettings || {}
+    systemSettings: Object.assign({}, INITIAL_STATE.systemSettings, incoming.systemSettings || {})
   };
 
   if (restored.users.admins.length === 0) {
@@ -1522,6 +1531,15 @@ app.patch('/api/state', authMiddleware, (req, res) => {
           });
         }
       }
+      if (incoming.systemSettings) {
+        const existingSettings = state.systemSettings || {};
+        if (!incoming.systemSettings.nineRouterApiKey && existingSettings.nineRouterApiKey) {
+          incoming.systemSettings.nineRouterApiKey = existingSettings.nineRouterApiKey;
+        }
+        if (!incoming.systemSettings.apiKey && existingSettings.apiKey) {
+          incoming.systemSettings.apiKey = existingSettings.apiKey;
+        }
+      }
       Object.assign(state, incoming);
     } else if (req.user.role === 'family') {
       // 1. Photo albums: family only owns albums matching their familyId
@@ -1885,27 +1903,87 @@ app.patch('/api/state', authMiddleware, (req, res) => {
 
 // ── AI PROXY ROUTE ────────────────────────────────────────────────────────────
 
-// POST /api/ai/analyze — proxy Anthropic Vision API
+// POST /api/ai/analyze — proxy AI Vision API via 9Router (OpenAI-compatible) dengan fallback Anthropic
 app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
   if (req.user.demo) return res.status(403).json({ error: 'AI Analisis tidak tersedia untuk akun demo' });
-  const { imageBase64, prompt, apiKey: clientKey } = req.body;
+  const { imageBase64, prompt, apiKey: clientKey, model: clientModel } = req.body;
   const state = getState();
-  const key = process.env.ANTHROPIC_API_KEY || state.systemSettings.apiKey || clientKey;
+  const settings = state.systemSettings || {};
 
-  if (!key) {
-    return res.status(400).json({ error: 'API Key Anthropic belum dikonfigurasi. Set di System Settings atau env ANTHROPIC_API_KEY.' });
-  }
+  const provider = settings.aiProvider || process.env.AI_PROVIDER || '9router';
+  const nineRouterBaseUrl = (settings.nineRouterBaseUrl || process.env.NINEROUTER_BASE_URL || 'http://127.0.0.1:20128/v1').replace(/\/+$/, '');
+  const nineRouterKey = settings.nineRouterApiKey || process.env.NINEROUTER_API_KEY || clientKey || settings.apiKey || process.env.ANTHROPIC_API_KEY || '';
+  const nineRouterModel = clientModel || settings.nineRouterModel || process.env.AI_MODEL_SMART || process.env.AI_MODEL_FAST || 'openai/gpt-4o-mini';
+
+  const promptText = prompt || 'Kamu adalah asisten analisis kondisi anak untuk orang tua. Analisis gambar dan beri laporan dalam Bahasa Indonesia. Respons HANYA dalam JSON valid: {"kondisi":"...","postur":"...","lingkungan":"...","rekomendasi":"...","skor_perhatian":7}';
+
   if (!imageBase64) {
     return res.status(400).json({ error: 'imageBase64 diperlukan' });
   }
 
   try {
     const fetch = (await import('node-fetch')).default;
+
+    // 1. Fokus 9Router (OpenAI-Compatible Gateway)
+    if (provider === '9router' || (!settings.apiKey && !process.env.ANTHROPIC_API_KEY)) {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (nineRouterKey) headers['Authorization'] = `Bearer ${nineRouterKey}`;
+
+        const imageUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
+        const response = await fetch(`${nineRouterBaseUrl}/chat/completions`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            model: nineRouterModel,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'text', text: promptText },
+                { type: 'image_url', image_url: { url: imageUrl } }
+              ]
+            }],
+            max_tokens: 800
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          const text = data.choices?.[0]?.message?.content || data.content?.[0]?.text || '';
+          return res.json({
+            provider: '9router',
+            model: nineRouterModel,
+            content: [{ type: 'text', text }],
+            choices: [{ message: { role: 'assistant', content: text } }],
+            text
+          });
+        }
+        console.warn('9Router gateway error:', data.error);
+        // Jika 9router mengembalikan error dan ada Anthropic key, lanjut ke fallback Anthropic
+        const hasAnthropic = process.env.ANTHROPIC_API_KEY || settings.apiKey || (clientKey?.startsWith('sk-ant-') ? clientKey : '');
+        if (!hasAnthropic) {
+          return res.status(response.status).json({ error: data.error?.message || data.error || `HTTP ${response.status} dari 9Router` });
+        }
+      } catch (err9r) {
+        console.warn('9Router connection failed:', err9r.message);
+        const hasAnthropic = process.env.ANTHROPIC_API_KEY || settings.apiKey || (clientKey?.startsWith('sk-ant-') ? clientKey : '');
+        if (!hasAnthropic) {
+          return res.status(502).json({ error: `Gagal terhubung ke 9Router (${nineRouterBaseUrl}): ${err9r.message}` });
+        }
+      }
+    }
+
+    // 2. Fallback Anthropic Claude
+    const anthropicKey = process.env.ANTHROPIC_API_KEY || settings.apiKey || clientKey;
+    if (!anthropicKey) {
+      return res.status(400).json({ error: '9Router AI Gateway belum dikonfigurasi. Atur di System Settings.' });
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': key,
+        'x-api-key': anthropicKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -1915,7 +1993,7 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
-            { type: 'text', text: prompt || 'Kamu adalah asisten analisis kondisi anak untuk orang tua. Analisis gambar dan beri laporan dalam Bahasa Indonesia. Respons HANYA dalam JSON: {"kondisi":"...","postur":"...","lingkungan":"...","rekomendasi":"...","skor_perhatian":7}' }
+            { type: 'text', text: promptText }
           ]
         }]
       })
@@ -1925,10 +2003,70 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
     if (!response.ok) {
       return res.status(response.status).json({ error: data.error?.message || 'AI API error' });
     }
-    res.json(data);
+    const text = data.content?.[0]?.text || '';
+    res.json({
+      provider: 'anthropic',
+      ...data,
+      content: [{ type: 'text', text }],
+      choices: [{ message: { role: 'assistant', content: text } }],
+      text
+    });
   } catch (err) {
     console.error('AI Proxy error:', err);
-    res.status(500).json({ error: 'Gagal menghubungi Anthropic API: ' + err.message });
+    res.status(500).json({ error: 'Gagal menghubungi AI Gateway: ' + err.message });
+  }
+});
+
+// POST /api/ai/test — test koneksi 9Router AI Gateway (admin only)
+app.post('/api/ai/test', authMiddleware, adminOnly, async (req, res) => {
+  const { baseUrl, apiKey, model } = req.body || {};
+  const state = getState();
+  const settings = state.systemSettings || {};
+
+  const targetUrl = (baseUrl || settings.nineRouterBaseUrl || process.env.NINEROUTER_BASE_URL || 'http://127.0.0.1:20128/v1').replace(/\/+$/, '');
+  const key = apiKey !== undefined && apiKey !== '' ? apiKey : (settings.nineRouterApiKey || process.env.NINEROUTER_API_KEY || '');
+  const targetModel = model || settings.nineRouterModel || 'openai/gpt-4o-mini';
+
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const headers = { 'Content-Type': 'application/json' };
+    if (key) headers['Authorization'] = `Bearer ${key}`;
+
+    const startTs = Date.now();
+    const response = await fetch(`${targetUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: targetModel,
+        messages: [{ role: 'user', content: 'Ping! Balas singkat hanya satu kata: PONG' }],
+        max_tokens: 10
+      })
+    });
+
+    const latencyMs = Date.now() - startTs;
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        ok: false,
+        error: data.error?.message || data.error || `HTTP ${response.status} dari 9Router`,
+        latencyMs
+      });
+    }
+
+    const reply = data.choices?.[0]?.message?.content || 'OK';
+    return res.json({
+      ok: true,
+      message: `Terhubung ke 9Router (${latencyMs}ms)`,
+      reply,
+      latencyMs,
+      model: targetModel
+    });
+  } catch (err) {
+    return res.status(502).json({
+      ok: false,
+      error: `Koneksi ke 9Router (${targetUrl}) gagal: ${err.message}`
+    });
   }
 });
 
