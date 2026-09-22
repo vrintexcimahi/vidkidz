@@ -905,6 +905,10 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
   color: #ffda4a;
 }
 .kids-app .kids-bottom-nav {
+  position: sticky !important;
+  bottom: 0 !important;
+  flex-shrink: 0 !important;
+  z-index: 100 !important;
   background: rgba(11,58,146,0.9) !important;
   border-top: 1px solid rgba(255,255,255,0.2) !important;
 }
@@ -1141,10 +1145,12 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
   padding: 5px 9px;
 }
 .app-mobile-frame .kids-bottom-nav {
-  left: 50% !important;
-  right: auto !important;
-  width: min(100%, 430px);
-  transform: translateX(-50%);
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  transform: none !important;
   background: rgba(11,58,146,0.9) !important;
   border-top: 1px solid rgba(255,255,255,0.2) !important;
 }
@@ -3577,11 +3583,14 @@ td {
 
 .kids-app .kids-bottom-nav,
 .app-mobile-frame .kids-bottom-nav {
-  left: 50% !important;
-  right: auto !important;
+  position: sticky !important;
   bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   width: 100% !important;
-  transform: translateX(-50%) !important;
+  transform: none !important;
+  flex-shrink: 0 !important;
+  z-index: 100 !important;
   min-height: 72px !important;
   height: auto !important;
   padding: 10px 14px calc(12px + env(safe-area-inset-bottom)) !important;
@@ -15696,7 +15705,7 @@ function KidsDashboard() {
     { id:'coins', label:'Koin', icon:'/assets/icons/3d-treasure.svg' },
   ];
   return (
-    <div className="kids-app app-mobile-frame" style={{minHeight:'100vh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
+    <div className="kids-app app-mobile-frame" style={{height:'100dvh',maxHeight:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
       {/* AMBIENT FLOATING DECORATIONS */}
       <div className="kids-bubble-decor" style={{width:140,height:140,top:'6%',left:'-40px',animationDelay:'0s'}} />
       <div className="kids-bubble-decor" style={{width:90,height:90,top:'42%',right:'-30px',animationDelay:'2.5s'}} />
@@ -15781,8 +15790,8 @@ function KidsDashboard() {
         {page==='duel' && <KidsQuizDuel kid={kid} />}
       </div>
 
-      {/* BOTTOM NAV — position:absolute so clipped by parent overflow:hidden */}
-      <div className="kids-bottom-nav" style={{position:'absolute',bottom:0,left:0,right:0,background:'rgba(7,27,61,0.96)',borderTop:'1px solid rgba(120,168,232,0.25)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',display:'flex',justifyContent:'space-around',alignItems:'center',padding:'4px 4px 6px',zIndex:10,boxShadow:'0 -10px 28px rgba(0,0,0,0.25)',overflowX:'auto'}}>
+      {/* BOTTOM NAV — sticky so it stays at bottom without scrolling */}
+      <div className="kids-bottom-nav" style={{flexShrink:0,position:'sticky',bottom:0,left:0,right:0,background:'rgba(7,27,61,0.96)',borderTop:'1px solid rgba(120,168,232,0.25)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',display:'flex',justifyContent:'space-around',alignItems:'center',padding:'4px 4px 6px',zIndex:10,boxShadow:'0 -10px 28px rgba(0,0,0,0.25)',overflowX:'auto'}}>
         {MENU.map(m => {
           const isActive = page===m.id||(page==='player'&&m.id==='videos');
           return (
