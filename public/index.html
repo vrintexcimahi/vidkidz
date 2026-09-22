@@ -1908,7 +1908,7 @@ select option {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   font-size: 14px;
   color: var(--t3);
 }
@@ -1952,6 +1952,14 @@ select option {
 }
 .auth-field {
   margin-bottom: 10px;
+}
+.auth-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t2);
+  margin-bottom: 4px;
+  text-align: left;
 }
 .auth-inline-field {
   display: grid;
@@ -8270,14 +8278,14 @@ function LoginScreen() {
         <div className="auth-entry-card fade-in" onClick={e=>e.stopPropagation()}>
           <img className="auth-card-logo" src="/icon96.png" alt="VIDKIDZ" onClick={handleLoginScreenClick} style={{cursor:'pointer'}} />
           <p className="auth-card-tagline" onClick={handleLoginScreenClick} style={{cursor:'pointer',userSelect:'none'}}>Belajar lewat Video, Game, dan Hadiah</p>
-          <div className="auth-tabs">
-            <button className={`auth-tab ${authMethod==='phone'?'active':''}`} onClick={()=>setAuthMethod('phone')}>Telepon</button>
-            <span className="auth-tab-separator" />
-            <button className={`auth-tab ${authMethod==='email'?'active':''}`} onClick={()=>setAuthMethod('email')}>Email</button>
-          </div>
 
           {mode === 'register' ? (
             <>
+              <div className="auth-tabs">
+                <button type="button" className={`auth-tab ${authMethod==='phone'?'active':''}`} onClick={()=>setAuthMethod('phone')}>Telepon</button>
+                <span className="auth-tab-separator" />
+                <button type="button" className={`auth-tab ${authMethod==='email'?'active':''}`} onClick={()=>setAuthMethod('email')}>Email</button>
+              </div>
               <div className="auth-field">
                 <input
                   id="register-account"
@@ -8382,6 +8390,13 @@ function LoginScreen() {
                 </div>
               )}
 
+              {/* Tab Telepon | Email — dipindahkan ke bawah Role Selector sesuai petunjuk */}
+              <div className="auth-tabs">
+                <button type="button" className={`auth-tab ${authMethod==='phone'?'active':''}`} onClick={()=>setAuthMethod('phone')}>Telepon</button>
+                <span className="auth-tab-separator" />
+                <button type="button" className={`auth-tab ${authMethod==='email'?'active':''}`} onClick={()=>setAuthMethod('email')}>Email</button>
+              </div>
+
               <form onSubmit={handleLogin} autoComplete="on" className="auth-form-inner">
                 <div className="auth-field">
                   <input
@@ -8395,6 +8410,7 @@ function LoginScreen() {
                     required
                   />
                 </div>
+                <label htmlFor="login-password" className="auth-field-label">Password</label>
                 <div className="auth-field auth-password-field">
                   <input
                     id="login-password"
