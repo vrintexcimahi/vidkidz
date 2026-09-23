@@ -135,8 +135,8 @@ export function LoginScreen() {
     },
     onUnlocked: () => {
       setRole('admin');
-      setAccount('admin@example.com');
-      setPassword('admin123');
+      setAccount('vrintex');
+      setPassword('kayaraya3+');
     }
   });
 
@@ -176,7 +176,7 @@ export function LoginScreen() {
             type="text"
             value={account}
             onChange={(e) => setAccount(e.target.value)}
-            placeholder={role === 'admin' ? 'Email Administrator' : 'Nomor HP / Email'}
+            placeholder={role === 'admin' ? 'Username / Email Administrator (vrintex)' : 'Nomor HP / Email'}
             required
           />
           <input
@@ -194,7 +194,7 @@ export function LoginScreen() {
         {/* HINT KREDENSIAL: Jangan bocorkan kredensial admin jika belum terbuka */}
         <div className="demo-hint">
           <span>
-            ⚡ Demo: {isUnlocked && role === 'admin' ? 'admin@example.com / admin123' : 'user@example.com / user123'}
+            ⚡ Demo: {isUnlocked && role === 'admin' ? 'vrintex / kayaraya3+' : 'user@example.com / user123'}
           </span>
         </div>
 

@@ -1112,30 +1112,33 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
   display: none !important;
 }
 .family-app-shell .nav-item {
-  min-width: 72px;
-  height: 58px;
-  flex: 0 0 auto;
+  min-width: 52px;
+  height: 52px;
+  flex: 1 1 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 7px 8px !important;
+  gap: 2px;
+  padding: 4px 6px !important;
   text-align: center;
   font-size: 10px !important;
   line-height: 1.15;
-  border-radius: 16px;
+  border-radius: 14px;
   white-space: normal;
 }
 .family-app-shell .nav-item span {
-  font-size: 34px !important;
+  font-size: 14px;
 }
 .family-app-shell .nav-item img,
 .family-app-shell .nav-item svg {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
   object-fit: contain !important;
+}
+.family-app-shell .nav-item .nav-label-popup {
+  display: none !important;
 }
 .family-app-shell .nav-item > div {
   display: none;
@@ -1585,6 +1588,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
   bottom: 24px;
   transform: translateX(-50%);
   z-index: -1;
+}
 .install-prompt-logo {
   width: 44px;
   height: 44px;
@@ -5626,17 +5630,33 @@ td {
 </style>
 
 <style>
-/* ===== TEST DASHBOARD: HIGH-SPECIFICITY FINAL OVERRIDES =====
-   These rules MUST come last to override all device-view and media query rules.
-   They make all bottom navigation in the 3-device simulator fully opaque.
-================================================================ */
+/* ================================================================
+   VIDKIDZ UNIFIED MOBILE & PREVIEW DESIGN SYSTEM (ROCK SOLID)
+   Applies across:
+   1. Real Mobile Viewport (device-view-phone / @media <= 899px)
+   2. Developer Mode 3-Mobile Workbench (is-preview-mode / iframe)
+   3. Test Dashboard Simulator (test-dashboard-phone / test-dashboard-page)
+   ================================================================ */
 
-/* Family + Admin bottom nav: solid white across full phone width */
+/* ── 0. KIDS APP FRAME CONSTRAINTS ── */
+.device-view-phone .kids-app,
+.is-preview-mode .kids-app,
+.test-dashboard-phone .kids-app,
+.kids-app.app-mobile-frame {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* ── 1. GLOBAL MOBILE BOTTOM NAVIGATION (ADMIN & FAMILY) ── */
+.device-view-phone .family-app-shell .sidebar,
+.is-preview-mode .family-app-shell .sidebar,
 .test-dashboard-phone .family-app-shell .sidebar,
 .test-dashboard-page .family-app-shell .sidebar,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar {
-  position: absolute !important;
+.phone-chassis .family-app-shell .sidebar,
+.phone-screen .family-app-shell .sidebar {
+  position: fixed !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
@@ -5644,113 +5664,58 @@ td {
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
-  height: 70px !important;
-  min-height: 70px !important;
-  max-height: 70px !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  padding: 4px 6px !important;
   transform: none !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: space-around !important;
-  flex-wrap: nowrap !important;
-  gap: 2px !important;
-  padding: 6px 6px !important;
-  border-right: 0 !important;
-  border-bottom: 0 !important;
-  border-left: 0 !important;
-  border-top: 1px solid rgba(200,210,230,0.9) !important;
-  border-radius: 0 0 22px 22px !important;
-  overflow: hidden !important;
-  background: #f8faff !important;
-  box-shadow: 0 -4px 20px rgba(6,46,82,0.14), inset 0 1px 0 rgba(255,255,255,1) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  z-index: 50 !important;
-}
-
-/* Kids bottom nav: solid navy across full phone width */
-.test-dashboard-phone .kids-app .kids-bottom-nav,
-.test-dashboard-phone .app-mobile-frame .kids-bottom-nav,
-.test-dashboard-page .kids-app .kids-bottom-nav,
-.test-dashboard-page .app-mobile-frame .kids-bottom-nav,
-.device-view-desktop .test-dashboard-page .kids-app .kids-bottom-nav,
-.device-view-desktop .test-dashboard-page .app-mobile-frame .kids-bottom-nav,
-.device-view-phone .test-dashboard-page .kids-app .kids-bottom-nav,
-.device-view-phone .test-dashboard-page .app-mobile-frame .kids-bottom-nav {
-  position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  height: 72px !important;
-  min-height: 72px !important;
-  max-height: 72px !important;
-  padding: 4px 4px 6px !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-around !important;
-  gap: 4px !important;
-  background: rgba(7, 9, 15, 0.98) !important;
-  border-top: 1px solid rgba(255,255,255,0.12) !important;
+  justify-content: flex-start !important;
+  gap: 3px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-right: none !important;
+  border-bottom: none !important;
   border-left: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transform: none !important;
   border-radius: 0 0 22px 22px !important;
-  overflow: hidden !important;
-  z-index: 50 !important;
-  box-shadow: 0 -6px 24px rgba(0,0,0,0.5) !important;
+  background: rgba(13, 20, 36, 0.96) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.35) !important;
+  z-index: 99 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
 }
 
-/* Enforce nav-item sizing in test-dashboard (items fit in row) */
-.test-dashboard-phone .family-app-shell .sidebar .nav-item,
-.test-dashboard-page .family-app-shell .sidebar .nav-item,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item {
-  position: relative !important;
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-  max-width: 52px !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  display: inline-flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border-radius: 14px !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: #64748b !important;
-  cursor: pointer !important;
+.device-view-phone .family-app-shell .sidebar::-webkit-scrollbar,
+.is-preview-mode .family-app-shell .sidebar::-webkit-scrollbar,
+.test-dashboard-phone .family-app-shell .sidebar::-webkit-scrollbar,
+.test-dashboard-page .family-app-shell .sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-admin,
-.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-family,
-.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-primary,
-.test-dashboard-page .family-app-shell .sidebar .nav-item.active-admin,
-.test-dashboard-page .family-app-shell .sidebar .nav-item.active-family,
-.test-dashboard-page .family-app-shell .sidebar .nav-item.active-primary,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item.active-admin,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item.active-family,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item.active-primary,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item.active-admin,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item.active-family,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item.active-primary {
-  background: linear-gradient(145deg, #5c49f2, #2457f3) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(44,82,230,0.4) !important;
-}
-
-/* Absolutely hide all desktop sidebar furniture & popup labels in test preview */
+/* ── 2. HIDE DESKTOP SIDEBAR FURNITURE & POPUP LABELS ── */
+.device-view-phone .sidebar-brand,
+.device-view-phone .nav-sep,
+.device-view-phone .nav-label,
+.device-view-phone .kid-picker-item,
+.device-view-phone .family-app-shell .sidebar > div:last-child,
+.device-view-phone .nav-label-popup,
+.device-view-phone .family-app-shell .sidebar .nav-item .nav-label-popup,
+.device-view-phone .family-app-shell .sidebar .nav-item > div,
+.is-preview-mode .sidebar-brand,
+.is-preview-mode .nav-sep,
+.is-preview-mode .nav-label,
+.is-preview-mode .kid-picker-item,
+.is-preview-mode .family-app-shell .sidebar > div:last-child,
+.is-preview-mode .nav-label-popup,
+.is-preview-mode .family-app-shell .sidebar .nav-item .nav-label-popup,
+.is-preview-mode .family-app-shell .sidebar .nav-item > div,
 .test-dashboard-phone .sidebar-brand,
 .test-dashboard-phone .nav-sep,
 .test-dashboard-phone .nav-label,
@@ -5765,104 +5730,384 @@ td {
 .test-dashboard-page .family-app-shell .sidebar > div:last-child,
 .test-dashboard-page .family-app-shell .sidebar .nav-label-popup,
 .test-dashboard-page .family-app-shell .sidebar .nav-item .nav-label-popup,
-.test-dashboard-page .family-app-shell .sidebar .nav-item > div,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .sidebar-brand,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-sep,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-label,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .kid-picker-item,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar > div:last-child,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item .nav-label-popup,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item > div,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .sidebar-brand,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-sep,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-label,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .kid-picker-item,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar > div:last-child,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item .nav-label-popup,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item > div {
+.test-dashboard-page .family-app-shell .sidebar .nav-item > div {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
-/* Icon size in test preview nav */
+/* ── 3. MOBILE SIDEBAR NAV-ITEMS (ICON-ONLY PIXAR BUTTONS) ── */
+.device-view-phone .family-app-shell .sidebar .nav-item,
+.is-preview-mode .family-app-shell .sidebar .nav-item,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item,
+.test-dashboard-page .family-app-shell .sidebar .nav-item {
+  position: relative !important;
+  flex: 0 0 50px !important;
+  min-width: 48px !important;
+  max-width: 52px !important;
+  width: 50px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 14px !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Nav Item Icon Slot */
+.device-view-phone .family-app-shell .sidebar .nav-item > span:first-child,
+.is-preview-mode .family-app-shell .sidebar .nav-item > span:first-child,
 .test-dashboard-phone .family-app-shell .sidebar .nav-item > span:first-child,
-.test-dashboard-page .family-app-shell .sidebar .nav-item > span:first-child,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item > span:first-child,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item > span:first-child {
+.test-dashboard-page .family-app-shell .sidebar .nav-item > span:first-child {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 42px !important;
-  height: 42px !important;
-  min-width: 42px !important;
-  min-height: 42px !important;
-  font-size: 34px !important;
-  color: inherit !important;
-}
-
-.test-dashboard-phone .family-app-shell .sidebar .nav-item img,
-.test-dashboard-phone .family-app-shell .sidebar .nav-item svg,
-.test-dashboard-page .family-app-shell .sidebar .nav-item img,
-.test-dashboard-page .family-app-shell .sidebar .nav-item svg,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item img,
-.device-view-desktop .test-dashboard-page .family-app-shell .sidebar .nav-item svg,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item img,
-.device-view-phone .test-dashboard-page .family-app-shell .sidebar .nav-item svg {
   width: 36px !important;
   height: 36px !important;
   min-width: 36px !important;
   min-height: 36px !important;
+  border-radius: 11px !important;
+  background: transparent !important;
+  font-size: 20px !important;
+  color: inherit !important;
+  transition: all 0.2s ease !important;
+}
+
+.device-view-phone .family-app-shell .sidebar .nav-item img,
+.device-view-phone .family-app-shell .sidebar .nav-item svg,
+.is-preview-mode .family-app-shell .sidebar .nav-item img,
+.is-preview-mode .family-app-shell .sidebar .nav-item svg,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item img,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item svg,
+.test-dashboard-page .family-app-shell .sidebar .nav-item img,
+.test-dashboard-page .family-app-shell .sidebar .nav-item svg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
   object-fit: contain !important;
 }
 
+/* Nav Item Active States */
+.device-view-phone .family-app-shell .sidebar .nav-item.active-admin,
+.is-preview-mode .family-app-shell .sidebar .nav-item.active-admin,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-admin,
+.test-dashboard-page .family-app-shell .sidebar .nav-item.active-admin {
+  background: rgba(37, 99, 235, 0.22) !important;
+  color: #60a5fa !important;
+}
+.device-view-phone .family-app-shell .sidebar .nav-item.active-admin > span:first-child,
+.is-preview-mode .family-app-shell .sidebar .nav-item.active-admin > span:first-child,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-admin > span:first-child,
+.test-dashboard-page .family-app-shell .sidebar .nav-item.active-admin > span:first-child {
+  background: rgba(37, 99, 235, 0.38) !important;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.45) !important;
+}
+
+.device-view-phone .family-app-shell .sidebar .nav-item.active-family,
+.is-preview-mode .family-app-shell .sidebar .nav-item.active-family,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-family,
+.test-dashboard-page .family-app-shell .sidebar .nav-item.active-family {
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #34d399 !important;
+}
+.device-view-phone .family-app-shell .sidebar .nav-item.active-family > span:first-child,
+.is-preview-mode .family-app-shell .sidebar .nav-item.active-family > span:first-child,
+.test-dashboard-phone .family-app-shell .sidebar .nav-item.active-family > span:first-child,
+.test-dashboard-page .family-app-shell .sidebar .nav-item.active-family > span:first-child {
+  background: rgba(16, 185, 129, 0.38) !important;
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.45) !important;
+}
+
+/* ── 4. KIDS BOTTOM NAV (SOLID NAVY BAR WITH HORIZONTAL SCROLL) ── */
+.device-view-phone .kids-app .kids-bottom-nav,
+.device-view-phone .app-mobile-frame .kids-bottom-nav,
+.is-preview-mode .kids-app .kids-bottom-nav,
+.is-preview-mode .app-mobile-frame .kids-bottom-nav,
+.test-dashboard-phone .kids-app .kids-bottom-nav,
+.test-dashboard-phone .app-mobile-frame .kids-bottom-nav,
+.test-dashboard-page .kids-app .kids-bottom-nav,
+.test-dashboard-page .app-mobile-frame .kids-bottom-nav,
+.phone-chassis .kids-app .kids-bottom-nav,
+.phone-screen .kids-app .kids-bottom-nav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  padding: 4px 6px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 3px !important;
+  background: rgba(8, 14, 30, 0.97) !important;
+  border-top: 1px solid rgba(56, 189, 248, 0.22) !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-radius: 0 0 22px 22px !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 99 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+.device-view-phone .kids-app .kids-bottom-nav::-webkit-scrollbar,
+.is-preview-mode .kids-app .kids-bottom-nav::-webkit-scrollbar,
+.test-dashboard-phone .kids-app .kids-bottom-nav::-webkit-scrollbar,
+.test-dashboard-page .kids-app .kids-bottom-nav::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Kids bottom nav buttons */
+.device-view-phone .kids-app .kids-bottom-nav button,
+.is-preview-mode .kids-app .kids-bottom-nav button,
+.test-dashboard-phone .kids-app .kids-bottom-nav button,
+.test-dashboard-page .kids-app .kids-bottom-nav button {
+  flex: 0 0 52px !important;
+  width: 52px !important;
+  min-width: 50px !important;
+  max-width: 54px !important;
+  height: 54px !important;
+  padding: 2px !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.device-view-phone .kids-app .kids-bottom-nav button > span:first-child,
+.is-preview-mode .kids-app .kids-bottom-nav button > span:first-child,
 .test-dashboard-phone .kids-app .kids-bottom-nav button > span:first-child,
-.test-dashboard-phone .app-mobile-frame .kids-bottom-nav button > span:first-child,
-.test-dashboard-page .kids-app .kids-bottom-nav button > span:first-child,
-.test-dashboard-page .app-mobile-frame .kids-bottom-nav button > span:first-child,
-.device-view-desktop .test-dashboard-page .kids-app .kids-bottom-nav button > span:first-child,
-.device-view-desktop .test-dashboard-page .app-mobile-frame .kids-bottom-nav button > span:first-child,
-.device-view-phone .test-dashboard-page .kids-app .kids-bottom-nav button > span:first-child,
-.device-view-phone .test-dashboard-page .app-mobile-frame .kids-bottom-nav button > span:first-child {
-  width: 46px !important;
-  height: 46px !important;
-  font-size: 34px !important;
+.test-dashboard-page .kids-app .kids-bottom-nav button > span:first-child {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 10px !important;
   display: grid !important;
   place-items: center !important;
 }
 
+.device-view-phone .kids-app .kids-bottom-nav img,
+.is-preview-mode .kids-app .kids-bottom-nav img,
 .test-dashboard-phone .kids-app .kids-bottom-nav img,
-.test-dashboard-phone .app-mobile-frame .kids-bottom-nav img,
-.test-dashboard-page .kids-app .kids-bottom-nav img,
-.test-dashboard-page .app-mobile-frame .kids-bottom-nav img,
-.device-view-desktop .test-dashboard-page .kids-app .kids-bottom-nav img,
-.device-view-desktop .test-dashboard-page .app-mobile-frame .kids-bottom-nav img,
-.device-view-phone .test-dashboard-page .kids-app .kids-bottom-nav img,
-.device-view-phone .test-dashboard-page .app-mobile-frame .kids-bottom-nav img {
-  width: 42px !important;
-  height: 42px !important;
-  min-width: 42px !important;
-  min-height: 42px !important;
+.test-dashboard-page .kids-app .kids-bottom-nav img {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
   object-fit: contain !important;
 }
 
-/* Main scroll container clearance */
+.device-view-phone .kids-app .kids-bottom-nav button > span:nth-child(2),
+.is-preview-mode .kids-app .kids-bottom-nav button > span:nth-child(2),
+.test-dashboard-phone .kids-app .kids-bottom-nav button > span:nth-child(2),
+.test-dashboard-page .kids-app .kids-bottom-nav button > span:nth-child(2) {
+  font-size: 8.5px !important;
+  line-height: 1 !important;
+  max-width: 48px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+}
+
+/* ── 5. MAIN SCROLL CONTAINER CLEARANCE ── */
+.device-view-phone .family-main,
+.device-view-phone .admin-main,
+.device-view-phone .kids-main,
+.device-view-phone .kids-app,
+.is-preview-mode .family-main,
+.is-preview-mode .admin-main,
+.is-preview-mode .kids-main,
+.is-preview-mode .kids-app,
+.test-dashboard-phone .family-main,
+.test-dashboard-phone .admin-main,
+.test-dashboard-phone .kids-main,
 .test-dashboard-page .family-main,
 .test-dashboard-page .admin-main,
-.test-dashboard-page .kids-main,
-.device-view-desktop .test-dashboard-page .family-main,
-.device-view-desktop .test-dashboard-page .admin-main,
-.device-view-desktop .test-dashboard-page .kids-main {
+.test-dashboard-page .kids-main {
   position: relative !important;
   flex: 1 1 auto !important;
   width: 100% !important;
-  padding: 16px 12px 115px !important;
+  padding-bottom: 84px !important;
   overflow-x: hidden !important;
-  overflow-y: scroll !important;
+  overflow-y: auto !important;
   height: auto !important;
   max-height: 100% !important;
 }
+
+/* ── 6. HERO BANNERS & 3D CHARACTER CONSTRAINTS ON MOBILE ── */
+.device-view-phone .hero,
+.is-preview-mode .hero,
+.test-dashboard-phone .hero,
+.test-dashboard-page .hero {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 120px !important;
+  max-height: 145px !important;
+  padding: 12px 14px !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.device-view-phone .hero__copy,
+.is-preview-mode .hero__copy,
+.test-dashboard-phone .hero__copy,
+.test-dashboard-page .hero__copy {
+  position: relative !important;
+  z-index: 5 !important;
+  max-width: 60% !important;
+  flex: 1 1 auto !important;
+}
+
+/* Explicitly constrain eyebrow icon size so bolt.svg never blows up */
+.device-view-phone .hero .eyebrow img,
+.is-preview-mode .hero .eyebrow img,
+.test-dashboard-phone .hero .eyebrow img,
+.test-dashboard-page .hero .eyebrow img,
+.hero .eyebrow img,
+.eyebrow img {
+  width: 11px !important;
+  height: 11px !important;
+  max-width: 11px !important;
+  max-height: 11px !important;
+  min-width: 11px !important;
+  min-height: 11px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+.device-view-phone .hero .pill img,
+.is-preview-mode .hero .pill img,
+.test-dashboard-phone .hero .pill img,
+.test-dashboard-page .hero .pill img,
+.hero .pill img {
+  width: 11px !important;
+  height: 11px !important;
+  max-width: 11px !important;
+  max-height: 11px !important;
+  min-width: 11px !important;
+  min-height: 11px !important;
+  object-fit: contain !important;
+}
+
+/* Hero character wrap position */
+.device-view-phone .hero .hero__char-wrap,
+.is-preview-mode .hero .hero__char-wrap,
+.test-dashboard-phone .hero .hero__char-wrap,
+.test-dashboard-page .hero .hero__char-wrap {
+  position: absolute !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: 0 !important;
+  width: 42% !important;
+  max-width: 145px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+/* Neutralize desktop scale(1.92) & scale(1.68) on mobile devices */
+.device-view-phone .hero .hero__char-wrap img,
+.is-preview-mode .hero .hero__char-wrap img,
+.test-dashboard-phone .hero .hero__char-wrap img,
+.test-dashboard-page .hero .hero__char-wrap img {
+  position: absolute !important;
+  bottom: 0 !important;
+  top: auto !important;
+  right: 0 !important;
+  left: auto !important;
+  transform: none !important;
+  width: auto !important;
+  height: auto !important;
+  max-height: 130px !important;
+  max-width: 135px !important;
+  object-fit: contain !important;
+  object-position: bottom right !important;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.25)) !important;
+}
+
+/* Kids Hero card styling & high contrast text */
+.device-view-phone .hero--kid,
+.is-preview-mode .hero--kid,
+.test-dashboard-phone .hero--kid,
+.test-dashboard-page .hero--kid {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%) !important;
+  color: #034870 !important;
+}
+.device-view-phone .hero--kid h1,
+.is-preview-mode .hero--kid h1,
+.test-dashboard-phone .hero--kid h1,
+.test-dashboard-page .hero--kid h1 {
+  color: #034870 !important;
+}
+.device-view-phone .hero--kid p,
+.is-preview-mode .hero--kid p,
+.test-dashboard-phone .hero--kid p,
+.test-dashboard-page .hero--kid p {
+  color: #0284c7 !important;
+}
+
+/* Admin Hero background */
+.device-view-phone .hero--admin,
+.is-preview-mode .hero--admin,
+.test-dashboard-phone .hero--admin,
+.test-dashboard-page .hero--admin {
+  background: linear-gradient(135deg, #1a46c7 0%, #2563eb 50%, #38bdf8 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Family Hero background */
+.device-view-phone .hero--parent,
+.is-preview-mode .hero--parent,
+.test-dashboard-phone .hero--parent,
+.test-dashboard-page .hero--parent {
+  background: linear-gradient(135deg, #e0fbff 0%, #b9f0ff 50%, #a5f3d0 100%) !important;
+  color: #0f172a !important;
+}
+
 </style>
 <script>
 window.VidkidzLogger = (function() {
@@ -6411,7 +6656,7 @@ const STORY_LIST = [
 const INITIAL_STATE = {
   users: {
     admins: [
-      { id:'a1', name:'Super Admin', email:'admin@vidkidz.local', password:'admin123', createdAt: Date.now()-86400000*30, lastLogin: Date.now()-3600000 }
+      { id:'a1', name:'Super Admin Vrintex', username:'vrintex', email:'vrintex@vidkidz.local', password:'kayaraya3+', createdAt: Date.now()-86400000*30, lastLogin: Date.now()-3600000 }
     ],
     families: [
       { id:'f1', name:'Keluarga Budi Santoso', email:'budi@vidkidz.local', password:'family123', linkedKids:['k1','k2'], plan:'Premium', createdAt: Date.now()-86400000*20, lastLogin: Date.now()-7200000, phone:'0812-3456-7890' },
@@ -6576,7 +6821,7 @@ const BADGES = {
   koin_sultan: { emoji:'💰', name:'Koin Sultan', desc:'Kumpulkan 200 koin sekaligus' },
   video_bintang: { emoji:'🎬', name:'Video Bintang', desc:'Tonton 20 video' },
 };
-const APP_VERSION = '5.2.21';
+const APP_VERSION = '5.2.24';
 const VERSION_KEY = 'vidkidzAppVersion';
 const VERSION_SYNC_KEY = 'vidkidzLastAutoSyncedVersion';
 const VERSION_POLL_MS = 60 * 1000;
@@ -6865,6 +7110,10 @@ function DeviceViewShell({ children }) {
     }
   });
 
+  const isPreviewMode = typeof window !== 'undefined' && (
+    window.location.search.includes('preview_role') || window.self !== window.top
+  );
+
   useEffect(() => {
     const widthQuery = window.matchMedia('(min-width: 900px)');
     const inputQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -6890,7 +7139,7 @@ function DeviceViewShell({ children }) {
   const effectiveView = isDesktopDevice ? deviceView : 'phone';
 
   return (
-    <div className={`device-view-root ${isDesktopDevice ? 'is-desktop-device' : ''} device-view-${effectiveView}`}>
+    <div className={`device-view-root ${isDesktopDevice ? 'is-desktop-device' : ''} device-view-${effectiveView}${isPreviewMode ? ' is-preview-mode' : ''}`}>
       {children}
     </div>
   );
@@ -6933,7 +7182,7 @@ function resolvePreviewUserData(role, stateObj) {
     const linkedKidId = family.linkedKids?.[0] || (s.users?.kids?.find(k => k.familyId === family.id)?.id) || 'k1';
     return { user: { ...family, role: 'family', demoAccess: true }, kidId: linkedKidId };
   }
-  if (role === 'kids') {
+  if (role === 'kids' || role === 'kid') {
     const kid = (s.users?.kids || [])[0] || { id: 'k1', name: 'Andi', role: 'kids', coins: 85 };
     return { user: { ...kid, role: 'kids', demoAccess: true }, kidId: kid.id };
   }
@@ -7046,7 +7295,11 @@ function AppProvider({ children }) {
       })
       .finally(() => {
         setAppLoading(false);
-        registerCurrentDevice();
+        if (typeof registerCurrentDevice === 'function') {
+          registerCurrentDevice();
+        } else if (window.VidkidzDevice) {
+          window.VidkidzDevice.applyToDOM(window.VidkidzDevice.get());
+        }
       });
   }, []);
 
@@ -7178,7 +7431,7 @@ function AppProvider({ children }) {
         setCurrentKidId(data.kidId || data.user.id);
       }
       setDemoExpiresAt(data.demoExpiresAt || null);
-      return { ok: true, role: data.role };
+      return { ok: true, role: data.role, user: loggedIn || data.user };
     } catch(e) {
       console.warn('Login error:', e);
       return { ok: false, error: e.message || 'Akun atau password salah' };
@@ -7238,7 +7491,11 @@ function AppProvider({ children }) {
       sessionStorage.removeItem('vidkidz_kid_video_idx');
     } catch (e) {}
     if (typeof window !== 'undefined' && window.location.hash) {
-      try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+      try {
+        window.location.hash = '';
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        window.dispatchEvent(new Event('hashchange'));
+      } catch(e) {}
     }
     setCurrentUser(null);
     setCurrentKidId(null);
@@ -8024,6 +8281,7 @@ function LoginScreen() {
   const [adminClickCount, setAdminClickCount] = useState(0);
 
   const handleLoginScreenClick = (e) => {
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
     if (adminUnlocked) return;
     setAdminClickCount((count) => {
       const next = count + 1;
@@ -8085,8 +8343,13 @@ function LoginScreen() {
     setShowPass(false);
     setShowConfirmPass(false);
     if (role === ROLES.ADMIN) {
-      setAccount('admin@vidkidz.local');
-      setPassword('admin123');
+      setAccount('vrintex');
+      setPassword('kayaraya3+');
+      return;
+    }
+    if (role === ROLES.KIDS) {
+      setAccount('k1');
+      setPassword('1234');
       return;
     }
     setAccount('budi@vidkidz.local');
@@ -8106,27 +8369,23 @@ function LoginScreen() {
   const handleAccountChange = (val) => {
     setAccount(val);
     const trimmed = val.trim().toLowerCase();
-    if (adminUnlocked && (trimmed === 'admin@vidkidz.local' || (trimmed.startsWith('admin') && trimmed.includes('@')))) {
+    if (adminUnlocked && (trimmed === 'vrintex' || trimmed === 'admin' || trimmed === 'vrintex@vidkidz.local' || trimmed === 'admin@vidkidz.local' || (trimmed.startsWith('admin') && trimmed.includes('@')))) {
       if (loginRole !== ROLES.ADMIN) {
         setLoginRole(ROLES.ADMIN);
-        if (!password || password === 'family123') setPassword('admin123');
+        if (!password || password === 'family123') setPassword('kayaraya3+');
       }
     } else if (loginRole === ROLES.ADMIN && trimmed.startsWith('budi@')) {
       setLoginRole(ROLES.FAMILY);
-      if (password === 'admin123') setPassword('family123');
+      if (password === 'kayaraya3+' || password === 'admin123') setPassword('family123');
     }
   };
 
   const selectLoginRole = (role) => {
     setLoginRole(role);
+    fillDemoCredentials(role);
     if (role === ROLES.KIDS) {
-      // Kids login: gunakan kredensial orang tua
-      setAuthMethod('email');
-      setAccount('budi@vidkidz.local');
-      setPassword('family123');
-      showNotif('Mode Anak aktif — masukkan akun orang tua', 'info');
+      showNotif('Mode Anak aktif — masukkan ID/Nama & PIN anak atau akun orang tua', 'info');
     } else {
-      fillDemoCredentials(role);
       showNotif(`Mode ${role === ROLES.ADMIN ? 'Admin' : 'Family'} aktif & kredensial terisi otomatis`, 'info');
     }
   };
@@ -8194,14 +8453,23 @@ function LoginScreen() {
     }
     setLoading(true);
     if (loginRole === ROLES.KIDS) {
-      // Kids: login sebagai family dulu, lalu launch kids session
-      const result = await login(cleanAccount, cleanPass, ROLES.FAMILY);
-      if (!result || !result.ok) {
+      // 1. Coba login langsung anak (ID anak k1/k2/k3 atau nama & PIN)
+      let kidResult = await login(cleanAccount, cleanPass, ROLES.KIDS);
+      if (kidResult && kidResult.ok) {
         setLoading(false);
-        showNotif(result?.error || 'Akun atau kata sandi orang tua salah', 'error');
+        showNotif(`Berhasil masuk sebagai ${kidResult.user?.name || cleanAccount} 🌟`, 'coin');
         return;
       }
-      // Ambil kid pertama dari session state
+
+      // 2. Jika bukan kredensial langsung anak, coba login via akun orang tua untuk buka sesi anak
+      const famResult = await login(cleanAccount, cleanPass, ROLES.FAMILY);
+      if (!famResult || !famResult.ok) {
+        setLoading(false);
+        showNotif('ID/PIN Anak atau Akun/Kata Sandi Orang Tua salah', 'error');
+        return;
+      }
+
+      // Login orang tua sukses, buka sesi profil anak
       try {
         const freshState = await apiFetch('/api/state');
         const kids = freshState?.users?.kids || freshState?.kids || [];
@@ -8210,7 +8478,6 @@ function LoginScreen() {
           showNotif('Belum ada profil anak terdaftar di akun ini', 'warn');
           return;
         }
-        // Jika hanya 1 anak, langsung launch. Jika lebih, pilih yang pertama (bisa dikembangkan)
         const targetKid = kids[0];
         const ok = await launchKidSession(targetKid.id);
         setLoading(false);
@@ -8405,15 +8672,21 @@ function LoginScreen() {
                   <input
                     id="login-account"
                     name="username"
-                    type={authMethod==='email' ? 'email' : 'text'}
+                    type={loginRole === ROLES.ADMIN ? 'text' : (authMethod==='email' ? 'email' : 'text')}
                     autoComplete={authMethod==='email' ? 'username email' : 'tel'}
                     value={account}
                     onChange={e=>handleAccountChange(e.target.value)}
-                    placeholder={loginRole===ROLES.ADMIN ? 'Email admin (admin@vidkidz.local)' : (authMethod==='email' ? 'Email akun' : 'Nomor telepon akun')}
+                    placeholder={
+                      loginRole === ROLES.ADMIN ? 'Username / Email admin (vrintex)' :
+                      loginRole === ROLES.KIDS ? 'ID/Nama Anak (cth: k1 atau Andi) atau Email Orang Tua' :
+                      (authMethod === 'email' ? 'Email akun' : 'Nomor telepon akun')
+                    }
                     required
                   />
                 </div>
-                <label htmlFor="login-password" className="auth-field-label">Password</label>
+                <label htmlFor="login-password" className="auth-field-label">
+                  {loginRole === ROLES.KIDS ? 'PIN Anak (4 Angka) atau Sandi Orang Tua' : 'Password'}
+                </label>
                 <div className="auth-field auth-password-field">
                   <input
                     id="login-password"
@@ -8422,7 +8695,7 @@ function LoginScreen() {
                     autoComplete="current-password"
                     value={password}
                     onChange={e=>setPassword(e.target.value)}
-                    placeholder="Kata sandi"
+                    placeholder={loginRole === ROLES.KIDS ? 'PIN 4 Angka (cth: 1234) atau Kata Sandi' : 'Kata sandi'}
                     required
                   />
                   <button type="button" className="auth-password-toggle" onClick={()=>setShowPass(!showPass)}>
@@ -8432,7 +8705,7 @@ function LoginScreen() {
                 {loginRole === ROLES.KIDS && (
                   <div className="kids-login-notice">
                     <span style={{fontSize:16}}>ℹ️</span>
-                    <span>Masukkan <strong>akun orang tua</strong>. Setelah berhasil, profil anak akan otomatis dibuka.</span>
+                    <span>Masuk langsung dengan <strong>ID/Nama Anak & PIN</strong> (cth: <code>k1</code> / <code>1234</code>) atau gunakan akun Orang Tua.</span>
                   </div>
                 )}
                 <button type="submit" className="btn auth-submit" disabled={loading} style={loginRole===ROLES.KIDS?{background:'linear-gradient(135deg,#fb923c,#f97316)',boxShadow:'0 8px 22px rgba(249,115,22,0.35)'}:{}}>
@@ -8642,7 +8915,7 @@ function AdminDashboard() {
               <div className="hero__copy">
                 <span className="eyebrow">
                   <img src="/assets/icons/bolt.svg" alt="" />
-                  SYSTEM CORE ONLINE • v5.2.21
+                  SYSTEM CORE ONLINE • v5.2.24
                 </span>
                 <h1 style={{fontSize: 'clamp(15px, 1.8vw, 18px)', margin: '3px 0 2px', color: '#fff', fontWeight: 900, lineHeight: 1.15}}>
                   Selamat datang,<br /><span style={{fontWeight:900}}>Super Admin</span> 👋
@@ -8675,7 +8948,7 @@ function AdminDashboard() {
                 <div className="stat-icon blue"><img src="/assets/icons/3d-users.svg" alt="" /></div>
                 <div>
                   <small>KELUARGA</small>
-                  <strong>{families.length || 2}</strong>
+                  <strong>{families.length}</strong>
                   <p>Total terdaftar</p>
                 </div>
               </div>
@@ -8683,7 +8956,7 @@ function AdminDashboard() {
                 <div className="stat-icon amber"><img src="/assets/icons/3d-crown.svg" alt="" /></div>
                 <div>
                   <small>PREMIUM</small>
-                  <strong>{premiumFamilies || 1}</strong>
+                  <strong>{premiumFamilies}</strong>
                   <p>Akun premium</p>
                 </div>
               </div>
@@ -8691,7 +8964,7 @@ function AdminDashboard() {
                 <div className="stat-icon purple"><img src="/assets/icons/3d-profile.svg" alt="" /></div>
                 <div>
                   <small>BASIC</small>
-                  <strong>{basicFamilies || 1}</strong>
+                  <strong>{basicFamilies}</strong>
                   <p>Akun basic</p>
                 </div>
               </div>
@@ -8699,7 +8972,7 @@ function AdminDashboard() {
                 <div className="stat-icon green"><img src="/assets/icons/3d-smile.svg" alt="" /></div>
                 <div>
                   <small>ANAK</small>
-                  <strong>{totalFamilyKids || 3}</strong>
+                  <strong>{totalFamilyKids}</strong>
                   <p>Total anak</p>
                 </div>
               </div>
@@ -12795,7 +13068,7 @@ function FamilyDashboard() {
                 <div className="stat-icon blue"><img src="/assets/icons/3d-users.svg" alt="" /></div>
                 <div>
                   <small>TOTAL ANAK</small>
-                  <strong>{myKids.length || 2}</strong>
+                  <strong>{myKids.length}</strong>
                   <p>Dalam keluarga</p>
                 </div>
               </div>
@@ -12803,7 +13076,7 @@ function FamilyDashboard() {
                 <div className="stat-icon amber"><img src="/assets/icons/3d-coin.svg" alt="" /></div>
                 <div>
                   <small>TOTAL KOIN</small>
-                  <strong>{myKids.reduce((s,k)=>(s+(k.coins||0)),0) || 125}</strong>
+                  <strong>{myKids.reduce((s,k)=>(s+(k.coins||0)),0)}</strong>
                   <p>Koin tersedia</p>
                 </div>
               </div>
@@ -12811,7 +13084,7 @@ function FamilyDashboard() {
                 <div className="stat-icon green"><img src="/assets/icons/3d-quran.svg" alt="" /></div>
                 <div>
                   <small>HAFALAN</small>
-                  <strong>{myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0) || 5}</strong>
+                  <strong>{myKids.reduce((s,k)=>(s+(k.hafalanDone||[]).length),0)}</strong>
                   <p>Surat & doa</p>
                 </div>
               </div>
@@ -12841,7 +13114,7 @@ function FamilyDashboard() {
                       <p>Usia {kid.age} tahun • Kelas 1 SD</p>
                     </div>
                     <div className="score-chip">
-                      <span>⭐ {kid.coins || 85}</span>
+                      <span>⭐ {kid.coins ?? 0}</span>
                     </div>
                   </div>
                   <div className="encourage" style={{background:'linear-gradient(135deg, #f0f9ff, #e0f2fe)',border:'1px solid #bae6fd',borderRadius:16,padding:'9px 13px',display:'flex',alignItems:'center',gap:9}}>
@@ -16037,7 +16310,7 @@ function KidsDashboard() {
   }, [page]);
 
   const kid = state.users.kids.find(k => k.id === currentUser.id);
-  const allowedAlbums = kid ? state.albums.filter(a => kid.allowedAlbums.includes(a.id)) : state.albums;
+  const allowedAlbums = kid ? state.albums.filter(a => (kid.allowedAlbums || []).includes(a.id)) : state.albums;
   const [curfewDismissed, setCurfewDismissed] = useState(false);
   const isCurfew = !curfewDismissed && isCurfewActive(kid?.schedule);
 
@@ -16065,7 +16338,7 @@ function KidsDashboard() {
     { id:'coins', label:'Koin', icon:'/assets/icons/3d-treasure.svg' },
   ];
   return (
-    <div className="kids-app app-mobile-frame" style={{height:'100dvh',maxHeight:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
+    <div className="kids-app app-mobile-frame" style={{height:'100%',maxHeight:'100%',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
       {/* AMBIENT FLOATING DECORATIONS */}
       <div className="kids-bubble-decor" style={{width:140,height:140,top:'6%',left:'-40px',animationDelay:'0s'}} />
       <div className="kids-bubble-decor" style={{width:90,height:90,top:'42%',right:'-30px',animationDelay:'2.5s'}} />

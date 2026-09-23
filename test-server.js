@@ -1179,6 +1179,41 @@ const server = app.listen(0, async () => {
     });
     assert(kidStateAi.ok && !kidStateAi.data.systemSettings.nineRouterApiKey, 'Non-admin has nineRouterApiKey stripped in GET /api/state');
 
+    // --- 40. Dashboard & Login Auth Flow Integrity ---
+    console.log('\n--- 40. Dashboard & Login Auth Flow Integrity ---');
+    // Direct kid login by ID and by Name
+    const directKidById = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'k1', password: '1234', role: 'kids' })
+    });
+    assert(directKidById.ok && directKidById.data.role === 'kids' && directKidById.data.kidId === 'k1', 'Direct kid login by ID k1');
+
+    const directKidByName = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'Andi', password: '1234', role: 'kids' })
+    });
+    assert(directKidByName.ok && directKidByName.data.role === 'kids' && directKidByName.data.user.name === 'Andi', 'Direct kid login by Name Andi');
+
+    // Launch kid session via fresh family token
+    const freshFamLogin = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'budi@vidkidz.local', password: 'family123' })
+    });
+    const launchKid = await req('/api/auth/kids-session', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${freshFamLogin.data?.token}` },
+      body: JSON.stringify({ kidId: 'k1' })
+    });
+    assert(launchKid.ok && launchKid.data.role === 'kids' && launchKid.data.kidId === 'k1', 'Launch kid session via family token succeeds');
+
+    // Admin overview state metric correctness
+    const adminOverviewState = await req('/api/state', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(adminOverviewState.ok, 'Admin overview state fetch succeeds');
+    const adminFamCount = adminOverviewState.data.users?.families?.length;
+    assert(typeof adminFamCount === 'number', 'Admin overview reports accurate numeric family count');
+
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
     console.log(`========================================`);
   } catch (err) {

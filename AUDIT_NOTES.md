@@ -1063,3 +1063,53 @@
   - `PASS`: Admin disable/pause telegram auto-backup succeeded
 - Total Regression Suite: **PASS — 148 passed, 0 failed** across **38 test groups**.
 - JSX Babel Standalone Compilation: **PASS — 0 syntax errors**, 575.991 bytes.
+
+---
+
+## [2026-09-23 08:50] Audit & Bug Fix Run — Mobile Layout & Developer Mode Multi-Role Stability (v5.2.24)
+
+### Scope
+- Penyelidikan mendalam visual regression pada Developer Multi-Role 3 Mobile Workbench (`#devmode`) dan perangkat mobile sebenarnya (`device-view-phone`).
+- Masalah yang dilaporkan pengguna: layout iframe 3-phone mobile masih belum stabil (navigasi bawah raksasa, teks 'Overview'/'User Mana...' meluap, icon petir eyebrow membesar tak terkendali di Admin Hero, dan karakter ilustrasi terpotong di Family & Mode Anak).
+
+### Root Causes Ditemukan
+1. **Navigasi Bawah Terfragmentasi & Overriding Rules**:
+   - Seluruh aturan responsif bilah navigasi bawah sebelumnya terkunci pada selector `.test-dashboard-page`.
+   - Ketika iframe simulator dirender mandiri via `/?preview_role=admin|family|kids`, class `.test-dashboard-page` tidak ada, sehingga sidebar desktop dengan lebar 230px, teks 34px, dan popup label meluap ke bawah layar ponsel.
+   - Aturan sebelumnya mencoba menambal dengan `.is-preview-mode` tetapi selector CSS masih memiliki `font-size: 34px !important;` dan `justify-content: space-around !important; overflow: hidden !important;`, sehingga 13 item navigasi pada Family role terhimpit menjadi titik-titik tak terbaca (25px).
+2. **Eyebrow Icon Expansion di Admin Hero**:
+   - Selector `.is-preview-mode [class*="hero"] img` menargetkan seluruh `img` di dalam `.hero`, termasuk icon petir kecil `<img src="/assets/icons/bolt.svg" />` pada `.eyebrow`. Akibatnya icon petir mengembang hingga `160px × 180px`, menutupi banner Admin.
+3. **Penskalaan Karakter Ekstrem di Mobile**:
+   - Selector desktop `.hero--admin .hero__char-wrap img` memiliki `scale(1.92)` dan `.hero--parent ... img` memiliki `scale(1.68)`. Di layar selebar 375px, penskalaan 1.7x–1.9x membuat wajah karakter berukuran > 350px dan menutupi 70% layar ponsel.
+4. **Kids Bottom Nav Pushed Off-Screen**:
+   - Inline style `.kids-app` menggunakan `height: '100dvh', maxHeight: '100dvh'`. Di dalam iframe browser tertentu, `100dvh` merujuk ke tinggi viewport induk (953px) alih-alih tinggi iframe (700px), sehingga bilah navigasi bawah anak terdorong ke luar batas pandang.
+
+### Perbaikan yang Diterapkan
+1. **Unified Mobile Design System (CSS Terpusat)**:
+   - Mengganti seluruh blok override acak (lines 5632–6054) dengan satu modul arsitektur CSS bersih yang berlaku konsisten untuk:
+     - `.device-view-phone` (smartphone asli / mobile browser < 900px),
+     - `.is-preview-mode` (iframe simulator 3-phone),
+     - `.test-dashboard-phone` & `.test-dashboard-page` (workbench test simulator).
+2. **Fixed Bottom Navigation Bar**:
+   - Posisikan bilah navigasi bawah secara `position: fixed !important; bottom: 0 !important; left: 0; right: 0; width: 100%; height: 64px;` dengan rounded corner `border-radius: 0 0 22px 22px` mengikuti chassis ponsel.
+   - Aktifkan scroll horizontal mulus (`overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none;`) sehingga seluruh 13 item Family dan 9 item Kids dapat diakses rapi tanpa terpangkas.
+   - Ukuran icon konsisten 24px × 24px, slot icon 36px × 36px, tombol 50px × 52px.
+   - Sembunyikan seluruh desktop sidebar furniture (`.sidebar-brand`, `.nav-sep`, `.nav-label`, `.kid-picker-item`, `.nav-label-popup`).
+3. **Penataan Proporsional Hero Banner Mobile**:
+   - Batasi icon eyebrow strictly pada `11px × 11px !important; object-fit: contain;` agar `bolt.svg` tetap kecil dan elegan.
+   - Netralkan penskalaan gambar karakter dengan `transform: none !important; max-height: 130px !important; max-width: 135px !important; object-position: bottom right;` sehingga karakter berdiri proporsional di sisi kanan (40% lebar) dan teks sambutan leluasa di sisi kiri (60% lebar).
+   - Pastikan teks Mode Anak memiliki kontras tinggi (`#034870` & `#0284c7`) pada gradien langit cerah.
+4. **Perbaikan Viewport Height Mode Anak**:
+   - Ganti `height: '100dvh'` menjadi `height: '100%'` pada `.kids-app.app-mobile-frame` agar pas sempurna di dalam iframe 700px.
+5. **Version Bump & Cache Invalidation**:
+   - `APP_VERSION`: `5.2.24`
+   - `sw.js CACHE_VERSION`: `v47`
+   - `package.json`: `5.2.24`
+
+### Bukti Verifikasi
+- Visual Screenshot: `devmode_3phones_fixed_1790127894562.png`
+  - Phone 1 (Admin): Hero banner proporsional dengan avatar 3D Admin, icon petir 11px, 4 kartu metrik, log aktivitas, dan bottom dock 7 icon bersih berlatar gelap glassmorphism.
+  - Phone 2 (Family): Hero banner dengan foto keluarga proporsional, 4 kartu metrik, kartu Andi aktif (85 koin, 3 streak), dan bottom dock navigasi mulus.
+  - Phone 3 (Kids): Hero banner Andi seragam sekolah, kartu streak koin, kartu Misi Harian interaktif, dan bottom dock Pixar 3D anak.
+- Automated Test Suite: **PASS — 159 passed, 0 failed** across 40 test groups.
+
