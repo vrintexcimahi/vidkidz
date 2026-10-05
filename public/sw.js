@@ -57,7 +57,7 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(
         keys
-          .filter((key) => /^(vidkidz-static-|vidkidz-runtime-)/.test(key) && ![STATIC_CACHE, RUNTIME_CACHE].includes(key))
+          .filter((key) => ![STATIC_CACHE, RUNTIME_CACHE].includes(key))
           .map((key) => caches.delete(key))
       ))
       .then(() => self.clients.claim())
