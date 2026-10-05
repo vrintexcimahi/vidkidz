@@ -46,13 +46,14 @@ tab dibuka kembali. Jika berbeda, tombol **Perbarui sekarang** muncul. Halaman
 tidak dipaksa reload di tengah pekerjaan. Jika offline, pemeriksaan ditunda;
 konten yang sudah tersimpan dapat digunakan sesuai cache yang tersedia.
 
-## Deployment otomatis melalui Git (opsional)
+## Deployment otomatis melalui Git (Terkonfigurasi Aktif)
 
-Vercel mendukung deployment otomatis dari push Git. Hubungkan repository dan
-pilih production branch di Settings > Git, lalu setiap push memicu build.
+Vercel mendukung deployment otomatis dari push Git. Repositori GitHub resmi
+`vrintexcimahi/vidkidz` kini telah ditautkan langsung ke proyek Vercel `vidkidz`
+dengan production branch `main`. Setiap `git push origin main` akan otomatis
+memicu automated build dan deployment ke https://vidkidz.vercel.app.
 Pemeriksaan sintaks `vercel-build` tetap berlaku. Untuk regresi penuh gunakan
 `npm run release`, atau tambahkan CI dan perlindungan branch sesuai kebutuhan.
-Konfigurasi Git integration belum diubah oleh pekerjaan ini.
 
 ## Batas verifikasi
 
