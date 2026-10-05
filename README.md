@@ -2,6 +2,8 @@
 
 **Platform edukasi video terproteksi untuk anak — dashboard orang tua dan kids app.**
 
+🌐 **Live Production**: [https://vidkidz.vercel.app](https://vidkidz.vercel.app)
+
 ---
 
 ## 🚀 Quick Start
