@@ -10,7 +10,7 @@
     "check:ui": "node scripts/check-ui.js",
     "check": "npm run check:ui && node --check server.js && node --test scripts/update.test.js scripts/kids-ui.test.js scripts/pwa.test.js",
     "test": "node scripts/test-isolated.js",
-    "release": "npm run check && npm test && npm run test:visual && npx --yes vercel@59.25.4 deploy --prod --yes --scope vrintexcimahi-6412s-projects && npm run release:status",
+    "release": "npm run check && npm test && npm run test:visual && npx --yes vercel deploy --prod --yes --scope vrintexcimahi-6412s-projects && npm run release:status",
     "release:status": "node scripts/release-status.js",
     "test:visual": "playwright test"
   },
