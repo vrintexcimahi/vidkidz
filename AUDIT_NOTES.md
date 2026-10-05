@@ -1248,6 +1248,31 @@
 
 ---
 
+## [2026-10-05] Domain & Git Repository Synchronization to Vercel Production
+
+### Scope & Misi:
+- Mengatasi anomali domain produksi `https://vidkidz.vercel.app/` yang keliru menampilkan aplikasi LOXER.
+- Memastikan domain resmi VIDKIDZ terhubung langsung ke repositori GitHub VIDKIDZ v5.4.0.
+
+### Root Causes & Temuan Teknis:
+1. Proyek Vercel `vidkidz` (`prj_Q9RnAKkbo24gEBCezOztPfnlLA5p`) sebelumnya dikonfigurasi dengan Git link yang mengarah ke `vrintexcimahi/LOXER`. Akibatnya setiap commit pada repositori LOXER memicu build dan deploy aplikasi LOXER ke domain VIDKIDZ.
+2. Repositori remote GitHub untuk VIDKIDZ belum dibuat di akun GitHub `vrintexcimahi`.
+
+### Perbaikan yang Diterapkan:
+1. **Unlink Git LOXER dari Vercel**: Memutuskan relasi git ke repositori LOXER via REST API Vercel (`DELETE /v1/projects/prj_Q9RnAKkbo24gEBCezOztPfnlLA5p/link`).
+2. **Penyediaan Repositori GitHub Resmi**: Membuat repositori GitHub publik `vrintexcimahi/vidkidz` dan melakukan initial push penuh atas 73 file VIDKIDZ v5.4.0 pada branch `main`.
+3. **Koneksi Git Vercel ke VIDKIDZ**: Menautkan repositori GitHub `vrintexcimahi/vidkidz` (repoId `1405936557`) ke proyek Vercel `vidkidz` dengan production branch `main`.
+4. **Pembersihan Cache Asing Service Worker**: Memperbarui `public/sw.js` pada event `activate` agar menghapus seluruh cache asing/lama yang tertinggal saat domain mengarah ke LOXER.
+5. **Modernisasi Script Release**: Memperbarui script `release` pada `package.json` untuk menggunakan Vercel CLI modern.
+
+### Bukti Verifikasi:
+- `release-status.js`: **SYNCED: production matches local source** (`5.4.0 / fcfebb8ed97ffcee8fbffc5e`).
+- Endpoint Live `/api/health`, `/api/version`, dan `/api/auth/config`: HTTP 200 OK (`status: ok`, Google Client ID valid).
+- Browser UI Live Test: Layanan `https://vidkidz.vercel.app/` terverifikasi 100% menyajikan antarmuka VIDKIDZ tanpa error.
+- Git Status: Branch `main` up to date dengan `origin/main`, working tree clean.
+
+---
+
 ### 10 Saran Fitur Evidence-Based (§17)
 
 1. **Database Storage Migration (SQLite / LibSQL / PostgreSQL Migration)**:
