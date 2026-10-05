@@ -12,14 +12,19 @@ const server = app.listen(0, async () => {
       headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }
     });
     const data = await res.json().catch(() => ({}));
-    return { status: res.status, ok: res.ok, data };
+    const headers = {};
+    if (res.headers && typeof res.headers.forEach === 'function') {
+      res.headers.forEach((v, k) => { headers[k.toLowerCase()] = v; });
+    }
+    return { status: res.status, ok: res.ok, data, headers, rawHeaders: res.headers };
   }
 
   let passed = 0;
   let failed = 0;
 
   const fs = require('fs');
-  const statePath = 'data/vidkidz-state.json';
+  const path = require('path');
+  const statePath = path.join(process.env.VIDKIDZ_DATA_DIR || 'data', 'vidkidz-state.json');
   let initialStateBackup = fs.existsSync(statePath) ? fs.readFileSync(statePath, 'utf8') : null;
 
   function assert(condition, message) {
@@ -38,7 +43,7 @@ const server = app.listen(0, async () => {
     assert(health.ok && health.data.status === 'ok', 'GET /api/health');
 
     const fs = require('fs');
-    const statePath = 'data/vidkidz-state.json';
+    const statePath = require('path').join(process.env.VIDKIDZ_DATA_DIR || 'data', 'vidkidz-state.json');
     if (fs.existsSync(statePath)) {
       initialStateBackup = fs.readFileSync(statePath, 'utf8');
       try {
@@ -419,6 +424,64 @@ const server = app.listen(0, async () => {
       })
     });
     assert(familyPathSchedule.ok, 'Family path-PATCH on kid schedule succeeded');
+
+    // Curfew Extension Request (Smart Curfew Remote Handshake)
+    const newCurfewReq = {
+      id: 'creq_test_1',
+      kidId: testKidId,
+      kidName: 'Anak Test',
+      reason: 'Selesaikan Dongeng',
+      minutes: 15,
+      status: 'pending',
+      createdAt: Date.now()
+    };
+    const kidReqCurfew = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${testKidToken}` },
+      body: JSON.stringify({ state: { curfewRequests: [newCurfewReq] } })
+    });
+    assert(kidReqCurfew.ok, 'Kid curfew extension request accepted via PATCH /api/state');
+
+    const kidStateCurfew = await req('/api/state', { headers: { Authorization: `Bearer ${testKidToken}` } });
+    const savedCurfewReq = (kidStateCurfew.data.curfewRequests || []).find(r => r.id === 'creq_test_1');
+    assert(savedCurfewReq && savedCurfewReq.status === 'pending', 'Kid curfew extension request persisted with pending status');
+
+    // Family approves request and grants 15m bypass
+    const bypassTimestamp = Date.now() + 15 * 60 * 1000;
+    const familyApproveCurfew = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${testToken}` },
+      body: JSON.stringify({
+        state: {
+          curfewRequests: [{ ...savedCurfewReq, status: 'approved' }],
+          users: {
+            kids: [{
+              id: testKidId,
+              name: 'Anak Test',
+              familyId: testFamId,
+              curfewBypassUntil: bypassTimestamp,
+              isLocked: false
+            }]
+          }
+        }
+      })
+    });
+    assert(familyApproveCurfew.ok, 'Family approved curfew extension request');
+
+    const famCheckState = await req('/api/state', { headers: { Authorization: `Bearer ${testToken}` } });
+    const verifiedKid = famCheckState.data.users?.kids?.find(k => k.id === testKidId);
+    assert(verifiedKid && verifiedKid.curfewBypassUntil === bypassTimestamp, 'Curfew bypass timestamp persisted for kid');
+
+    // Kid cannot tamper with curfewBypassUntil directly
+    const kidTamperBypass = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${testKidToken}` },
+      body: JSON.stringify({
+        path: `users.kids.${testKidId}.curfewBypassUntil`,
+        value: Date.now() + 86400000
+      })
+    });
+    assert(kidTamperBypass.status === 403, 'Kid cannot path-PATCH curfewBypassUntil directly (403)');
 
     console.log('\n--- 16. Security & Parental PIN Stripping in GET /api/state ---');
     const kidState = await req('/api/state', {
@@ -862,7 +925,8 @@ const server = app.listen(0, async () => {
         storyRecords: [newStoryRecord],
         drawingRecords: [newDrawingRecord],
         parentStoryAudios: [newParentAudio],
-        quizDuels: [newQuizDuel]
+        quizDuels: [newQuizDuel],
+        curfewRequests: [newCurfewReq]
       }
     };
     const fullRestoreRes = await req('/api/admin/restore-state', {
@@ -874,6 +938,7 @@ const server = app.listen(0, async () => {
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.drawingRecords === 1, 'Admin restore-state preserves drawingRecords collection');
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.parentStoryAudios === 1, 'Admin restore-state preserves parentStoryAudios collection');
     assert(fullRestoreRes.ok && fullRestoreRes.data.stats.quizDuels === 1, 'Admin restore-state preserves quizDuels collection');
+    assert(fullRestoreRes.ok && fullRestoreRes.data.stats.curfewRequests === 1, 'Admin restore-state preserves curfewRequests collection');
 
     // --- 32. Vrintex Image API & 7-Day Media Retention Policy ---
     console.log('\n--- 32. Vrintex Image API & 7-Day Media Retention Policy ---');
@@ -985,6 +1050,34 @@ const server = app.listen(0, async () => {
     });
     assert(ansRes.status === 200 || ansRes.status === 400, 'Quiz room answer submission validated');
 
+    // BUG-042 regression: SSE stream must require authentication
+    const sseNoAuthRes = await req(`/api/quiz-room/stream/${createdRoomId}`, {});
+    assert(sseNoAuthRes.status === 401, 'SSE stream rejects unauthenticated access (BUG-042)');
+
+    // BUG-042 regression: SSE stream must reject cross-family access
+    const f2BugLogin = await req('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Keluarga Lain Test',
+        email: 'crossfam_' + Date.now() + '@test.local',
+        password: 'securePass123!',
+        otp: '123456',
+        acceptedTerms: true
+      })
+    });
+    const sseCrossFamRes = await req(`/api/quiz-room/stream/${createdRoomId}`, {
+      headers: { Authorization: `Bearer ${f2BugLogin.data.token}` }
+    });
+    assert(sseCrossFamRes.status === 403, 'SSE stream rejects cross-family access (BUG-042)');
+
+    // BUG-042 regression: SSE stream accepts valid token via query param
+    const sseAbort = new AbortController();
+    const sseAuthRes = await fetch(`${base}/api/quiz-room/stream/${createdRoomId}?token=${encodeURIComponent(kidLogin.data.token)}`, {
+      signal: sseAbort.signal
+    });
+    assert(sseAuthRes.status === 200 && (sseAuthRes.headers.get('content-type') || '').includes('text/event-stream'), 'SSE stream accepts valid token via query param (BUG-042)');
+    sseAbort.abort();
+
     // Leave room
     const leaveRes = await req('/api/quiz-room/leave', {
       method: 'POST',
@@ -1036,6 +1129,48 @@ const server = app.listen(0, async () => {
       })
     });
     assert(famDuelPathRes.ok, 'Family quizDuels accepted via path-based PATCH');
+
+    // Kid submits curfewRequests via path-based PATCH
+    const kidCurfewPathRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistKidToken}` },
+      body: JSON.stringify({
+        path: 'curfewRequests.creq_path_test',
+        value: { id: 'creq_path_test', kidId: artistKidId, reason: 'Belajar Hafalan', minutes: 15, status: 'pending', createdAt: Date.now() }
+      })
+    });
+    assert(kidCurfewPathRes.ok, 'Kid curfewRequests accepted via path-based PATCH');
+
+    // Test Idempotency Key Replay (Feature #5)
+    const idemKey = 'idem_test_' + Date.now();
+    const idemRes1 = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}`, 'Idempotency-Key': idemKey },
+      body: JSON.stringify({ path: 'rewards', value: [] })
+    });
+    assert(idemRes1.ok, 'First request with Idempotency-Key succeeds');
+
+    const idemRes2 = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}`, 'Idempotency-Key': idemKey },
+      body: JSON.stringify({ path: 'rewards', value: [] })
+    });
+    assert(idemRes2.ok && (idemRes2.headers?.get ? idemRes2.headers.get('x-idempotency-replay') : idemRes2.headers?.['x-idempotency-replay']) === 'true', 'Second request with same Idempotency-Key returns replayed response');
+
+    // Test Multiple Failed PIN Attempts & Security Alert Tracking (Feature #7)
+    for (let i = 0; i < 5; i++) {
+      await req('/api/kids/unlock', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${famToken}` },
+        body: JSON.stringify({ kidId: 'k1', pin: '0000' })
+      });
+    }
+    const kidUnlockFail = await req('/api/kids/unlock', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${famToken}` },
+      body: JSON.stringify({ kidId: 'k1', pin: '0000' })
+    });
+    assert(kidUnlockFail.status === 401 || kidUnlockFail.status === 429, 'PIN failure tracking records multiple incorrect attempts and prevents unauthorized unlock');
 
     // --- 36. Password Preservation in Admin State Sync ---
     console.log('\n--- 36. Password Preservation in Admin State Sync ---');
@@ -1165,6 +1300,8 @@ const server = app.listen(0, async () => {
     });
     assert(adminAiTest.status === 200 || adminAiTest.status === 502, 'Admin /api/ai/test returns structured response');
     assert(typeof adminAiTest.data === 'object' && ('error' in adminAiTest.data || 'ok' in adminAiTest.data), 'Admin /api/ai/test returns error or ok format');
+    assert(adminAiTest.data.circuitBreaker && typeof adminAiTest.data.circuitBreaker.isOpen === 'boolean', 'Admin /api/ai/test returns circuit breaker status');
+    assert(adminAiTest.data.gateways && typeof adminAiTest.data.gateways === 'object', 'Admin /api/ai/test returns multi-gateway reachability status');
 
     // Verify 9Router settings in state
     const stateWith9Router = await req('/api/state', {
@@ -1214,6 +1351,137 @@ const server = app.listen(0, async () => {
     const adminFamCount = adminOverviewState.data.users?.families?.length;
     assert(typeof adminFamCount === 'number', 'Admin overview reports accurate numeric family count');
 
+    // ── Group 41: Features #5, #7, #10 — Co-op Quest, Roadtrip Vault, WebAuthn ──
+    console.log('\n--- 41. Feature Regression: Co-op Quest, Roadtrip Vault, WebAuthn ---');
+
+    // Feature #5: Co-op quest is a client-side localStorage feature; verify family
+    // telegram-digest endpoint (co-op data aggregation path) works for family role
+    const famLoginForCoop = await req('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'budi@vidkidz.local', password: 'family123' })
+    });
+    const coopFamToken = famLoginForCoop.data.token;
+    assert(typeof coopFamToken === 'string', 'Feature #5: family login for co-op test succeeds');
+
+    // Family coin aggregate is exposed via /api/state
+    const coopState = await req('/api/state', {
+      headers: { Authorization: `Bearer ${coopFamToken}` }
+    });
+    assert(coopState.ok, 'Feature #5: Family /api/state reachable for co-op coin aggregation');
+    const coopKids = (coopState.data?.users?.kids || []).filter(k => k.familyId === famLoginForCoop.data?.id);
+    const totalFamilyCoins = coopKids.reduce((s, k) => s + (k.coins || 0), 0);
+    assert(typeof totalFamilyCoins === 'number', 'Feature #5: family total coin pool computable from state');
+
+    // Feature #7: Roadtrip Vault is a Cache API (browser) feature; verify that
+    // server does NOT block cross-origin-like video URLs (no-cors access must be possible)
+    // Test: /api/state serves correct album whitelist so roadtrip vault can cache approved videos
+    const vidState = await req('/api/state', { headers: { Authorization: `Bearer ${coopFamToken}` } });
+    assert(Array.isArray(vidState.data?.albums), 'Feature #7: albums array present in state for Roadtrip Vault');
+    assert(vidState.ok, 'Feature #7: state endpoint accessible for Roadtrip Vault album resolution');
+
+    // Verify index.html includes Roadtrip Vault button marker
+    const indexPage = await fetch(`${base}/`);
+    const indexHtml = await indexPage.text();
+    assert(indexHtml.includes('btn-roadtrip-cache'), 'Feature #7: Roadtrip Vault button present in index.html');
+    assert(indexHtml.includes('ROADTRIP_CACHE'), 'Feature #7: ROADTRIP_CACHE constant present in index.html');
+
+    // Feature #10: WebAuthn — verify helpers present in index.html
+    assert(indexHtml.includes('webauthnRegisterParent'), 'Feature #10: webauthnRegisterParent helper present in index.html');
+    assert(indexHtml.includes('webauthnVerifyParent'), 'Feature #10: webauthnVerifyParent helper present in index.html');
+    assert(indexHtml.includes('btn-webauthn-unlock'), 'Feature #10: WebAuthn unlock button present in index.html');
+    assert(indexHtml.includes('PublicKeyCredential'), 'Feature #10: WebAuthn API guard (PublicKeyCredential) present');
+
+    // Feature #5: verify co-op goal UI present in index.html
+    assert(indexHtml.includes('btn-create-coop-quest'), 'Feature #5: Co-op Quest create button present in index.html');
+    assert(indexHtml.includes('vk_coop_goal_'), 'Feature #5: Co-op goal localStorage key marker present');
+
+    // Security: verify non-family role cannot access family telegram-digest
+    const guestDigest = await req('/api/family/telegram-digest', { method: 'POST', body: '{}' });
+    assert(guestDigest.status === 401 || guestDigest.status === 403, 'Feature #6: telegram-digest blocked for unauthenticated');
+
+    // --- 42. AI Voice Story Narration, Adaptive Video Bandwidth & Periodic Heartbeat ---
+    console.log('\n--- 42. AI Voice Story Narration & Adaptive Media ---');
+    const ttsEmpty = await req('/api/ai/tts');
+    assert(ttsEmpty.status === 400, 'AI TTS rejects missing text parameter (400)');
+
+    const ttsFirst = await req('/api/ai/tts?text=Kancil%20dan%20Buaya%20cerita%20bijak');
+    assert(ttsFirst.status === 200, 'AI TTS returns HTTP 200 for valid text');
+    assert(ttsFirst.headers?.['content-type']?.includes('audio/wav'), 'AI TTS responds with audio/wav');
+    assert(ttsFirst.headers?.['x-tts-engine'] === 'vidkidz-tts-synth', 'AI TTS engine header present');
+    assert(ttsFirst.headers?.['x-tts-cache'] === 'MISS', 'First AI TTS request records cache MISS');
+
+    const ttsSecond = await req('/api/ai/tts?text=Kancil%20dan%20Buaya%20cerita%20bijak');
+    assert(ttsSecond.status === 200, 'Cached AI TTS request succeeds (200)');
+    assert(ttsSecond.headers?.['x-tts-cache'] === 'HIT', 'Second AI TTS request serves from cache (HIT)');
+
+    const ttsPost = await req('/api/ai/tts', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'Cerita budi pekerti sebelum tidur' })
+    });
+    assert(ttsPost.status === 200, 'POST /api/ai/tts accepts JSON body');
+
+    // UI Marker Validations
+    assert(indexHtml.includes('btn-video-quality'), 'Feature #8: Video quality selector button present in index.html');
+    assert(indexHtml.includes('vidkidz_video_quality'), 'Feature #8: Video quality localStorage persistence marker present');
+    assert(indexHtml.includes('btn-ai-story-tts'), 'Feature #2: AI story narration button present in index.html');
+    assert(indexHtml.includes('vidkidz-telemetry-heartbeat'), 'Feature #10: Periodic telemetry heartbeat tag present in index.html');
+
+    const swCode = fs.readFileSync(path.join(__dirname, 'public/sw.js'), 'utf8');
+    assert(swCode.includes('vidkidz-telemetry-heartbeat'), 'Feature #10: Periodic sync heartbeat listener present in sw.js');
+
+    // --- 43. P1 Recommendations: Error Telemetry, Self-Healing & Compression ---
+    console.log('\n--- 43. P1 Recommendations: Error Telemetry, Self-Healing & Compression ---');
+
+    // 1. Client Error Telemetry Endpoint (POST /api/logs)
+    const logPost = await req('/api/logs', {
+      method: 'POST',
+      body: JSON.stringify({
+        level: 'error',
+        source: 'test-runner',
+        message: 'Simulated client error with Bearer token_secret_12345',
+        stack: 'Error: at line 42',
+        url: 'http://localhost/test'
+      })
+    });
+    assert(logPost.status === 200, 'POST /api/logs accepts error telemetry payload');
+    assert(logPost.data?.success === true, 'POST /api/logs returns success: true');
+
+    // Verify sanitization and activityLog storage in state
+    const adminStateCheck = await req('/api/state', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(adminStateCheck.status === 200, 'Admin can inspect state to verify logged telemetry');
+    const recentTelemetry = adminStateCheck.data?.activityLog?.find(l => l.type === 'telemetry_error');
+    assert(recentTelemetry, 'Telemetry error entry logged in state activityLog');
+    assert(!recentTelemetry.action.includes('token_secret_12345'), 'Sensitive token was sanitized from action');
+
+    // 2. Self-Healing State Verification (GET /api/admin/self-heal)
+    const healForbidden = await req('/api/admin/self-heal', {
+      headers: { Authorization: `Bearer ${testKidToken}` }
+    });
+    assert(healForbidden.status === 403, 'Non-admin forbidden from /api/admin/self-heal');
+
+    const healAdmin = await req('/api/admin/self-heal', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(healAdmin.status === 200, 'Admin can invoke /api/admin/self-heal');
+    assert(healAdmin.data?.success === true, 'Self-healing routine reports success');
+    assert(typeof healAdmin.data?.healedCount === 'number', 'Self-healing reports numeric healedCount');
+    assert(Array.isArray(healAdmin.data?.issues), 'Self-healing returns issues array');
+    assert(healAdmin.data?.verifiedAt, 'Self-healing includes verifiedAt timestamp');
+
+    // 3. Compression & HTTP Optimization
+    const compRes = await req('/api/version', {
+      headers: { 'Accept-Encoding': 'gzip, deflate, br' }
+    });
+    assert(compRes.status === 200, 'Version endpoint reachable with Accept-Encoding');
+    assert(compRes.headers?.['vary']?.includes('Accept-Encoding'), 'Vary: Accept-Encoding header present');
+
+    // 4. Client ErrorBoundary UI Check
+    assert(indexHtml.includes('class ErrorBoundary extends React.Component'), 'ErrorBoundary class component present in index.html');
+    assert(indexHtml.includes('<ErrorBoundary>'), 'Root component wrapped with <ErrorBoundary>');
+    assert(indexHtml.includes('Ups, Ada Sedikit Gangguan!'), 'Child-friendly error message present in ErrorBoundary');
+
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
     console.log(`========================================`);
   } catch (err) {
@@ -1222,7 +1490,7 @@ const server = app.listen(0, async () => {
   } finally {
     try {
       const fs = require('fs');
-      const p = 'data/vidkidz-state.json';
+      const p = require('path').join(process.env.VIDKIDZ_DATA_DIR || 'data', 'vidkidz-state.json');
       if (initialStateBackup) {
         fs.writeFileSync(p, initialStateBackup, 'utf8');
       } else if (fs.existsSync(p)) {

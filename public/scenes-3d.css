@@ -1,0 +1,104 @@
+/* One decorative layer per screen. Never participates in layout or captures input. */
+.playful-decor { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.scene-orb { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #ffffff 0%, #b8e6fe 38%, #38bdf8 75%, #0aa7e5 100%); box-shadow: inset -14px -18px 32px rgba(2, 132, 199, 0.28), 0 22px 60px rgba(10, 167, 229, 0.22); }
+.scene-orb-one { width: 340px; height: 340px; top: -180px; right: 6%; }
+.scene-orb-two { width: 250px; height: 250px; bottom: -120px; left: 26%; background: radial-gradient(circle at 30% 25%, #ffffff 0%, #d0f2fe 42%, #7dd3fc 80%, #0aa7e5 100%); box-shadow: inset -10px -14px 24px rgba(10, 167, 229, 0.25), 0 16px 40px rgba(10, 167, 229, 0.15); }
+.scene-prop { position: absolute; width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 12px 12px rgba(10, 167, 229, 0.18)); }
+.scene-prop-0 { left: 3%; top: 14%; transform: rotate(-14deg); }
+.scene-prop-1 { right: 3%; top: 45%; transform: rotate(16deg); }
+.scene-prop-2 { left: 8%; bottom: 8%; transform: rotate(-18deg); }
+.scene-prop-3 { right: 10%; bottom: 5%; transform: rotate(12deg); }
+.family-app-shell { position: relative; isolation: isolate; background: radial-gradient(at 15% 15%, rgba(186, 230, 253, 0.35) 0px, transparent 50%), radial-gradient(at 85% 85%, rgba(125, 211, 252, 0.28) 0px, transparent 50%), linear-gradient(135deg, #e0f2fe 0%, #edf8ff 45%, #dbeefe 100%) !important; }
+.family-app-shell.role-family { background: radial-gradient(at 15% 15%, rgba(186, 230, 253, 0.35) 0px, transparent 50%), radial-gradient(at 85% 85%, rgba(125, 211, 252, 0.28) 0px, transparent 50%), linear-gradient(135deg, #e2f4fe 0%, #f0f9ff 50%, #daf0fd 100%) !important; }
+.family-app-shell.role-admin { background: radial-gradient(at 15% 15%, rgba(186, 230, 253, 0.4) 0px, transparent 50%), radial-gradient(at 85% 85%, rgba(125, 211, 252, 0.32) 0px, transparent 50%), linear-gradient(135deg, #e0f2fe 0%, #eff8ff 50%, #e2f2fd 100%) !important; }
+.family-app-shell:has(.dev-workbench) .scene-prop { display: none !important; }
+.family-app-shell > .sidebar, .family-app-shell > .family-main, .family-app-shell > .admin-main { z-index: 1; }
+.family-app-shell .scene-prop { opacity: .25; width: 78px; height: 78px; }
+.family-app-shell .sidebar-brand { padding-bottom: 22px; }
+.family-app-shell .sidebar > .nav-item { margin: 3px 0; border-radius: 16px; }
+.family-app-shell .sidebar > .nav-item[aria-current="page"] { box-shadow: inset 0 1px 0 #ffffffc9, 0 4px 14px rgba(10, 167, 229, 0.15); }
+.family-app-shell.role-family .hero--parent { background: linear-gradient(125deg, #e0f8ff, #d8f3fd 62%, #eaf8ff) !important; border: 2px solid #fff; box-shadow: 0 8px 0 rgba(186, 230, 253, 0.4), 0 18px 34px rgba(10, 167, 229, 0.12); }
+.family-app-shell .hero { border-radius: 28px !important; }
+.family-app-shell .child-card { border: 2px solid #fff; box-shadow: 0 8px 0 #d9eef9, 0 16px 32px rgba(10, 167, 229, 0.1); }
+.family-app-shell .card { border-radius: 24px !important; }
+.family-app-shell .stat-icon { background: linear-gradient(140deg, #fff, #e2f5ff); box-shadow: inset 0 2px 0 #fff, 0 4px 0 #c0d8ec; border-radius: 16px; }
+.kids-ui .activity-page { background: radial-gradient(circle at 100% 0, #e0f2fe 0, transparent 230px), #f4f8fd; }
+.kids-ui .story-banner { border: 2px solid #ffffff70; box-shadow: 0 6px 0 #bae6fd, 0 14px 24px rgba(10, 167, 229, 0.12); }
+.kids-ui .story-card, .kids-ui .studio-tools, .kids-ui .studio-canvas { border: 2px solid #e0ecf7; box-shadow: 0 5px 0 #e4f0fa; }
+.kids-ui .story-art { background: linear-gradient(145deg, #fff, #e2f3fe); box-shadow: inset 0 2px 0 #fff, 0 4px 0 #c8e5f9; }
+.kids-tabbar { background: linear-gradient(#fff, #f0f9ff); box-shadow: 0 -5px 20px rgba(10, 167, 229, 0.1); }
+.kids-tabbar button[aria-current="page"] { background: linear-gradient(#e0f2fe, #bae6fd); box-shadow: inset 0 2px 0 #fff, 0 3px 0 #7dd3fc; }
+.kids-menu { border: 3px solid #fff; background: linear-gradient(150deg, #fff, #eaf6fe); box-shadow: 0 10px 0 #cce9fb, 0 28px 70px rgba(10, 167, 229, 0.2); }
+.kids-menu-grid button { border: 2px solid #fff; background: #fff; box-shadow: 0 4px 0 #dcedf9; }
+.family-app-shell button:focus-visible, .playful-portal button:focus-visible, .playful-portal input:focus-visible { outline: 3px solid #0aa7e5 !important; outline-offset: 3px; }
+.playful-portal.mobile-auth-screen { background: radial-gradient(ellipse at 18% 20%, #bae6fd, transparent 50%), linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #dbeefe 100%) !important; padding: 40px 24px; overflow: hidden; align-items: center; }
+.playful-portal .mobile-phone-shell { width: min(1120px,100%) !important; max-width: none !important; min-height: 0 !important; height: auto !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; overflow: visible; }
+.playful-portal .mobile-phone-shell::before, .playful-portal .mobile-status-bar { display: none; }
+.playful-portal .mobile-auth-content.auth-form-layout { max-width: none !important; padding: 0 !important; display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,440px); gap: 40px; align-items: center; }
+.playful-portal .login-hero { display: flex !important; flex-direction: column; align-items: flex-start; text-align: left; margin: 0; min-width: 0; }
+.playful-portal .login-logo-wrap { margin: 0 0 22px !important; width: auto !important; height: auto !important; }
+.playful-portal .login-logo-wrap::before { display: none; }
+.playful-portal .login-logo-wrap .brand-logo { width: 132px !important; max-height: 72px; height: auto !important; object-fit: contain; }
+.portal-eyebrow { color: #0284c7; font: 900 10px var(--font-display); letter-spacing: 2px; }
+.portal-title { font: 900 clamp(30px,3.5vw,46px)/1.15 var(--font-display); letter-spacing: -1.7px; color: #0c3453; margin: 12px 0 16px; }
+.portal-title em { font-style: normal; color: #0aa7e5; }
+.playful-portal .login-subtitle { color: #3b6685 !important; font-size: 15px; line-height: 1.7; max-width: 350px; }
+.portal-illustration { position: relative; height: 310px; width: 100%; display: flex; align-items: flex-end; justify-content: center; margin: 12px 0; }
+.portal-illustration > img:first-of-type { position: relative; z-index: 1; height: 100%; width: 90%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 18px 14px rgba(10, 167, 229, 0.15)); }
+.portal-stage { position: absolute; bottom: -2px; width: 82%; height: 42px; border-radius: 50%; background: linear-gradient(#fff, #bae6fd); box-shadow: 0 9px 0 #90cdf4, 0 24px 28px rgba(10, 167, 229, 0.18); }
+.portal-illustration .portal-star { position: absolute; width: 68px; height: 68px; top: 20px; right: 8%; transform: rotate(15deg); }
+.portal-features { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.portal-features > span { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; background: #ffffffbe; border: 1px solid #fff; border-radius: 14px; color: #1e4d6d; font-size: 10px; font-weight: 800; box-shadow: 0 4px 12px rgba(10, 167, 229, 0.08); }
+.playful-portal .auth-entry-card { margin: 0 !important; padding: 28px !important; background: #fff !important; border: 2px solid #fff !important; border-radius: 30px !important; box-shadow: 0 9px 0 #d4ecf9, 0 24px 60px rgba(10, 167, 229, 0.14) !important; min-width: 0; }
+.playful-portal .auth-card-logo, .playful-portal .auth-card-tagline { display: none; }
+.portal-form-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.portal-form-heading > img { width: 52px; height: 52px; object-fit: contain; }
+.portal-form-heading span { font-size: 8px; font-weight: 900; letter-spacing: 1px; color: #0284c7; }
+.portal-form-heading h2 { font-size: 21px; line-height: 1.3; color: #0d3654; margin: 4px 0; }
+.portal-form-heading p { font-size: 11px; line-height: 1.6; color: #436e8c; }
+.playful-portal .login-role-selector { gap: 12px; margin-bottom: 22px; }
+.playful-portal .login-role-card { font-family: inherit; min-width: 0; border: 2px solid #e1eff8 !important; background: #f8fcff !important; box-shadow: 0 4px 0 #e0eff8; border-radius: 20px; padding: 14px 8px; color: #1e4d6d; cursor: pointer; }
+.playful-portal .login-role-card.active-family { background: #eaf9f2 !important; border-color: #75c5a7 !important; box-shadow: 0 4px 0 #94d4bc; }
+.playful-portal .login-role-card.active-kids { background: #eaf8ff !important; border-color: #7dd3fc !important; box-shadow: 0 4px 0 #a0e1fd; }
+.playful-portal .lrc-icon { font-size: 38px; line-height: 1; }
+.playful-portal .lrc-label { font-size: 13px; color: #153c5a; }
+.playful-portal .lrc-sub { color: #487291 !important; font-size: 10px; }
+.playful-portal .auth-tabs { margin: 12px 0 16px; color: #4b7493; }
+.playful-portal .auth-tab { min-height: 32px; }
+.playful-portal .auth-tab.active { color: #0aa7e5; }
+.playful-portal .auth-field-label { color: #1e4d6d; font-size: 11px; font-weight: 800; margin: 12px 0 6px; display: block; }
+.playful-portal .auth-entry-card input { height: 48px !important; border-radius: 13px !important; border: 1px solid #cce5f5 !important; background: #f9fcff !important; font-size: 13px; padding-left: 14px; color: #0d3654 !important; }
+.playful-portal .auth-password-toggle { color: #0aa7e5; padding: 8px; }
+.playful-portal .auth-submit { min-height: 49px; border-radius: 15px !important; background: linear-gradient(145deg, #0aa7e5, #0284c7) !important; color: #fff !important; box-shadow: 0 5px 0 #0369a1, 0 10px 20px rgba(10, 167, 229, 0.25) !important; margin: 12px 0; }
+.playful-portal .divider { color: #537d9c !important; }
+.playful-portal .google-btn { border: 1px solid #d0e7f7; border-radius: 14px; box-shadow: 0 3px 0 #e4f2fb; color: #1e4d6d; background: #fff; }
+.playful-portal .auth-footer, .playful-portal .auth-consent { color: #4b7493; font-size: 12px; }
+.playful-portal .auth-submit { font-size: 14px; }
+.playful-portal .auth-bottom-caption { grid-column: 1 / -1; margin: 4px 0 0; text-align: center; color: #537d9c; font-size: 11px; }
+@media(max-width: 899px) {
+ .playful-portal.mobile-auth-screen { padding: 24px 16px 32px; }
+ .playful-portal .mobile-auth-content.auth-form-layout { grid-template-columns: minmax(0,1fr); gap: 22px; max-width: 440px !important; }
+ .playful-portal .login-hero { align-items: center; text-align: center; }
+ .playful-portal .login-logo-wrap { margin-bottom: 10px !important; }
+ .portal-title { font-size: 29px; margin: 9px 0; letter-spacing: -1px; }
+ .playful-portal .login-subtitle { font-size: 12px; max-width: 290px; }
+ .portal-illustration { height: 160px; max-width: 310px; margin: 10px 0 0; }
+ .portal-stage { height: 25px; }
+ .portal-illustration .portal-star { width: 44px; height: 44px; right: 10px; }
+ .portal-features { justify-content: center; margin-top: 14px; gap: 5px; }
+ .portal-features > span { font-size: 9px; padding: 6px; gap: 4px; }
+ .portal-features img { width: 19px !important; height: 19px !important; }
+ .playful-portal .auth-entry-card { padding: 20px !important; border-radius: 25px !important; }
+ .portal-form-heading h2 { font-size: 19px; }
+ .scene-prop { width: 36px; height: 36px; opacity: .4; }
+ .family-app-shell .scene-prop { opacity: .12; }
+}
+@media(max-width: 480px) {
+ .playful-portal .login-logo-wrap .brand-logo { width: 102px !important; max-height: 52px; }
+ .portal-illustration { height: 124px; }
+ .portal-features { display: none; }
+ .portal-title { font-size: 26px; }
+ .playful-portal .mobile-auth-content.auth-form-layout { gap: 18px; }
+}
+@media(prefers-reduced-motion: reduce) { .playful-portal *, .playful-decor * { animation: none !important; transition: none !important; } }
+

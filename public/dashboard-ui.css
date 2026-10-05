@@ -1,0 +1,53 @@
+/* Shared dashboard surfaces. Decorative glass must not determine text contrast. */
+.family-app-shell { background: radial-gradient(at 15% 15%, rgba(186, 230, 253, 0.35) 0px, transparent 50%), radial-gradient(at 85% 85%, rgba(125, 211, 252, 0.28) 0px, transparent 50%), linear-gradient(135deg, #e0f2fe 0%, #edf8ff 45%, #dbeefe 100%) !important; --t1: #0a3556; --t2: #1e587f; --t3: #4b7a99; }
+.family-app-shell > .sidebar { background: rgba(255, 255, 255, 0.95) !important; border-color: rgba(10, 167, 229, 0.2) !important; box-shadow: 4px 0 24px rgba(10, 167, 229, 0.08) !important; }
+.family-app-shell .nav-item { border: 0; text-align: left; font: inherit; color: #1e587f; }
+.family-app-shell .nav-item:focus-visible { outline: 3px solid #0aa7e5; outline-offset: -3px; }
+.family-app-shell .hero--admin p { color: #e4efff !important; }
+.family-app-shell .hero--parent p { color: #375568 !important; }
+.family-app-shell .stat-icon img { width: 38px; height: 38px; object-fit: contain; }
+.family-app-shell .stat-icon { min-width: 44px; }
+.family-app-shell table th { color: #3b6b8c !important; }
+.family-app-shell .terminal { background: #0c273e !important; color: #eef6ff; }
+.family-app-shell .hero .pill { min-height: 36px; gap: 5px; font-size: 11px; }
+.family-app-shell .hero .pill img { width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; max-width: 20px !important; max-height: 20px !important; }
+.dev-workbench { min-width: 0; }
+.dev-toolbar { background: rgba(255, 255, 255, 0.95) !important; color: #0a3556 !important; border: 1px solid rgba(10, 167, 229, 0.22) !important; box-shadow: 0 10px 28px rgba(10, 167, 229, 0.09) !important; border-radius: 16px !important; backdrop-filter: blur(12px); }
+.dev-toolbar > div { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+.dev-toolbar > div:last-child > div { flex-wrap: wrap; background: rgba(10, 167, 229, 0.08) !important; border: 1px solid rgba(10, 167, 229, 0.2) !important; border-radius: 10px !important; }
+.dev-role-tags > div:nth-child(1) { background: rgba(239, 68, 68, 0.08) !important; border: 1px solid rgba(239, 68, 68, 0.3) !important; color: #dc2626 !important; border-radius: 999px !important; }
+.dev-role-tags > div:nth-child(2) { background: rgba(16, 185, 129, 0.08) !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; color: #059669 !important; border-radius: 999px !important; }
+.dev-role-tags > div:nth-child(3) { background: rgba(10, 167, 229, 0.08) !important; border: 1px solid rgba(10, 167, 229, 0.3) !important; color: #0284c7 !important; border-radius: 999px !important; }
+.device-view-phone .family-app-shell .sidebar > .kid-picker-item,
+.is-preview-mode .family-app-shell .sidebar > .kid-picker-item { display: none !important; }
+.device-view-phone .family-app-shell .sidebar > button.nav-item,
+.is-preview-mode .family-app-shell .sidebar > button.nav-item { min-height: 64px !important; max-height: 64px !important; }
+.device-view-phone .family-app-shell .sidebar > button.nav-item > span:first-child,
+.is-preview-mode .family-app-shell .sidebar > button.nav-item > span:first-child { flex: 0 0 34px !important; min-height: 34px !important; max-height: 34px !important; }
+.device-view-phone .family-app-shell .sidebar > button.nav-item > .nav-label-popup,
+.is-preview-mode .family-app-shell .sidebar > button.nav-item > .nav-label-popup { flex: 0 0 14px !important; height: 14px !important; min-height: 14px !important; }
+.device-view-phone .sidebar .nav-label-popup::before, .device-view-phone .sidebar .nav-label-popup::after,
+.is-preview-mode .sidebar .nav-label-popup::before, .is-preview-mode .sidebar .nav-label-popup::after { display: none !important; }
+.device-view-phone .family-app-shell .sidebar,
+.is-preview-mode .family-app-shell .sidebar { height: 76px !important; min-height: 76px !important; max-height: 76px !important; background: #fff !important; box-shadow: 0 -3px 16px #20375712; border-radius: 0 !important; }
+.device-view-phone .family-app-shell .sidebar > .nav-item,
+.is-preview-mode .family-app-shell .sidebar > .nav-item { flex-direction: column !important; width: 66px !important; min-width: 66px !important; height: 64px !important; gap: 1px !important; padding: 4px 2px !important; }
+.device-view-phone .family-app-shell .sidebar > .nav-item > span:first-child,
+.is-preview-mode .family-app-shell .sidebar > .nav-item > span:first-child { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+.device-view-phone .family-app-shell .sidebar > .nav-item img,
+.is-preview-mode .family-app-shell .sidebar > .nav-item img { width: 32px !important; height: 32px !important; max-width: 32px !important; max-height: 32px !important; }
+.device-view-phone .family-app-shell .sidebar > .nav-item > .nav-label-popup,
+.is-preview-mode .family-app-shell .sidebar > .nav-item > .nav-label-popup { display: block !important; position: static !important; opacity: 1 !important; visibility: visible !important; transform: none !important; width: 100% !important; max-width: 100% !important; background: transparent !important; color: #344e6c !important; padding: 0 !important; font-size: 9px !important; line-height: 12px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: none !important; pointer-events: none; }
+.device-view-phone .family-app-shell .hero,
+.is-preview-mode .family-app-shell .hero { min-height: 176px !important; max-height: none !important; }
+.device-view-phone .family-app-shell .hero__copy h1,
+.is-preview-mode .family-app-shell .hero__copy h1 { font-size: 18px !important; line-height: 1.2 !important; }
+.device-view-phone .family-app-shell .hero__copy p,
+.is-preview-mode .family-app-shell .hero__copy p { font-size: 11px !important; white-space: normal !important; line-height: 1.4 !important; }
+.device-view-phone .family-app-shell .hero__copy,
+.is-preview-mode .family-app-shell .hero__copy { max-width: 66% !important; }
+.device-view-phone .family-app-shell .hero__char-wrap,
+.is-preview-mode .family-app-shell .hero__char-wrap { width: 34% !important; }
+.device-view-phone .family-app-shell .hero__char-wrap img,
+.is-preview-mode .family-app-shell .hero__char-wrap img { max-width: 112px !important; max-height: 132px !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

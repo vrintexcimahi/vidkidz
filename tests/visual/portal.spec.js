@@ -1,0 +1,22 @@
+const {test,expect}=require('@playwright/test');
+for(const width of [320,375,1440])test(`decorated login at ${width}px remains usable`,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.goto('/?preview_role=login');
+ await expect(page.locator('.portal-form-heading')).toBeVisible({timeout:60000});
+ await page.locator('.playful-portal img').evaluateAll(images=>Promise.all(images.map(i=>i.decode().catch(()=>{}))));
+ expect(await page.locator('.playful-portal img').evaluateAll(images=>images.filter(i=>!i.naturalWidth).map(i=>i.src))).toEqual([]);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+ await expect(page.getByRole('heading',{name:'Siap berpetualang?'})).toBeVisible();
+ await page.screenshot({path:`test-results/login-${width}.png`,fullPage:true});
+ await page.getByRole('button',{name:/Anak \(Kids\)/}).click();
+ await expect(page.locator('#login-account')).toBeVisible();
+ await expect(page.getByRole('button',{name:/Anak \(Kids\)/})).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('button',{name:/Orang Tua Kelola/}).click();
+ await page.getByRole('button',{name:'Email',exact:true}).click();
+ await page.getByLabel('Email akun',{exact:true}).fill('uji@example.test');
+ await expect(page.locator('#login-account')).toHaveValue('uji@example.test');
+ await page.getByRole('button',{name:'Daftar',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Mulai cerita keluargamu'})).toBeVisible();
+ await expect(page.locator('#register-password')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+});

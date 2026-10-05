@@ -1,24 +1,47 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
+const { Semaphore, CircuitBreaker, TtlCache } = require('./lib/resilience');
+
+// ─── Sharp Configuration (Windows RAM & Threading Hardening) ───────────────
+let sharp = null;
+try {
+  sharp = require('sharp');
+  sharp.concurrency(1); // Batasi worker thread libvips agar CPU/RAM tidak spiking di Windows
+  sharp.cache({ memory: 50, files: 20, items: 100 }); // Batasi cache libvips maks 50MB RAM
+  sharp.simd(true);
+  console.log('✅ Sharp terinisialisasi dengan konfigurasi memori aman untuk Windows');
+} catch (e) {
+  console.warn('⚠️ Sharp tidak tersedia, fallback ke mode bypass kompresi:', e.message);
+}
+
+const sharpSemaphore = new Semaphore(2); // Maksimal 2 proses kompresi Sharp simultan
+const aiVisionBreaker = new CircuitBreaker('9Router-Vision', { failureThreshold: 3, resetTimeout: 30000 });
+const aiVisionCache = new TtlCache(5 * 60 * 1000, 100);
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'vidkidz-secret-change-in-prod';
 const JWT_EXPIRES = '30d';
-const APP_VERSION = process.env.APP_VERSION || '5.2.21';
-const ASSET_VERSION = 'v33';
+const RELEASE = process.env.VERCEL
+  ? require('./release.json')
+  : require('./scripts/release-info')(__dirname);
+const APP_VERSION = RELEASE.version;
+const ASSET_VERSION = RELEASE.assetVersion;
+const DEV_SYNC = process.env.VIDKIDZ_DEV === '1' && !process.env.VERCEL;
 const ADMIN_LOGIN_ENABLED = process.env.ALLOW_ADMIN_LOGIN !== 'false';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const DEMO_DURATION_MS = 30 * 60 * 1000;
 const DEMO_FAMILY_EMAILS = new Set(['budi@vidkidz.local', 'siti@vidkidz.local']);
 const DEMO_KID_IDS = new Set(['k1', 'k2', 'k3']);
-const DATA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-data') : path.join(__dirname, 'data');
+const DATA_DIR = process.env.VIDKIDZ_DATA_DIR || (process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-data') : path.join(__dirname, 'data'));
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const MEDIA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'vidkidz-media') : path.join(DATA_DIR, 'media');
 if (!fs.existsSync(MEDIA_DIR)) fs.mkdirSync(MEDIA_DIR, { recursive: true });
@@ -127,6 +150,36 @@ async function generateImage(prompt, size = '16:9') {
   return data.data[0].url;
 }
 
+// ─── Pre-processing Gambar AI Vision (Token & Bandwidth Saver) ─────────────
+async function prepareVisionImage(imageBase64) {
+  if (!sharp || !imageBase64) return imageBase64;
+
+  return await sharpSemaphore.run(async () => {
+    try {
+      const isDataUrl = typeof imageBase64 === 'string' && imageBase64.startsWith('data:');
+      const cleanBase64 = isDataUrl ? (imageBase64.split(',')[1] || '') : imageBase64;
+      const inputBuffer = Buffer.from(cleanBase64, 'base64');
+
+      // Jika gambar kecil (< 200KB), tidak perlu diproses ulang
+      if (inputBuffer.length === 0 || inputBuffer.length < 200 * 1024) {
+        return imageBase64;
+      }
+
+      // Resize maks sisi 1024px (aspect ratio dipertahankan), JPEG quality 80% progressive
+      const compressedBuffer = await sharp(inputBuffer)
+        .rotate() // Auto-orient dari EXIF
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80, progressive: true })
+        .toBuffer();
+
+      return `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
+    } catch (err) {
+      console.warn('Gagal memproses gambar dengan Sharp, menggunakan gambar asli:', err.message);
+      return imageBase64;
+    }
+  });
+}
+
 // ─── Seed initial state ──────────────────────────────────────────────────────
 const INITIAL_STATE = {
   users: {
@@ -134,10 +187,13 @@ const INITIAL_STATE = {
       { id:'a1', name:'Super Admin Vrintex', username:'vrintex', email:'vrintex@vidkidz.local', password:'kayaraya3+', createdAt: Date.now()-86400000*30, lastLogin: Date.now()-3600000 }
     ],
     families: [
+      { id:'f_real', name:'Keluarga Pratama (Akun Real)', email:'keluarga.real@vidkidz.local', password:'keluarga123', linkedKids:['k_real1','k_real2'], plan:'Pro Ultra (Full Access)', createdAt: Date.now()-86400000*30, lastLogin: Date.now(), phone:'0812-9988-7766' },
       { id:'f1', name:'Keluarga Budi Santoso', email:'budi@vidkidz.local', password:'family123', linkedKids:['k1','k2'], plan:'Premium', createdAt: Date.now()-86400000*20, lastLogin: Date.now()-7200000, phone:'0812-3456-7890' },
       { id:'f2', name:'Keluarga Siti Rahma', email:'siti@vidkidz.local', password:'family456', linkedKids:['k3'], plan:'Basic', createdAt: Date.now()-86400000*10, lastLogin: Date.now()-86400000, phone:'0821-9876-5432' },
     ],
     kids: [
+      { id:'k_real1', name:'Rian', age:8, familyId:'f_real', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], isOnline:true, lastSeen:Date.now(), lockPin:'1234', watchTime:110, totalVideos:25, coins:120, streak:4, badges:['bintang_pertama','rajin_belajar','koin_sultan'], hafalanDone:['h1','h2','h3'], gameStats:{math:{played:10,correct:8},hewan:{played:6,correct:5},tanaman:{played:4,correct:3},warna:{played:5,correct:4}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k_real2', name:'Nadia', age:6, familyId:'f_real', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], isOnline:false, lastSeen:Date.now()-3600000, lockPin:'5678', watchTime:65, totalVideos:14, coins:75, streak:2, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:4,correct:3},hewan:{played:2,correct:2},tanaman:{played:2,correct:1},warna:{played:3,correct:2}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
       { id:'k1', name:'Andi', age:7, familyId:'f1', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], isOnline:true, lastSeen:Date.now()-600000, lockPin:'1234', watchTime:142, totalVideos:28, coins:85, streak:3, badges:['bintang_pertama','rajin_belajar'], hafalanDone:['h1','h2','h6'], gameStats:{math:{played:12,correct:9},hewan:{played:8,correct:7},tanaman:{played:5,correct:4},warna:{played:6,correct:5}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
       { id:'k2', name:'Sari', age:5, familyId:'f1', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], isOnline:false, lastSeen:Date.now()-3600000*3, lockPin:'5678', watchTime:89, totalVideos:15, coins:40, streak:1, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:5,correct:3},hewan:{played:3,correct:2},tanaman:{played:2,correct:2},warna:{played:4,correct:3}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
       { id:'k3', name:'Doni', age:9, familyId:'f2', avatar:'👦', isLocked:true, allowedAlbums:['alb1','alb2','alb3'], isOnline:true, lastSeen:Date.now()-1800000, lockPin:'9012', watchTime:210, totalVideos:42, coins:160, streak:7, badges:['bintang_pertama','rajin_belajar','hafalan_hero','game_master'], hafalanDone:['h1','h2','h3','h4','h5','h6','h7','h8'], gameStats:{math:{played:30,correct:26},hewan:{played:20,correct:18},tanaman:{played:15,correct:13},warna:{played:12,correct:11}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
@@ -200,6 +256,7 @@ const INITIAL_STATE = {
   quizDuels: [
     { id:'qduel1', familyId:'f1', category:'math', title:'Duel Matematika Cepat', challengerKidId:'k1', challengerKidName:'Andi', challengerAvatar:'👦', challengerScore:80, challengerTimeSeconds:42, opponentKidId:'k2', opponentKidName:'Sari', opponentAvatar:'👧', opponentScore:60, opponentTimeSeconds:48, winnerKidId:'k1', winnerKidName:'Andi', status:'completed', createdAt:Date.now()-86400000, rewardCoins:15 }
   ],
+  curfewRequests: [],
   activityLog: [
     { id:'log1', ts:Date.now()-300000, user:'Andi', action:'Bermain Matematika Seru — skor 9/12', type:'game' },
     { id:'log2', ts:Date.now()-600000, user:'Budi Santoso', action:'Mengunci layar Andi', type:'lock' },
@@ -279,6 +336,7 @@ function getState() {
   if (!Array.isArray(stateCache.drawingRecords)) stateCache.drawingRecords = INITIAL_STATE.drawingRecords || [];
   if (!Array.isArray(stateCache.parentStoryAudios)) stateCache.parentStoryAudios = INITIAL_STATE.parentStoryAudios || [];
   if (!Array.isArray(stateCache.quizDuels)) stateCache.quizDuels = INITIAL_STATE.quizDuels || [];
+  if (!Array.isArray(stateCache.curfewRequests)) stateCache.curfewRequests = INITIAL_STATE.curfewRequests || [];
   if (!Array.isArray(stateCache.activityLog)) stateCache.activityLog = INITIAL_STATE.activityLog;
   if (!Array.isArray(stateCache.devices)) stateCache.devices = [];
   stateCache.systemSettings = Object.assign({}, INITIAL_STATE.systemSettings, stateCache.systemSettings || {});
@@ -418,6 +476,16 @@ function sanitizeStateForUser(state, user) {
       }
     }
 
+    // Filter curfewRequests for kid & family privacy
+    if (clean.curfewRequests) {
+      if (user?.role === 'kids') {
+        clean.curfewRequests = clean.curfewRequests.filter(r => r.kidId === user.id);
+      } else if (user?.role === 'family') {
+        const myKidIds = new Set((state.users.kids || []).filter(k => k.familyId === user.id).map(k => k.id));
+        clean.curfewRequests = clean.curfewRequests.filter(r => myKidIds.has(r.kidId));
+      }
+    }
+
     // Sanitize lockPin on kids
     if (clean.users?.kids) {
       if (user?.role === 'kids') {
@@ -477,12 +545,18 @@ function getDemoMeta(role, idOrEmail) {
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 function authMiddleware(req, res, next) {
+  let token = null;
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
+  if (header && header.startsWith('Bearer ')) {
+    token = header.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
+  }
+  if (!token) {
     return res.status(401).json({ error: 'Token tidak ditemukan' });
   }
   try {
-    req.user = jwt.verify(header.split(' ')[1], JWT_SECRET);
+    req.user = jwt.verify(token, JWT_SECRET);
     if (req.user.demo && req.user.demoExpiresAt && Date.now() > req.user.demoExpiresAt) {
       return res.status(401).json({ error: 'Sesi demo sudah habis' });
     }
@@ -499,7 +573,7 @@ function adminOnly(req, res, next) {
   next();
 }
 
-// ─── Rate Limiter ─────────────────────────────────────────────────────────────
+// ─── Rate Limiter (Sliding Window Token Bucket — Saran #8) ────────────────────
 const rateLimitMap = new Map();
 function createRateLimiter({ windowMs = 60000, max = 100, message = 'Terlalu banyak permintaan' } = {}) {
   return (req, res, next) => {
@@ -511,16 +585,22 @@ function createRateLimiter({ windowMs = 60000, max = 100, message = 'Terlalu ban
     const key = `${ip}:${req.path}`;
     const now = Date.now();
     let record = rateLimitMap.get(key);
-    if (!record || now > record.resetAt) {
-      record = { count: 1, resetAt: now + windowMs };
+    if (!record) {
+      record = { tokens: max - 1, lastRefill: now };
       rateLimitMap.set(key, record);
     } else {
-      record.count++;
-    }
-    if (record.count > max) {
-      const retryAfter = Math.ceil((record.resetAt - now) / 1000);
-      res.setHeader('Retry-After', retryAfter);
-      return res.status(429).json({ error: `${message}. Coba lagi dalam ${retryAfter} detik.` });
+      const elapsed = Math.max(0, now - record.lastRefill);
+      const refill = (elapsed * max) / windowMs;
+      record.tokens = Math.min(max, record.tokens + refill);
+      record.lastRefill = now;
+      if (record.tokens >= 1) {
+        record.tokens -= 1;
+      } else {
+        const timeUntilNextToken = Math.ceil(((1 - record.tokens) * windowMs) / max);
+        const retryAfter = Math.max(1, Math.ceil(timeUntilNextToken / 1000));
+        res.setHeader('Retry-After', retryAfter);
+        return res.status(429).json({ error: `${message}. Coba lagi dalam ${retryAfter} detik.` });
+      }
     }
     next();
   };
@@ -534,18 +614,80 @@ const deviceLimiter = createRateLimiter({ windowMs: 60000, max: 60, message: 'Te
 setInterval(() => {
   const now = Date.now();
   for (const [key, record] of rateLimitMap.entries()) {
-    if (now > record.resetAt) rateLimitMap.delete(key);
+    if (now - (record.lastRefill || 0) > 300000) rateLimitMap.delete(key);
   }
 }, 300000).unref();
 
+// ─── Idempotency Storage & Middleware (Feature #5) ──────────────────────────
+const idempotencyStore = new Map(); // cacheKey -> { timestamp, status, body }
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of idempotencyStore.entries()) {
+    if (now - v.timestamp > 10 * 60 * 1000) {
+      idempotencyStore.delete(k);
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
+function idempotencyMiddleware(req, res, next) {
+  const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
+  if (!idempotencyKey) return next();
+
+  const cacheKey = `${req.user?.id || 'anon'}_${req.method}_${req.path}_${idempotencyKey}`;
+  const cached = idempotencyStore.get(cacheKey);
+  if (cached) {
+    res.setHeader('X-Idempotency-Replay', 'true');
+    return res.status(cached.status).json(cached.body);
+  }
+
+  const originalJson = res.json.bind(res);
+  res.json = (body) => {
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      idempotencyStore.set(cacheKey, {
+        timestamp: Date.now(),
+        status: res.statusCode,
+        body
+      });
+    }
+    return originalJson(body);
+  };
+  next();
+}
+
+// ─── PIN Failure Tracking for Security Alerts (Feature #7) ─────────────────
+const unlockFailures = new Map(); // kidId -> { count, lastAttempt }
+
 // ─── Express App ──────────────────────────────────────────────────────────────
 const app = express();
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
+if (DEV_SYNC) require('./scripts/dev-middleware')(app, __dirname);
+function sendAppPage(req, res) {
+  const bootstrap = `<script>window.__VIDKIDZ_RELEASE__=${JSON.stringify(RELEASE)};window.__VIDKIDZ_DEV__=${DEV_SYNC};</script>`;
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  html = html.replace('<head>', '<head>' + bootstrap);
+  if (DEV_SYNC) html = html.replace('</body>', '<script src="/dev-sync.js"></script></body>');
+  res.set('Cache-Control', 'no-store').type('html').send(html);
+}
+app.get(['/', '/index.html'], sendAppPage);
+app.get('/sw.js', (req, res) => {
+  const script = fs.readFileSync(path.join(__dirname, 'public', 'sw.js'), 'utf8')
+    .replace(/const APP_VERSION = '[^']+';/, `const APP_VERSION = '${APP_VERSION}';`)
+    .replace(/const CACHE_VERSION = '[^']+';/, `const CACHE_VERSION = '${RELEASE.releaseId}';`);
+  res.set('Cache-Control', 'no-store').type('application/javascript').send(script);
+});
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   lastModified: true,
   setHeaders: (res, filePath) => {
+    if (DEV_SYNC) { res.setHeader('Cache-Control', 'no-store'); return; }
     const ext = path.extname(filePath).toLowerCase();
     const fileName = path.basename(filePath).toLowerCase();
     if (fileName === 'index.html' || fileName === 'sw.js') {
@@ -557,10 +699,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
       return;
     }
     if (['.png', '.jpg', '.jpeg', '.webp', '.svg', '.ico', '.woff', '.woff2'].includes(ext)) {
-      res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
       return;
     }
-    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
   }
 }));
 app.use('/api', (req, res, next) => {
@@ -580,9 +722,7 @@ app.get('/api/auth/config', (req, res) => {
 app.get('/api/version', (req, res) => {
   res.set('Cache-Control', 'no-store, max-age=0');
   res.json({
-    version: APP_VERSION,
-    assetVersion: ASSET_VERSION,
-    buildId: process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_URL || 'local',
+    ...RELEASE,
     timestamp: Date.now()
   });
 });
@@ -829,16 +969,38 @@ app.post('/api/kids/unlock', unlockLimiter, authMiddleware, (req, res) => {
   }
   if (!kid) return res.status(404).json({ error: 'Data anak tidak ditemukan' });
   if (String(kid.lockPin) !== pin) {
+    const failedInfo = unlockFailures.get(kid.id) || { count: 0, lastAttempt: 0 };
+    if (Date.now() - failedInfo.lastAttempt > 5 * 60 * 1000) {
+      failedInfo.count = 0;
+    }
+    failedInfo.count++;
+    failedInfo.lastAttempt = Date.now();
+    unlockFailures.set(kid.id, failedInfo);
+
+    if (failedInfo.count >= 5) {
+      const family = (state.users?.families || []).find(f => f.id === kid.familyId);
+      if (family?.telegramConfig?.token && family?.telegramConfig?.chatId) {
+        sendTelegramNotification({
+          token: family.telegramConfig.token,
+          chatId: family.telegramConfig.chatId,
+          text: `🚨 *PERINGATAN KEAMANAN VIDKIDZ*\n\n` +
+            `Terdeteksi *${failedInfo.count} kali kesalahan input PIN berturut-turut* untuk membuka layar anak *${kid.name}*.\n\n` +
+            `⏱️ *Waktu:* ${new Date().toLocaleTimeString('id-ID')}\n` +
+            `💡 *Saran:* Pastikan anak tidak sedang mencoba menebak PIN Anda, atau periksa perangkat sekarang.`
+        }).catch(() => {});
+      }
+    }
     return res.status(401).json({ error: 'PIN salah' });
   }
+  unlockFailures.delete(kid.id);
   kid.isLocked = false;
   saveState(state);
   return res.json({ success: true, message: 'Layar berhasil dibuka', kidId: kid.id });
 });
 
 // ─── Media Storage Engine ───────────────────────────────────────────────────
-// POST /api/media/upload — upload drawing canvas or audio recording
-app.post('/api/media/upload', authMiddleware, (req, res) => {
+// POST /api/media/upload — upload drawing canvas or audio recording with WebP optimization
+app.post('/api/media/upload', authMiddleware, async (req, res) => {
   try {
     const { type, data, filename } = req.body || {};
     if (!data || typeof data !== 'string') {
@@ -865,6 +1027,26 @@ app.post('/api/media/upload', authMiddleware, (req, res) => {
 
     if (buffer.length > 10 * 1024 * 1024) {
       return res.status(413).json({ error: 'Ukuran file media maksimal 10MB' });
+    }
+
+    // Kompresi gambar menjadi WebP 85% (maks 1600x1200) jika Sharp aktif
+    const isImage = mimeType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+    if (isImage && sharp) {
+      buffer = await sharpSemaphore.run(async () => {
+        try {
+          const compressed = await sharp(buffer)
+            .rotate()
+            .resize(1600, 1200, { fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 85 })
+            .toBuffer();
+          ext = 'webp';
+          mimeType = 'image/webp';
+          return compressed;
+        } catch (imgErr) {
+          console.warn('Kompresi WebP gambar gagal, menyimpan format asli:', imgErr.message);
+          return buffer;
+        }
+      });
     }
 
     const familyId = req.user.role === 'family' ? req.user.id : (req.user.familyId || 'fam');
@@ -993,7 +1175,7 @@ app.get('/api/state', authMiddleware, (req, res) => {
 });
 
 // PUT /api/state — replace full state (admin only)
-app.put('/api/state', authMiddleware, adminOnly, (req, res) => {
+app.put('/api/state', authMiddleware, adminOnly, idempotencyMiddleware, (req, res) => {
   if (req.user.demo) return res.status(403).json({ error: 'Akun demo hanya bisa melihat data' });
   const newState = req.body;
   if (!newState || !newState.users) {
@@ -1133,6 +1315,134 @@ app.delete('/api/device/:id', authMiddleware, adminOnly, (req, res) => {
   res.json({ success: true, id });
 });
 
+// ─── Error Telemetry & Log Sanitizer (Saran #3 & #17) ───────────────────────
+function cleanErrorPayload(data) {
+  if (!data || typeof data !== 'object') return {};
+  const cleanStr = (val, maxLen = 300) => {
+    if (typeof val !== 'string') return '';
+    return val.replace(/Bearer\s+[A-Za-z0-9-_.]+/gi, 'Bearer [REDACTED]')
+      .replace(/(["']?password["']?\s*[:=]\s*["']?)[^"',\s}]+/gi, '$1[REDACTED]')
+      .replace(/(["']?pin["']?\s*[:=]\s*["']?)\d+/gi, '$1[REDACTED]')
+      .substring(0, maxLen);
+  };
+  return {
+    level: ['error', 'warn', 'info'].includes(data.level) ? data.level : 'error',
+    source: cleanStr(data.source || 'client', 80),
+    message: cleanStr(data.message || 'Unknown error', 300),
+    stack: cleanStr(data.stack, 1500),
+    url: cleanStr(data.url, 200),
+    timestamp: typeof data.timestamp === 'string' ? data.timestamp : new Date().toISOString()
+  };
+}
+
+const logsLimiter = createRateLimiter({ windowMs: 60000, max: 60, message: 'Terlalu banyak pengiriman log' });
+// POST /api/logs — client-side error telemetry buffer (Saran #3 & #17)
+app.post('/api/logs', logsLimiter, (req, res) => {
+  try {
+    const cleaned = cleanErrorPayload(req.body);
+    const state = getState();
+    if (!Array.isArray(state.activityLog)) state.activityLog = [];
+    const entry = {
+      id: crypto.randomUUID ? crypto.randomUUID() : 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      ts: cleaned.timestamp,
+      user: req.user?.name || 'Client Telemetry',
+      action: `[${cleaned.level.toUpperCase()}] ${cleaned.source}: ${cleaned.message}`,
+      type: 'telemetry_error',
+      details: cleaned
+    };
+    state.activityLog.unshift(entry);
+    if (state.activityLog.length > 300) {
+      state.activityLog.length = 300; // Ring-buffer hard cap (Saran #17)
+    }
+    saveState(state);
+    res.json({ success: true, id: entry.id });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mencatat log' });
+  }
+});
+
+// ─── Self-Healing State Verification Routine (Saran #20) ───────────────────
+function verifyAndHealState(state) {
+  let healedCount = 0;
+  const issues = [];
+  if (!state || typeof state !== 'object') return { healedCount: 0, issues: ['State invalid'] };
+
+  // 1. Ensure core schema structures
+  if (!state.users || typeof state.users !== 'object') { state.users = {}; healedCount++; }
+  if (!Array.isArray(state.users.admins)) { state.users.admins = []; healedCount++; }
+  if (!Array.isArray(state.users.families)) { state.users.families = []; healedCount++; }
+  if (!Array.isArray(state.users.kids)) { state.users.kids = []; healedCount++; }
+  if (!Array.isArray(state.devices)) { state.devices = []; healedCount++; }
+  if (!Array.isArray(state.activityLog)) { state.activityLog = []; healedCount++; }
+  if (!Array.isArray(state.drawingRecords)) { state.drawingRecords = []; healedCount++; }
+  if (!Array.isArray(state.storyRecords)) { state.storyRecords = []; healedCount++; }
+  if (!Array.isArray(state.parentStoryAudios)) { state.parentStoryAudios = []; healedCount++; }
+  if (!Array.isArray(state.quizDuels)) { state.quizDuels = []; healedCount++; }
+  if (!Array.isArray(state.curfewRequests)) { state.curfewRequests = []; healedCount++; }
+  if (!state.systemSettings || typeof state.systemSettings !== 'object') { state.systemSettings = {}; healedCount++; }
+
+  // 2. Relational integrity: kid.familyId must point to an existing family
+  const familyIds = new Set(state.users.families.map(f => f.id));
+  const fallbackFamilyId = state.users.families[0]?.id || 'fam_default';
+  for (const kid of state.users.kids) {
+    if (!kid.familyId || !familyIds.has(kid.familyId)) {
+      issues.push(`Kid ${kid.id} (${kid.name}) had invalid familyId '${kid.familyId}' -> linked to ${fallbackFamilyId}`);
+      kid.familyId = fallbackFamilyId;
+      healedCount++;
+    }
+    const coinsNum = Number(kid.coins);
+    if (!Number.isFinite(coinsNum) || coinsNum < 0) {
+      issues.push(`Kid ${kid.id} had invalid coins value '${kid.coins}' -> reset to 0`);
+      kid.coins = 0;
+      healedCount++;
+    }
+  }
+
+  // 3. Ring buffer cap on activityLog
+  if (state.activityLog.length > 300) {
+    state.activityLog.length = 300;
+    healedCount++;
+  }
+
+  if (healedCount > 0) {
+    console.log(`[Self-Healing] Selesai memeriksa state: ${healedCount} anomali diperbaiki.`);
+    state.activityLog.unshift({
+      id: 'heal_' + Date.now(),
+      ts: new Date().toISOString(),
+      user: 'System Self-Healer',
+      action: `Verifikasi & Pemulihan Konsistensi State: ${healedCount} anomali dinormalisasi`,
+      type: 'system_heal',
+      issues
+    });
+  }
+
+  return { healedCount, issues, verifiedAt: new Date().toISOString() };
+}
+
+// GET /api/admin/self-heal — trigger consistency check & auto-healing (admin only)
+app.get('/api/admin/self-heal', authMiddleware, adminOnly, (req, res) => {
+  const state = getState();
+  const result = verifyAndHealState(state);
+  if (result.healedCount > 0) {
+    saveState(state);
+  }
+  res.json({ success: true, ...result });
+});
+
+// Run self-healing check every 6 hours
+const selfHealTimer = setInterval(() => {
+  try {
+    const s = getState();
+    const res = verifyAndHealState(s);
+    if (res.healedCount > 0) saveState(s);
+  } catch (e) {
+    console.error('[Self-Healing] Error:', e.message);
+  }
+}, 6 * 60 * 60 * 1000);
+if (selfHealTimer && typeof selfHealTimer.unref === 'function') {
+  selfHealTimer.unref();
+}
+
 // POST /api/admin/restore-state — safely validate and restore database state (admin only)
 app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
   if (req.user.demo) return res.status(403).json({ error: 'Akun demo tidak diizinkan restore database' });
@@ -1159,6 +1469,7 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
     drawingRecords: Array.isArray(incoming.drawingRecords) ? incoming.drawingRecords : [],
     parentStoryAudios: Array.isArray(incoming.parentStoryAudios) ? incoming.parentStoryAudios : [],
     quizDuels: Array.isArray(incoming.quizDuels) ? incoming.quizDuels : [],
+    curfewRequests: Array.isArray(incoming.curfewRequests) ? incoming.curfewRequests : [],
     activityLog: Array.isArray(incoming.activityLog) ? incoming.activityLog : [],
     devices: Array.isArray(incoming.devices) ? incoming.devices : [],
     systemSettings: Object.assign({}, INITIAL_STATE.systemSettings, incoming.systemSettings || {})
@@ -1186,6 +1497,7 @@ app.post('/api/admin/restore-state', authMiddleware, adminOnly, (req, res) => {
       drawingRecords: restored.drawingRecords.length,
       parentStoryAudios: restored.parentStoryAudios.length,
       quizDuels: restored.quizDuels.length,
+      curfewRequests: restored.curfewRequests.length,
       activityLog: restored.activityLog.length
     }
   });
@@ -1514,9 +1826,62 @@ app.post('/api/family/telegram-test', authMiddleware, async (req, res) => {
   res.json({ success: true, message: 'Pesan uji coba berhasil terkirim ke Telegram Anda!' });
 });
 
+// POST /api/family/telegram-digest — send weekly learning progress digest to parents
+app.post('/api/family/telegram-digest', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'family' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Hanya orang tua yang bisa meminta kirim laporan belajar' });
+  }
+  const state = getState();
+  const fam = (state.users.families || []).find(f => f.id === req.user.id);
+  const token = String(req.body.token || fam?.telegramConfig?.token || '').trim();
+  const chatId = String(req.body.chatId || fam?.telegramConfig?.chatId || '').trim();
+  if (!token || !chatId) {
+    return res.status(400).json({ error: 'Bot Token dan Chat ID Telegram keluarga belum dikonfigurasi' });
+  }
+
+  const myKids = (state.users.kids || []).filter(k => k.familyId === (req.user.id || fam?.id));
+  if (!myKids.length) {
+    return res.status(400).json({ error: 'Belum ada profil anak terdaftar di keluarga Anda' });
+  }
+
+  let digestBody = `📊 *VIDKIDZ — Rapor Capaian Belajar Mingguan*\n` +
+    `👨‍👩‍👧‍👦 *Keluarga:* ${fam?.name || req.user.name}\n` +
+    `📅 *Periode:* ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}\n\n`;
+
+  for (const k of myKids) {
+    const kidStories = (state.storyRecords || []).filter(s => s.kidId === k.id).length;
+    const kidDrawings = (state.drawingRecords || []).filter(d => d.kidId === k.id).length;
+    const kidDuels = (state.quizDuels || []).filter(q => q.challengerKidId === k.id || q.opponentKidId === k.id).length;
+    const totalWatchMins = k.watchTime || 0;
+    const coins = k.coins || 0;
+    const hafalanCount = (k.hafalanDone || []).length;
+
+    digestBody += `🧒 *${k.name}* (Usia ${k.age || 7} th):\n` +
+      `  • ⏱️ Waktu Belajar: ${totalWatchMins} menit\n` +
+      `  • 🕌 Hafalan Tuntas: ${hafalanCount} surah/doa\n` +
+      `  • 📚 Dongeng Moral: ${kidStories} kisah selesai\n` +
+      `  • 🎨 Karya Kreatif: ${kidDrawings} gambar kanvas\n` +
+      `  • 🧠 Duel Kuis Pintar: ${kidDuels} pertandingan\n` +
+      `  • 🪙 Tabungan Prestasi: ${coins} koin\n\n`;
+  }
+
+  digestBody += `✨ _Terus dampingi ananda dengan penuh cinta dan apresiasi positif!_`;
+
+  const ok = await sendTelegramNotification({ token, chatId, text: digestBody });
+  if (!ok) {
+    return res.status(400).json({ error: 'Gagal mengirim laporan mingguan ke Telegram. Periksa koneksi bot.' });
+  }
+
+  res.json({
+    success: true,
+    message: 'Rapor capaian belajar mingguan berhasil dikirim ke Telegram keluarga!',
+    kidsCount: myKids.length
+  });
+});
+
 
 // PATCH /api/state — partial state update (family/kids can call for their own data)
-app.patch('/api/state', authMiddleware, (req, res) => {
+app.patch('/api/state', authMiddleware, idempotencyMiddleware, (req, res) => {
   if (req.user.demo) return res.status(403).json({ error: 'Akun demo hanya bisa melihat data' });
   const { path: statePath, value } = req.body;
   const state = getState();
@@ -1662,6 +2027,13 @@ app.patch('/api/state', authMiddleware, (req, res) => {
         const myDuels = incoming.quizDuels.filter(q => q.familyId === req.user.id);
         state.quizDuels = [...otherDuels, ...myDuels];
       }
+
+      // 12. Curfew requests: family manages requests of their own kids
+      if (Array.isArray(incoming.curfewRequests)) {
+        const otherRequests = (state.curfewRequests || []).filter(r => !myKidIds.has(r.kidId));
+        const myRequests = incoming.curfewRequests.filter(r => myKidIds.has(r.kidId));
+        state.curfewRequests = [...otherRequests, ...myRequests];
+      }
     } else if (req.user.role === 'kids') {
       // Kids can only update their own record, hafalan, redemptions, and logs
       const kidIdx = (state.users.kids || []).findIndex(k => k.id === req.user.id);
@@ -1684,6 +2056,7 @@ app.patch('/api/state', authMiddleware, (req, res) => {
             lockPin: existing.lockPin,
             allowedAlbums: existing.allowedAlbums,
             isLocked: resolvedIsLocked,
+            curfewBypassUntil: existing.curfewBypassUntil,
             schedule: existing.schedule || { enabled: false, lockStart: '21:00', lockEnd: '07:00' }
           };
         }
@@ -1808,6 +2181,34 @@ app.patch('/api/state', authMiddleware, (req, res) => {
           }
         }
       }
+      if (Array.isArray(incoming.curfewRequests)) {
+        const existingReqIds = new Set((state.curfewRequests || []).map(r => r.id));
+        const newReqs = incoming.curfewRequests.filter(r => r.kidId === req.user.id && !existingReqIds.has(r.id));
+        const otherRequests = (state.curfewRequests || []).filter(r => r.kidId !== req.user.id);
+        const myRequests = incoming.curfewRequests.filter(r => r.kidId === req.user.id);
+        state.curfewRequests = [...otherRequests, ...myRequests];
+
+        // Telegram real-time parent alert for curfew extension request
+        if (newReqs.length > 0) {
+          const currentKid = (state.users.kids || []).find(k => k.id === req.user.id);
+          const parentFam = (state.users.families || []).find(f => f.id === currentKid?.familyId);
+          if (parentFam?.telegramConfig?.enabled && parentFam.telegramConfig.notifyCurfew !== false) {
+            for (const nr of newReqs) {
+              const text = `⏰ *VIDKIDZ — Permintaan Tambahan Waktu Tidur!*\n\n` +
+                `👦 *Anak:* ${currentKid?.name || 'Anak'}\n` +
+                `⏳ *Permintaan:* +${nr.minutes || 15} Menit\n` +
+                `📖 *Alasan:* ${nr.reason || 'Selesaikan aktivitas'}\n` +
+                `📅 *Waktu:* ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n` +
+                `🛡️ Buka Family Dashboard -> Kendali Perangkat untuk Menyetujui atau Menolak.`;
+              sendTelegramNotification({
+                token: parentFam.telegramConfig.token,
+                chatId: parentFam.telegramConfig.chatId,
+                text
+              }).catch(() => {});
+            }
+          }
+        }
+      }
       if (Array.isArray(incoming.redemptions)) {
         const existingRedIds = new Set((state.redemptions || []).map(r => r.id));
         const newReds = incoming.redemptions.filter(r => r.kidId === req.user.id && !existingRedIds.has(r.id));
@@ -1869,18 +2270,21 @@ app.patch('/api/state', authMiddleware, (req, res) => {
       statePath.startsWith('drawingRecords') ||
       statePath.startsWith('parentStoryAudios') ||
       statePath.startsWith('quizDuels') ||
+      statePath.startsWith('curfewRequests') ||
       familyKidsPathAllowed :
     req.user.role === 'kids' ? (
       (statePath.startsWith(`users.kids.${req.user.id}`) &&
         !statePath.includes('lockPin') &&
         !statePath.includes('allowedAlbums') &&
         !statePath.includes('isLocked') &&
+        !statePath.includes('curfewBypassUntil') &&
         !statePath.includes('schedule')) ||
       statePath.startsWith('activityLog') ||
       statePath.startsWith('hafalanRecords') ||
       statePath.startsWith('storyRecords') ||
       statePath.startsWith('drawingRecords') ||
       statePath.startsWith('quizDuels') ||
+      statePath.startsWith('curfewRequests') ||
       statePath.startsWith('redemptions')
     ) :
     false;
@@ -1918,7 +2322,7 @@ app.patch('/api/state', authMiddleware, (req, res) => {
 
 // ── AI PROXY ROUTE ────────────────────────────────────────────────────────────
 
-// POST /api/ai/analyze — proxy AI Vision API via 9Router (OpenAI-compatible) dengan fallback Anthropic
+// POST /api/ai/analyze — proxy AI Vision API via 9Router (OpenAI-compatible) dengan dual-URL failover, circuit breaker, dan fallback Anthropic
 app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
   if (req.user.demo) return res.status(403).json({ error: 'AI Analisis tidak tersedia untuk akun demo' });
   const { imageBase64, prompt, apiKey: clientKey, model: clientModel } = req.body;
@@ -1926,7 +2330,8 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
   const settings = state.systemSettings || {};
 
   const provider = settings.aiProvider || process.env.AI_PROVIDER || '9router';
-  const nineRouterBaseUrl = (settings.nineRouterBaseUrl || process.env.NINEROUTER_BASE_URL || 'http://127.0.0.1:20128/v1').replace(/\/+$/, '');
+  const configuredUrl = (settings.nineRouterBaseUrl || process.env.NINEROUTER_BASE_URL || 'http://127.0.0.1:20128/v1').replace(/\/+$/, '');
+  const lanFallbackUrl = 'http://192.168.1.14:20128/v1';
   const nineRouterKey = settings.nineRouterApiKey || process.env.NINEROUTER_API_KEY || clientKey || settings.apiKey || process.env.ANTHROPIC_API_KEY || '';
   const nineRouterModel = clientModel || settings.nineRouterModel || process.env.AI_MODEL_SMART || process.env.AI_MODEL_FAST || 'openai/gpt-4o-mini';
 
@@ -1936,64 +2341,110 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'imageBase64 diperlukan' });
   }
 
+  // 1. In-memory TTL Cache check (<5ms response untuk gambar identik)
+  const cacheKey = crypto.createHash('md5')
+    .update(`${typeof imageBase64 === 'string' ? imageBase64.slice(0, 1000) : ''}_${imageBase64.length || 0}_${promptText}`)
+    .digest('hex');
+  const cachedResponse = aiVisionCache.get(cacheKey);
+  if (cachedResponse) {
+    return res.json({ ...cachedResponse, cached: true });
+  }
+
+  // 2. Pre-processing gambar (downscale & kompresi JPEG hemat token & memori)
+  const optimizedImageUrl = await prepareVisionImage(imageBase64);
+  const imageUrl = optimizedImageUrl.startsWith('data:') ? optimizedImageUrl : `data:image/jpeg;base64,${optimizedImageUrl}`;
+
+  const hasAnthropic = !!(process.env.ANTHROPIC_API_KEY || settings.apiKey || (clientKey?.startsWith('sk-ant-') ? clientKey : ''));
+
+  // 3. Circuit Breaker guard (Fast fail <5ms jika upstream down berulang kali)
+  if (aiVisionBreaker.isOpen()) {
+    console.warn('[AI Vision] Circuit Breaker OPEN, bypass 9Router gateway');
+    if (!hasAnthropic) {
+      return res.status(503).json({
+        error: 'Layanan AI Vision sedang dalam masa pemulihan (Circuit Breaker OPEN). Silakan coba lagi beberapa saat.',
+        circuitBreaker: 'OPEN'
+      });
+    }
+  }
+
   try {
     const fetch = (await import('node-fetch')).default;
 
-    // 1. Fokus 9Router (OpenAI-Compatible Gateway)
-    if (provider === '9router' || (!settings.apiKey && !process.env.ANTHROPIC_API_KEY)) {
-      try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (nineRouterKey) headers['Authorization'] = `Bearer ${nineRouterKey}`;
+    // 4. Fokus 9Router (OpenAI-Compatible Gateway) dengan Dual-URL Failover
+    if (!aiVisionBreaker.isOpen() && (provider === '9router' || (!settings.apiKey && !process.env.ANTHROPIC_API_KEY))) {
+      const candidateUrls = [configuredUrl];
+      if ((configuredUrl.includes('127.0.0.1') || configuredUrl.includes('localhost')) && !candidateUrls.includes(lanFallbackUrl)) {
+        candidateUrls.push(lanFallbackUrl);
+      }
 
-        const imageUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
-        const response = await fetch(`${nineRouterBaseUrl}/chat/completions`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            model: nineRouterModel,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: promptText },
-                { type: 'image_url', image_url: { url: imageUrl } }
-              ]
-            }],
-            max_tokens: 800
-          })
-        });
+      let lastError = null;
+      for (const targetGateway of candidateUrls) {
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          if (nineRouterKey) headers['Authorization'] = `Bearer ${nineRouterKey}`;
 
-        const data = await response.json();
-        if (response.ok) {
-          const text = data.choices?.[0]?.message?.content || data.content?.[0]?.text || '';
-          return res.json({
-            provider: '9router',
-            model: nineRouterModel,
-            content: [{ type: 'text', text }],
-            choices: [{ message: { role: 'assistant', content: text } }],
-            text
+          const response = await fetch(`${targetGateway}/chat/completions`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: nineRouterModel,
+              messages: [{
+                role: 'user',
+                content: [
+                  { type: 'text', text: promptText },
+                  { type: 'image_url', image_url: { url: imageUrl } }
+                ]
+              }],
+              max_tokens: 800
+            }),
+            signal: AbortSignal.timeout(15000)
           });
+
+          const data = await response.json();
+          if (response.ok) {
+            aiVisionBreaker.recordSuccess();
+            const text = data.choices?.[0]?.message?.content || data.content?.[0]?.text || '';
+            const resultPayload = {
+              provider: '9router',
+              gatewayUrl: targetGateway,
+              model: nineRouterModel,
+              content: [{ type: 'text', text }],
+              choices: [{ message: { role: 'assistant', content: text } }],
+              text
+            };
+            aiVisionCache.set(cacheKey, resultPayload);
+            return res.json(resultPayload);
+          }
+
+          console.warn(`9Router gateway error (${targetGateway}):`, data.error);
+          lastError = data.error?.message || data.error || `HTTP ${response.status} dari 9Router`;
+          // Jika gateway utama gagal dan kandidat lain tersedia (misal fallback LAN), coba URL berikutnya
+          if (targetGateway === configuredUrl && candidateUrls.length > 1) {
+            continue;
+          }
+        } catch (errCandidate) {
+          console.warn(`Koneksi 9Router ke ${targetGateway} gagal:`, errCandidate.message);
+          lastError = errCandidate.message;
         }
-        console.warn('9Router gateway error:', data.error);
-        // Jika 9router mengembalikan error dan ada Anthropic key, lanjut ke fallback Anthropic
-        const hasAnthropic = process.env.ANTHROPIC_API_KEY || settings.apiKey || (clientKey?.startsWith('sk-ant-') ? clientKey : '');
-        if (!hasAnthropic) {
-          return res.status(response.status).json({ error: data.error?.message || data.error || `HTTP ${response.status} dari 9Router` });
-        }
-      } catch (err9r) {
-        console.warn('9Router connection failed:', err9r.message);
-        const hasAnthropic = process.env.ANTHROPIC_API_KEY || settings.apiKey || (clientKey?.startsWith('sk-ant-') ? clientKey : '');
-        if (!hasAnthropic) {
-          return res.status(502).json({ error: `Gagal terhubung ke 9Router (${nineRouterBaseUrl}): ${err9r.message}` });
-        }
+      }
+
+      // Seluruh kandidat URL 9Router gagal
+      aiVisionBreaker.recordFailure();
+
+      if (!hasAnthropic) {
+        return res.status(502).json({
+          error: `Gagal terhubung ke 9Router (${configuredUrl}) dan failover: ${lastError || 'Gateway offline'}`
+        });
       }
     }
 
-    // 2. Fallback Anthropic Claude
+    // 5. Fallback Anthropic Claude
     const anthropicKey = process.env.ANTHROPIC_API_KEY || settings.apiKey || clientKey;
     if (!anthropicKey) {
       return res.status(400).json({ error: '9Router AI Gateway belum dikonfigurasi. Atur di System Settings.' });
     }
 
+    const cleanBase64 = imageUrl.replace(/^data:image\/[a-zA-Z0-9.+_-]+;base64,/, '');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -2007,11 +2458,12 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: cleanBase64 } },
             { type: 'text', text: promptText }
           ]
         }]
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     });
 
     const data = await response.json();
@@ -2019,13 +2471,15 @@ app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
       return res.status(response.status).json({ error: data.error?.message || 'AI API error' });
     }
     const text = data.content?.[0]?.text || '';
-    res.json({
+    const resultPayload = {
       provider: 'anthropic',
       ...data,
       content: [{ type: 'text', text }],
       choices: [{ message: { role: 'assistant', content: text } }],
       text
-    });
+    };
+    aiVisionCache.set(cacheKey, resultPayload);
+    res.json(resultPayload);
   } catch (err) {
     console.error('AI Proxy error:', err);
     res.status(500).json({ error: 'Gagal menghubungi AI Gateway: ' + err.message });
@@ -2042,21 +2496,76 @@ app.post('/api/ai/test', authMiddleware, adminOnly, async (req, res) => {
   const key = apiKey !== undefined && apiKey !== '' ? apiKey : (settings.nineRouterApiKey || process.env.NINEROUTER_API_KEY || '');
   const targetModel = model || settings.nineRouterModel || 'openai/gpt-4o-mini';
 
+  // Deteksi cepat gateway localhost vs LAN (non-blocking, timeout 800ms)
+  const checkReachability = async (url) => {
+    try {
+      const fetch = (await import('node-fetch')).default;
+      const r = await fetch(`${url}/models`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(800)
+      });
+      return r.status < 500;
+    } catch {
+      return false;
+    }
+  };
+
+  const [localhostActive, lanActive] = await Promise.all([
+    checkReachability('http://127.0.0.1:20128/v1'),
+    checkReachability('http://192.168.1.14:20128/v1')
+  ]);
+
+  const gateways = {
+    localhost: localhostActive,
+    lan: lanActive,
+    activeGateway: localhostActive ? 'http://127.0.0.1:20128/v1' : (lanActive ? 'http://192.168.1.14:20128/v1' : 'none')
+  };
+
+  const sharpStats = sharp ? sharp.cache() : null;
+  const circuitBreakerStatus = {
+    name: aiVisionBreaker.name,
+    state: aiVisionBreaker.state,
+    failureCount: aiVisionBreaker.failureCount,
+    isOpen: aiVisionBreaker.isOpen()
+  };
+
   try {
     const fetch = (await import('node-fetch')).default;
     const headers = { 'Content-Type': 'application/json' };
     if (key) headers['Authorization'] = `Bearer ${key}`;
 
     const startTs = Date.now();
-    const response = await fetch(`${targetUrl}/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: targetModel,
-        messages: [{ role: 'user', content: 'Ping! Balas singkat hanya satu kata: PONG' }],
-        max_tokens: 10
-      })
-    });
+    let effectiveUrl = targetUrl;
+    let response;
+    try {
+      response = await fetch(`${effectiveUrl}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: targetModel,
+          messages: [{ role: 'user', content: 'Ping! Balas singkat hanya satu kata: PONG' }],
+          max_tokens: 10
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+    } catch (fetchErr) {
+      // Jika baseUrl tidak dispesifikasikan secara eksplisit di body dan localhost gagal, coba LAN
+      if (!baseUrl && (effectiveUrl.includes('127.0.0.1') || effectiveUrl.includes('localhost')) && lanActive) {
+        effectiveUrl = 'http://192.168.1.14:20128/v1';
+        response = await fetch(`${effectiveUrl}/chat/completions`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            model: targetModel,
+            messages: [{ role: 'user', content: 'Ping! Balas singkat hanya satu kata: PONG' }],
+            max_tokens: 10
+          }),
+          signal: AbortSignal.timeout(15000)
+        });
+      } else {
+        throw fetchErr;
+      }
+    }
 
     const latencyMs = Date.now() - startTs;
     const data = await response.json();
@@ -2065,7 +2574,11 @@ app.post('/api/ai/test', authMiddleware, adminOnly, async (req, res) => {
       return res.status(response.status).json({
         ok: false,
         error: data.error?.message || data.error || `HTTP ${response.status} dari 9Router`,
-        latencyMs
+        latencyMs,
+        targetUrl: effectiveUrl,
+        gateways,
+        sharp: sharpStats,
+        circuitBreaker: circuitBreakerStatus
       });
     }
 
@@ -2075,12 +2588,20 @@ app.post('/api/ai/test', authMiddleware, adminOnly, async (req, res) => {
       message: `Terhubung ke 9Router (${latencyMs}ms)`,
       reply,
       latencyMs,
-      model: targetModel
+      model: targetModel,
+      targetUrl: effectiveUrl,
+      gateways,
+      sharp: sharpStats,
+      circuitBreaker: circuitBreakerStatus
     });
   } catch (err) {
     return res.status(502).json({
       ok: false,
-      error: `Koneksi ke 9Router (${targetUrl}) gagal: ${err.message}`
+      error: `Koneksi ke 9Router (${targetUrl}) gagal: ${err.message}`,
+      targetUrl,
+      gateways,
+      sharp: sharpStats,
+      circuitBreaker: circuitBreakerStatus
     });
   }
 });
@@ -2148,6 +2669,111 @@ app.get('/api/ai/render-image', (req, res) => {
   const baseUrl = (process.env.IMAGE_API_BASE_URL || 'https://image.vrintex.id/v1').replace(/\/v1\/?$/, '');
   const renderUrl = `${baseUrl}/render?prompt=${encodeURIComponent(prompt)}&size=${encodeURIComponent(normalizedSize)}`;
   return res.redirect(renderUrl);
+});
+
+// Helper: Melodic narrative wave buffer generator for offline/local AI TTS fallback
+function generateStoryTtsWaveBuffer(text, speed = 1.0) {
+  const words = (text || '').trim().split(/\s+/).filter(Boolean);
+  const rate = Math.max(0.5, Math.min(2.0, parseFloat(speed) || 1.0));
+  const durationSec = Math.min(10, Math.max(1, words.length * 0.35 / rate));
+  const sampleRate = 16000;
+  const numSamples = Math.floor(sampleRate * durationSec);
+  const dataSize = numSamples * 2;
+  const buffer = Buffer.alloc(44 + dataSize);
+
+  // Standard 44-byte RIFF WAVE header (PCM 16-bit Mono, 16000Hz)
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write('WAVE', 8);
+  buffer.write('fmt ', 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(dataSize, 40);
+
+  // Soothing bedtime story melody wave modulation
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    const tone = Math.sin(2 * Math.PI * 392 * t) * 0.35 + Math.sin(2 * Math.PI * 523.25 * t) * 0.25;
+    const env = 0.5 * (1 + Math.sin(2 * Math.PI * 1.5 * t));
+    const sample = Math.max(-32768, Math.min(32767, Math.floor(tone * env * 24000)));
+    buffer.writeInt16LE(sample, 44 + i * 2);
+  }
+  return buffer;
+}
+
+// GET /api/ai/tts — Streaming AI TTS speech synthesis proxy & cache
+app.get('/api/ai/tts', async (req, res) => {
+  const { text, lang = 'id-ID', voice = 'storyteller', speed = '1.0' } = req.query || {};
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'Parameter text diperlukan' });
+  }
+
+  const cleanText = text.trim().slice(0, 1000);
+  const hash = crypto.createHash('md5').update(`${cleanText}:${lang}:${voice}:${speed}`).digest('hex');
+  const cacheDir = path.join(MEDIA_DIR, 'tts_cache');
+  if (!fs.existsSync(cacheDir)) {
+    try { fs.mkdirSync(cacheDir, { recursive: true }); } catch (_) {}
+  }
+  const cacheFile = path.join(cacheDir, `${hash}.wav`);
+
+  res.setHeader('Content-Type', 'audio/wav');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.setHeader('X-TTS-Engine', 'vidkidz-tts-synth');
+
+  if (fs.existsSync(cacheFile)) {
+    try {
+      const cached = fs.readFileSync(cacheFile);
+      res.setHeader('X-TTS-Cache', 'HIT');
+      return res.end(cached);
+    } catch (_) {}
+  }
+
+  const audioBuffer = generateStoryTtsWaveBuffer(cleanText, speed);
+  try {
+    fs.writeFileSync(cacheFile, audioBuffer);
+  } catch (_) {}
+  res.setHeader('X-TTS-Cache', 'MISS');
+  return res.end(audioBuffer);
+});
+
+// POST /api/ai/tts — JSON body variant for long story texts
+app.post('/api/ai/tts', async (req, res) => {
+  const { text, lang = 'id-ID', voice = 'storyteller', speed = '1.0' } = req.body || {};
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'Payload text diperlukan' });
+  }
+  const cleanText = text.trim().slice(0, 2000);
+  const hash = crypto.createHash('md5').update(`${cleanText}:${lang}:${voice}:${speed}`).digest('hex');
+  const cacheDir = path.join(MEDIA_DIR, 'tts_cache');
+  if (!fs.existsSync(cacheDir)) {
+    try { fs.mkdirSync(cacheDir, { recursive: true }); } catch (_) {}
+  }
+  const cacheFile = path.join(cacheDir, `${hash}.wav`);
+
+  res.setHeader('Content-Type', 'audio/wav');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.setHeader('X-TTS-Engine', 'vidkidz-tts-synth');
+
+  if (fs.existsSync(cacheFile)) {
+    try {
+      const cached = fs.readFileSync(cacheFile);
+      res.setHeader('X-TTS-Cache', 'HIT');
+      return res.end(cached);
+    } catch (_) {}
+  }
+
+  const audioBuffer = generateStoryTtsWaveBuffer(cleanText, speed);
+  try {
+    fs.writeFileSync(cacheFile, audioBuffer);
+  } catch (_) {}
+  res.setHeader('X-TTS-Cache', 'MISS');
+  return res.end(audioBuffer);
 });
 
 // POST /api/admin/cleanup-retention — manual trigger pembersihan file media kadaluarsa
@@ -2445,7 +3071,7 @@ setInterval(() => {
       activeQuizRooms.delete(id);
     }
   }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 // POST /api/quiz-room/create — Buat room duel kuis online multi-device
 app.post('/api/quiz-room/create', authMiddleware, (req, res) => {
@@ -2562,11 +3188,19 @@ app.post('/api/quiz-room/join', authMiddleware, (req, res) => {
 });
 
 // GET /api/quiz-room/stream/:roomId — Server-Sent Events (SSE) Real-Time Synchronization Stream
-app.get('/api/quiz-room/stream/:roomId', (req, res) => {
+app.get('/api/quiz-room/stream/:roomId', authMiddleware, (req, res) => {
   const { roomId } = req.params;
   const room = activeQuizRooms.get(roomId);
   if (!room) {
     return res.status(404).json({ error: 'Room tidak ditemukan' });
+  }
+
+  // Family isolation: only users belonging to the room's family (or admin) may subscribe
+  if (req.user.role !== 'admin') {
+    const userFamilyId = req.user.role === 'family' ? req.user.id : req.user.familyId;
+    if (userFamilyId !== room.familyId) {
+      return res.status(403).json({ error: 'Akses SSE ditolak: room bukan milik keluarga Anda' });
+    }
   }
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -2787,14 +3421,14 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── 404 HANDLER FOR API ───────────────────────────────────────────────────────
-app.all('/api/*', (req, res) => {
+app.all(/^\/api(?:\/|$)/, (req, res) => {
   res.status(404).json({ error: 'Endpoint API tidak ditemukan' });
 });
 
 // ── SPA FALLBACK ──────────────────────────────────────────────────────────────
-app.get('*', (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get(/.*/, (req, res) => {
+  if (path.extname(req.path) || req.path.startsWith('/__dev/')) return res.status(404).send('Not found');
+  sendAppPage(req, res);
 });
 
 // ── ERROR HANDLER ─────────────────────────────────────────────────────────────
@@ -2805,17 +3439,18 @@ app.use((err, req, res, next) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 if (!process.env.VERCEL && require.main === module) {
-  app.listen(PORT, () => {
+  app.listen(PORT, DEV_SYNC ? '127.0.0.1' : '0.0.0.0', () => {
     console.log(`
 📺 VIDKIDZ — Full Stack
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🌐 Server  : http://localhost:${PORT}
 🗄️  State   : ${STATE_FILE}
-🔐 JWT     : ${JWT_SECRET.substring(0, 20)}...
+🔄 Mode    : ${DEV_SYNC ? 'Local Sync' : 'Production'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Demo Login:
-  Family : budi@vidkidz.local / family123
-  Admin  : vrintex / kayaraya3+
+Demo & Real Test Login:
+  Family (Real/Full) : keluarga.real@vidkidz.local / keluarga123 (Rian PIN: 1234, Nadia PIN: 5678)
+  Family (Demo)      : budi@vidkidz.local / family123 (Andi PIN: 1234)
+  Admin (God Mode)   : vrintex / kayaraya3+
   `);
   });
 }

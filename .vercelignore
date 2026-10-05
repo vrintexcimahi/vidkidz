@@ -1,6 +1,12 @@
 node_modules
 data
 .env
+.env.*
+scratch
+test-results
+*.zip
+.git
+.github
 .cf
 asset
 *.db
