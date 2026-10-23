@@ -192,11 +192,11 @@ const INITIAL_STATE = {
       { id:'f2', name:'Keluarga Siti Rahma', email:'siti@vidkidz.local', password:'family456', linkedKids:['k3'], plan:'Basic', createdAt: Date.now()-86400000*10, lastLogin: Date.now()-86400000, phone:'0821-9876-5432' },
     ],
     kids: [
-      { id:'k_real1', name:'Rian', age:8, familyId:'f_real', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], isOnline:true, lastSeen:Date.now(), lockPin:'1234', watchTime:110, totalVideos:25, coins:120, streak:4, badges:['bintang_pertama','rajin_belajar','koin_sultan'], hafalanDone:['h1','h2','h3'], gameStats:{math:{played:10,correct:8},hewan:{played:6,correct:5},tanaman:{played:4,correct:3},warna:{played:5,correct:4}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
-      { id:'k_real2', name:'Nadia', age:6, familyId:'f_real', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], isOnline:false, lastSeen:Date.now()-3600000, lockPin:'5678', watchTime:65, totalVideos:14, coins:75, streak:2, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:4,correct:3},hewan:{played:2,correct:2},tanaman:{played:2,correct:1},warna:{played:3,correct:2}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
-      { id:'k1', name:'Andi', age:7, familyId:'f1', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], isOnline:true, lastSeen:Date.now()-600000, lockPin:'1234', watchTime:142, totalVideos:28, coins:85, streak:3, badges:['bintang_pertama','rajin_belajar'], hafalanDone:['h1','h2','h6'], gameStats:{math:{played:12,correct:9},hewan:{played:8,correct:7},tanaman:{played:5,correct:4},warna:{played:6,correct:5}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
-      { id:'k2', name:'Sari', age:5, familyId:'f1', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], isOnline:false, lastSeen:Date.now()-3600000*3, lockPin:'5678', watchTime:89, totalVideos:15, coins:40, streak:1, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:5,correct:3},hewan:{played:3,correct:2},tanaman:{played:2,correct:2},warna:{played:4,correct:3}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
-      { id:'k3', name:'Doni', age:9, familyId:'f2', avatar:'👦', isLocked:true, allowedAlbums:['alb1','alb2','alb3'], isOnline:true, lastSeen:Date.now()-1800000, lockPin:'9012', watchTime:210, totalVideos:42, coins:160, streak:7, badges:['bintang_pertama','rajin_belajar','hafalan_hero','game_master'], hafalanDone:['h1','h2','h3','h4','h5','h6','h7','h8'], gameStats:{math:{played:30,correct:26},hewan:{played:20,correct:18},tanaman:{played:15,correct:13},warna:{played:12,correct:11}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k_real1', name:'Rian', age:8, familyId:'f_real', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], allowedModules:[], isOnline:true, lastSeen:Date.now(), lockPin:'1234', watchTime:110, totalVideos:25, coins:120, streak:4, badges:['bintang_pertama','rajin_belajar','koin_sultan'], hafalanDone:['h1','h2','h3'], gameStats:{math:{played:10,correct:8},hewan:{played:6,correct:5},tanaman:{played:4,correct:3},warna:{played:5,correct:4}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k_real2', name:'Nadia', age:6, familyId:'f_real', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], allowedModules:[], isOnline:false, lastSeen:Date.now()-3600000, lockPin:'5678', watchTime:65, totalVideos:14, coins:75, streak:2, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:4,correct:3},hewan:{played:2,correct:2},tanaman:{played:2,correct:1},warna:{played:3,correct:2}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k1', name:'Andi', age:7, familyId:'f1', avatar:'👦', isLocked:false, allowedAlbums:['alb1','alb2'], allowedModules:[], isOnline:true, lastSeen:Date.now()-600000, lockPin:'1234', watchTime:142, totalVideos:28, coins:85, streak:3, badges:['bintang_pertama','rajin_belajar'], hafalanDone:['h1','h2','h6'], gameStats:{math:{played:12,correct:9},hewan:{played:8,correct:7},tanaman:{played:5,correct:4},warna:{played:6,correct:5}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k2', name:'Sari', age:5, familyId:'f1', avatar:'👧', isLocked:false, allowedAlbums:['alb1'], allowedModules:[], isOnline:false, lastSeen:Date.now()-3600000*3, lockPin:'5678', watchTime:89, totalVideos:15, coins:40, streak:1, badges:['bintang_pertama'], hafalanDone:['h6','h7'], gameStats:{math:{played:5,correct:3},hewan:{played:3,correct:2},tanaman:{played:2,correct:2},warna:{played:4,correct:3}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
+      { id:'k3', name:'Doni', age:9, familyId:'f2', avatar:'👦', isLocked:true, allowedAlbums:['alb1','alb2','alb3'], allowedModules:[], isOnline:true, lastSeen:Date.now()-1800000, lockPin:'9012', watchTime:210, totalVideos:42, coins:160, streak:7, badges:['bintang_pertama','rajin_belajar','hafalan_hero','game_master'], hafalanDone:['h1','h2','h3','h4','h5','h6','h7','h8'], gameStats:{math:{played:30,correct:26},hewan:{played:20,correct:18},tanaman:{played:15,correct:13},warna:{played:12,correct:11}}, schedule:{ enabled:false, lockStart:'21:00', lockEnd:'07:00' } },
     ]
   },
   albums: [
@@ -346,6 +346,7 @@ function getState() {
   stateCache.users.kids.forEach(k => {
     if (k.avatar === '??' && kidAvatars[k.id]) k.avatar = kidAvatars[k.id];
     if (!k.schedule) k.schedule = { enabled: false, lockStart: '21:00', lockEnd: '07:00' };
+    if (!Array.isArray(k.allowedModules)) k.allowedModules = [];
   });
   const albumEmojis = { alb1: '🔤', alb2: '🔢', alb3: '🐾', alb4: '🎵' };
   stateCache.albums.forEach(a => {
@@ -559,6 +560,15 @@ function authMiddleware(req, res, next) {
     req.user = jwt.verify(token, JWT_SECRET);
     if (req.user.demo && req.user.demoExpiresAt && Date.now() > req.user.demoExpiresAt) {
       return res.status(401).json({ error: 'Sesi demo sudah habis' });
+    }
+    // Session Revocation check (Saran #13)
+    if (req.user.role === 'family' || req.user.role === 'admin') {
+      const state = getState();
+      const collection = req.user.role === 'admin' ? state.users?.admins : state.users?.families;
+      const account = (collection || []).find(u => u.id === req.user.id);
+      if (account && account.tokenVersion && (req.user.tokenVersion || 0) < account.tokenVersion) {
+        return res.status(401).json({ error: 'Sesi telah dicabut. Silakan login kembali.' });
+      }
     }
     next();
   } catch (e) {
@@ -817,9 +827,10 @@ app.post('/api/auth/register', registerLimiter, (req, res) => {
     action: `Mendaftar akun Family via ${method === 'phone' ? 'telepon' : 'email'}`,
     type: 'admin'
   });
+  family.tokenVersion = 1;
   saveState(state);
 
-  const token = signToken({ id: family.id, role: 'family', name: family.name });
+  const token = signToken({ id: family.id, role: 'family', name: family.name, tokenVersion: 1 });
   const { password: _, ...safeFamily } = family;
   res.status(201).json({ token, user: { ...safeFamily, role: 'family' }, role: 'family', isNew: true });
 });
@@ -879,7 +890,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
         if (dev) { dev.userId = admin.id; dev.userName = admin.name; dev.userType = 'admin'; dev.lastSeen = Date.now(); }
       }
       saveState(state);
-      const token = signToken({ id: admin.id, role: 'admin', name: admin.name });
+      const token = signToken({ id: admin.id, role: 'admin', name: admin.name, tokenVersion: admin.tokenVersion || 1 });
       const { password, ...safeAdmin } = admin;
       return res.json({ token, user: { ...safeAdmin, role: 'admin' }, role: 'admin' });
     }
@@ -902,7 +913,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
       }
       saveState(state);
       const demoMeta = getDemoMeta('family', family.email);
-      const token = signToken({ id: family.id, role: 'family', name: family.name, ...demoMeta });
+      const token = signToken({ id: family.id, role: 'family', name: family.name, tokenVersion: family.tokenVersion || 1, ...demoMeta });
       const { password, ...safeFamily } = family;
       return res.json({ token, user: { ...safeFamily, role: 'family', demoAccess: demoMeta.demo, demoExpiresAt: demoMeta.demoExpiresAt }, role: 'family', ...demoMeta });
     }
@@ -973,13 +984,31 @@ app.post('/api/kids/unlock', unlockLimiter, authMiddleware, (req, res) => {
     kid = (state.users.kids || []).find(k => k.id === kidId);
   }
   if (!kid) return res.status(404).json({ error: 'Data anak tidak ditemukan' });
+
+  const now = Date.now();
+  const failedInfo = unlockFailures.get(kid.id) || { count: 0, lastAttempt: 0, lockedUntil: 0 };
+
+  // Check active lockout (Saran #35)
+  if (failedInfo.lockedUntil && now < failedInfo.lockedUntil) {
+    const waitSec = Math.ceil((failedInfo.lockedUntil - now) / 1000);
+    res.setHeader('Retry-After', String(waitSec));
+    return res.status(429).json({
+      error: `PIN terkunci sementara karena terlalu banyak percobaan gagal. Coba lagi dalam ${waitSec} detik.`,
+      retryAfter: waitSec
+    });
+  }
+
   if (String(kid.lockPin) !== pin) {
-    const failedInfo = unlockFailures.get(kid.id) || { count: 0, lastAttempt: 0 };
-    if (Date.now() - failedInfo.lastAttempt > 5 * 60 * 1000) {
+    if (now - failedInfo.lastAttempt > 5 * 60 * 1000) {
       failedInfo.count = 0;
     }
     failedInfo.count++;
-    failedInfo.lastAttempt = Date.now();
+    failedInfo.lastAttempt = now;
+
+    // Exponential backoff lockout: 5+ failed attempts = 5 min lockout (Saran #35)
+    if (failedInfo.count >= 5) {
+      failedInfo.lockedUntil = now + (5 * 60 * 1000);
+    }
     unlockFailures.set(kid.id, failedInfo);
 
     if (failedInfo.count >= 5) {
@@ -1169,6 +1198,34 @@ app.post('/api/auth/logout', authMiddleware, (req, res) => {
     if (kid) { kid.isOnline = false; kid.lastSeen = Date.now(); saveState(state); }
   }
   res.json({ success: true });
+});
+
+// POST /api/auth/revoke-sessions — Keluar dari semua perangkat lain (Saran #13)
+app.post('/api/auth/revoke-sessions', authMiddleware, (req, res) => {
+  if (req.user.demo) return res.status(403).json({ error: 'Akun demo tidak dapat mencabut sesi' });
+  const state = getState();
+  const collection = req.user.role === 'admin' ? state.users?.admins : state.users?.families;
+  const account = (collection || []).find(u => u.id === req.user.id);
+  if (!account) return res.status(404).json({ error: 'Akun tidak ditemukan' });
+
+  account.tokenVersion = (account.tokenVersion || 1) + 1;
+  saveState(state);
+
+  const demoMeta = getDemoMeta(req.user.role, req.user.id);
+  const newToken = signToken({
+    id: account.id,
+    role: req.user.role,
+    name: account.name,
+    tokenVersion: account.tokenVersion,
+    ...demoMeta
+  });
+
+  res.json({
+    success: true,
+    message: 'Semua sesi lain berhasil dicabut',
+    token: newToken,
+    tokenVersion: account.tokenVersion
+  });
 });
 
 // ── STATE ROUTES ──────────────────────────────────────────────────────────────
@@ -1401,6 +1458,11 @@ function verifyAndHealState(state) {
     if (!Number.isFinite(coinsNum) || coinsNum < 0) {
       issues.push(`Kid ${kid.id} had invalid coins value '${kid.coins}' -> reset to 0`);
       kid.coins = 0;
+      healedCount++;
+    }
+    if (!Array.isArray(kid.allowedModules)) {
+      issues.push(`Kid ${kid.id} had missing or non-array allowedModules -> reset to []`);
+      kid.allowedModules = [];
       healedCount++;
     }
   }

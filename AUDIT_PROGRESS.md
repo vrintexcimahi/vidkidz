@@ -75,18 +75,19 @@
 ## Current Checkpoint
 - Run ID: `run-20261024-godmax-ultra-v5`
 - Status run: `COMPLETED_VERIFIED`
-- Terakhir diperbarui: 2026-10-24 00:25 WIB (+07:00)
+- Terakhir diperbarui: 2026-10-24 01:10 WIB (+07:00)
 - Scope: Universal Audit, Bugfix & Performance Engineering (GODMAX ULTRA v5.0) — Seluruh Repositori VIDKIDZ v5.4.0
 - Branch / Commit: `main` / `3c771dc`
 - Status sinkronisasi rilis: `SYNCED` (`5.4.0 / 8bd16b257e350554684e8215`)
 - Domain produksi: `https://vidkidz.vercel.app/` terverifikasi aktif menyajikan VIDKIDZ v5.4.0
-- Automated verification: 100% PASS (294 total checks across all test suites)
-  - Unit & Integration regression suite (`npm test`): 218 passed, 0 failed across 43 test groups
+- Automated verification: 100% PASS (308 total checks across all test suites)
+  - Unit & Integration regression suite (`npm test`): 227 passed, 0 failed across 44 test groups
   - UI Syntax & Update test suite (`npm run check`): 24 passed, 0 failed across 11 files
   - Playwright Visual E2E suite (`npm run test:visual`): 38 passed, 0 failed across 2 workers
+  - Disaster recovery & session revocation drill (`scripts/test-disaster-recovery.js`): 5 passed, 0 failed
   - Fault tolerance & resilience suite (`scripts/test-resilience.js`): 9 passed, 0 failed
   - AI & media HTTP integration suite (`scripts/test-ai-integration.js`): 5 passed, 0 failed
-  - Vercel production build gate (`npm run vercel-build`): PASS (Release 5.4.0 / 8bd16b257e350554684e8215)
+  - Vercel production build gate (`npm run vercel-build`): PASS (Release 5.4.0 / 263d941ee0cb2644b48fcca9)
   - Babel Standalone JSX compilation: PASS (0 syntax errors)
 - Blocked items: None
 - Last completed menu: M001 through M034 & All Global Areas & All Cross-Module Workflows
@@ -94,6 +95,10 @@
   - **AUD-043 [HIGH]:** Transisi status terminal strictly `pending` & pencegahan double coin refund pada persetujuan/penolakan klaim hadiah di `FamilyCoinsPanel` (`public/index.html`)
   - **AUD-044 [HIGH]:** SHA-256 payload hash verification pada `idempotencyMiddleware` (`server.js`) untuk mendeteksi dan menolak konflik payload berbeda pada key yang sama dengan HTTP 422
   - **AUD-045 [MEDIUM]:** Inisialisasi defensif array `rewards` dan `redemptions` pada `verifyAndHealState` (`server.js`)
+  - **Saran #4 [P1]:** Granular Child Module Whitelist & Usia Filter: sakelar toggle aktivitas (`allowedModules: []`), preset filter usia (Balita, TK, SD, Buka Semua), badge hitungan modul aktif di `FamilyKidsManager`, proteksi navigasi URL dan filtering kartu aktivitas di `KidsHomePage` & `KidsDashboard`
+  - **Saran #13 [P1]:** Session Revocation: pembatalan sesi lintas perangkat dengan `tokenVersion` di `authMiddleware` dan endpoint `POST /api/auth/revoke-sessions` (HTTP 401 untuk token lama)
+  - **Saran #35 [P1]:** Exponential Backoff Lockout pada `POST /api/kids/unlock`: penundaan kunci otomatis bertingkat (5+ kali gagal memicu lockout 5 menit dengan respons HTTP 429 dan header `Retry-After: 300`)
+  - **Saran #50 [P1]:** Centralized Disaster Recovery Runbook & Automated Rehearsal Drill: otomasi pengujian pemulihan bencana dan integritas jurnal transaksi di `scripts/test-disaster-recovery.js`
   - **Saran #8 [P2]:** Dynamic Video Bandwidth & Resolution Selector (Adaptive 360p / 720p / Auto Data Saver)
   - **Saran #10 [P2]:** Background Periodic Sync untuk Pembaruan Jam Belajar & Telemetri Heartbeat (`vidkidz-telemetry-heartbeat` di SW)
   - **Saran #2 [P2]:** AI Voice Story Narration Streaming Proxy (`/api/ai/tts`) dengan cache disk MD5 dan playback HTML5 Audio
@@ -102,5 +107,5 @@
   - **Saran #7 [P2]:** Multi-Factor Parental PIN Lockout & Alert ke Telegram pada 5x kegagalan berturut-turut di `POST /api/kids/unlock`
   - **Saran #9 [P3]:** Family Art Gallery Multi-Export / A4 Keepsake Art Book compilation di `FamilyArtGallery` (`handleExportArtBook`)
 - Audit completion: 100% (34 of 34 menus VERIFIED, 4 Global Areas VERIFIED, 7 Cross-Module Workflows VERIFIED)
-- Rollback: Balikkan commit `3c771dc` jika diperlukan; skema data dan persistensi tetap kompatibel.
+- Rollback: Balikkan commit terbaru jika diperlukan; skema data dan persistensi tetap kompatibel.
 

@@ -12555,17 +12555,28 @@ function AdminDeveloperMode({ initialTab } = {}) {
   );
 }
 
+const KID_ACTIVITY_MODULES = [
+  { id: 'videos', label: 'Tonton Video', icon: '📺', badge: 'Semua Usia' },
+  { id: 'drawing', label: 'Studio Mewarnai', icon: '🎨', badge: 'Balita (2-4 thn)' },
+  { id: 'stories', label: 'Dongeng Santai', icon: '📚', badge: 'Semua Usia' },
+  { id: 'games', label: 'Game Seru', icon: '🎮', badge: 'TK / SD (5+ thn)' },
+  { id: 'duel', label: 'Duel Kuis', icon: '⚡', badge: 'SD (7+ thn)' },
+  { id: 'hafalan', label: 'Hafalan Mengaji', icon: '📖', badge: 'Semua Usia' },
+  { id: 'photos', label: 'Foto Kenangan', icon: '📷', badge: 'Semua Usia' },
+  { id: 'coins', label: 'Dompet Koin', icon: '🪙', badge: 'Semua Usia' }
+];
+
 function AddKidModal({ onClose, familyId }) {
   const { state, updateState, addLog, showNotif, currentUser } = useContext(AppCtx);
   const forcedFamilyId = familyId || (currentUser.role === ROLES.FAMILY ? currentUser.id : '');
   const isFamilyOwned = !!forcedFamilyId;
-  const [form, setForm] = useState({ name:'', age:5, avatar:'👦', familyId:forcedFamilyId, lockPin:'1234' });
+  const [form, setForm] = useState({ name:'', age:5, avatar:'👦', familyId:forcedFamilyId, lockPin:'1234', allowedModules: KID_ACTIVITY_MODULES.map(m=>m.id) });
   const handle = () => {
     if (!form.name || !form.familyId || !form.lockPin || !/^\d{4}$/.test(form.lockPin)) {
       showNotif('Nama, keluarga, dan PIN 4-digit wajib diisi', 'error');
       return;
     }
-    const newKid = { ...form, id:uid(), isLocked:false, allowedAlbums:[], isOnline:false, lastSeen:now(), watchTime:0, totalVideos:0, coins:10, streak:0, badges:[], hafalanDone:[], gameStats:{math:{played:0,correct:0},hewan:{played:0,correct:0},tanaman:{played:0,correct:0},warna:{played:0,correct:0}} };
+    const newKid = { ...form, id:uid(), isLocked:false, allowedAlbums:[], allowedModules:form.allowedModules||[], isOnline:false, lastSeen:now(), watchTime:0, totalVideos:0, coins:10, streak:0, badges:[], hafalanDone:[], gameStats:{math:{played:0,correct:0},hewan:{played:0,correct:0},tanaman:{played:0,correct:0},warna:{played:0,correct:0}} };
     updateState(s => { s.users.kids.push(newKid); const fam = s.users.families.find(f=>f.id===form.familyId); if (fam) fam.linkedKids = [...new Set([...(fam.linkedKids||[]), newKid.id])]; });
     addLog(currentUser.name, `Menambah anak baru: ${form.name}`, isFamilyOwned ? 'edit' : 'admin');
     showNotif('Anak berhasil ditambahkan'); onClose();
@@ -12587,23 +12598,95 @@ function AddKidModal({ onClose, familyId }) {
 function EditKidModal({ data, onClose }) {
   const { updateState, addLog, showNotif, currentUser } = useContext(AppCtx);
   const [form, setForm] = useState({ ...data });
+  const [allowedModules, setAllowedModules] = useState(() => {
+    if (Array.isArray(data.allowedModules) && data.allowedModules.length > 0) {
+      return [...data.allowedModules];
+    }
+    return KID_ACTIVITY_MODULES.map(m => m.id);
+  });
+
+  const toggleModule = (id) => {
+    setAllowedModules(prev => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) {
+          showNotif('Minimal 1 aktivitas harus aktif untuk anak', 'warn');
+          return prev;
+        }
+        return prev.filter(m => m !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const applyPreset = (preset) => {
+    if (preset === 'toddler') {
+      setAllowedModules(['drawing', 'stories', 'videos', 'photos']);
+      setForm(f => ({ ...f, age: 3 }));
+    } else if (preset === 'kindergarten') {
+      setAllowedModules(['drawing', 'stories', 'videos', 'games', 'hafalan', 'photos', 'coins']);
+      setForm(f => ({ ...f, age: 5 }));
+    } else if (preset === 'elementary') {
+      setAllowedModules(KID_ACTIVITY_MODULES.map(m => m.id));
+      setForm(f => ({ ...f, age: 8 }));
+    } else if (preset === 'all') {
+      setAllowedModules(KID_ACTIVITY_MODULES.map(m => m.id));
+    }
+  };
+
   const handle = () => {
     if (!form.name || !form.lockPin) { showNotif('Nama dan PIN wajib diisi','error'); return; }
     updateState(s => {
       const idx = s.users.kids.findIndex(k=>k.id===data.id && k.familyId===currentUser.id);
-      if (idx >= 0) s.users.kids[idx] = { ...s.users.kids[idx], name:form.name, age:parseInt(form.age)||1, avatar:form.avatar, lockPin:form.lockPin };
+      if (idx >= 0) s.users.kids[idx] = { 
+        ...s.users.kids[idx], 
+        name: form.name, 
+        age: parseInt(form.age)||1, 
+        avatar: form.avatar, 
+        lockPin: form.lockPin,
+        allowedModules: allowedModules
+      };
     });
-    addLog(currentUser.name, `Mengubah profil anak: ${form.name}`, 'edit');
+    addLog(currentUser.name, `Mengubah profil & modul anak: ${form.name}`, 'edit');
     showNotif('Profil anak diperbarui'); onClose();
   };
   return (
-    <Modal open title={<span style={{display:'inline-flex',alignItems:'center',gap:8}}><UiIcon name="edit" size={18} color="var(--primary)" /> Edit Anak</span>} onClose={onClose}>
+    <Modal open title={<span style={{display:'inline-flex',alignItems:'center',gap:8}}><UiIcon name="edit" size={18} color="var(--primary)" /> Edit Anak & Hak Akses Modul</span>} onClose={onClose}>
       <div style={{marginBottom:12}}><label style={{display:'block',fontSize:11,color:'var(--t3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:4,fontFamily:'var(--font-display)'}}>Nama</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
       <div style={{marginBottom:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
         <div><label style={{display:'block',fontSize:11,color:'var(--t3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:4,fontFamily:'var(--font-display)'}}>Usia</label><input type="number" min="1" max="18" value={form.age} onChange={e=>setForm({...form,age:parseInt(e.target.value)||1})} /></div>
         <div><label style={{display:'block',fontSize:11,color:'var(--t3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:4,fontFamily:'var(--font-display)'}}>Avatar</label><select value={form.avatar} onChange={e=>setForm({...form,avatar:e.target.value})}>{['👦','👧','🧒','👶','🧑'].map(a=><option key={a} value={a}>{a}</option>)}</select></div>
       </div>
-      <div style={{marginBottom:16}}><label style={{display:'block',fontSize:11,color:'var(--t3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:4,fontFamily:'var(--font-display)'}}>PIN (4 digit)</label><input maxLength={4} value={form.lockPin} onChange={e=>setForm({...form,lockPin:e.target.value})} /></div>
+      <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,color:'var(--t3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:4,fontFamily:'var(--font-display)'}}>PIN (4 digit)</label><input maxLength={4} value={form.lockPin} onChange={e=>setForm({...form,lockPin:e.target.value})} /></div>
+      
+      {/* Saran #4: Granular Child Module Whitelist & Usia Filter */}
+      <div style={{marginBottom:14,background:'var(--bg-secondary, rgba(255,255,255,0.03))',padding:'10px 12px',borderRadius:12,border:'1px solid var(--border)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <label style={{fontSize:11,color:'var(--t3)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',fontFamily:'var(--font-display)'}}>
+            Preset Filter Usia (Saran #4)
+          </label>
+          <span style={{fontSize:11,color:'var(--primary)',fontWeight:700}}>{allowedModules.length}/8 Aktif</span>
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+          <button type="button" className="btn btn-sm btn-ghost" style={{fontSize:11,padding:'4px 8px'}} onClick={()=>applyPreset('toddler')}>🍼 Balita (2-4 thn)</button>
+          <button type="button" className="btn btn-sm btn-ghost" style={{fontSize:11,padding:'4px 8px'}} onClick={()=>applyPreset('kindergarten')}>🎒 TK (5-6 thn)</button>
+          <button type="button" className="btn btn-sm btn-ghost" style={{fontSize:11,padding:'4px 8px'}} onClick={()=>applyPreset('elementary')}>🏫 SD (7+ thn)</button>
+          <button type="button" className="btn btn-sm btn-ghost" style={{fontSize:11,padding:'4px 8px'}} onClick={()=>applyPreset('all')}>✨ Semua</button>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,maxHeight:160,overflowY:'auto'}}>
+          {KID_ACTIVITY_MODULES.map(m => {
+            const checked = allowedModules.includes(m.id);
+            return (
+              <label key={m.id} className="module-whitelist-item" style={{display:'flex',alignItems:'center',gap:6,padding:'6px 8px',borderRadius:8,background:checked?'rgba(16,185,129,0.09)':'transparent',border:`1px solid ${checked?'var(--primary)':'var(--border)'}`,cursor:'pointer',userSelect:'none'}}>
+                <input type="checkbox" checked={checked} onChange={()=>toggleModule(m.id)} style={{accentColor:'var(--primary)',cursor:'pointer'}} />
+                <span style={{fontSize:14}}>{m.icon}</span>
+                <span style={{fontSize:11,fontWeight:checked?700:500,color:'var(--t1)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{m.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex gap-3 justify-end"><button className="btn btn-ghost" onClick={onClose}>Batal</button><button className="btn btn-family" onClick={handle}>Simpan</button></div>
     </Modal>
   );
@@ -14475,7 +14558,10 @@ function FamilyKidsManager({ myKids, selectedKidId, setSelectedKidId, setPage, s
                     </div>
                   </div>
                 </td>
-                <td>{kid.age} tahun</td>
+                <td>
+                  <div>{kid.age} tahun</div>
+                  <small style={{display:'block',color:'var(--t3)',fontSize:10,marginTop:2}}>{(kid.allowedModules && kid.allowedModules.length > 0) ? `${kid.allowedModules.length}/8 Modul` : '8/8 Modul'}</small>
+                </td>
                 <td><span className="badge badge-coin"><PixarCoin size={14} /> {kid.coins||0}</span></td>
                 <td><span style={{color:'var(--warn)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><img src="/assets/icons/pixar/flame.webp" alt="" style={{width:14,height:14,objectFit:'contain'}} /> {kid.streak||0}</span></td>
                 <td><div className="flex gap-1 flex-wrap"><span className={`badge ${kid.isOnline?'badge-success':'badge-gray'}`}>{kid.isOnline?'Online':'Offline'}</span>{kid.isLocked&&<span className="badge badge-danger"><UiIcon name="lock" size={11} /></span>}</div></td>
@@ -17696,6 +17782,7 @@ function KidsNavigation({ items: MENU, page, onNavigate: setPage }) {
       <nav className="kids-tabbar" aria-label="Menu utama anak">
         {['home','videos','drawing','stories'].map(id => {
           const item = MENU.find(m=>m.id===id);
+          if (!item) return null;
           const active = page===id || (page==='player' && id==='videos');
           return <button key={id} type="button" aria-current={active?'page':undefined} onClick={()=>setPage(id)}><IconSlot icon={item.icon} size={32}/><span>{item.label}</span></button>;
         })}
@@ -17803,6 +17890,21 @@ function KidsDashboard() {
   const isCurfew = !curfewDismissed && isCurfewActive(kid?.schedule, kid);
   const circadian = getCircadianStatus(kid?.schedule, kid);
 
+  // Saran #4: Granular Child Module Whitelist & Usia Filter
+  const hasModuleFilter = Array.isArray(kid?.allowedModules) && kid.allowedModules.length > 0;
+  const isModuleAllowed = (moduleId) => {
+    if (!hasModuleFilter) return true;
+    if (moduleId === 'home') return true;
+    if (moduleId === 'player') return kid.allowedModules.includes('videos');
+    return kid.allowedModules.includes(moduleId);
+  };
+
+  useEffect(() => {
+    if (page !== 'home' && !isModuleAllowed(page)) {
+      setPage('home');
+    }
+  }, [page, kid?.allowedModules]);
+
   if (kid?.isLocked || isCurfew) {
     return <KidsLockScreen kid={kid} isCurfew={isCurfew && !kid?.isLocked} onDismissCurfew={()=>setCurfewDismissed(true)} />;
   }
@@ -17815,7 +17917,9 @@ function KidsDashboard() {
 
   const albumVideos = selectedAlb ? DEMO_VIDEOS.filter(v => selectedAlb.videos.includes(v.id)) : [];
 
-  const MENU = KIDS_MENU;  return (
+  const MENU = hasModuleFilter 
+    ? KIDS_MENU.filter(m => m.id === 'home' || kid.allowedModules.includes(m.id))
+    : KIDS_MENU;  return (
     <div className={`kids-app app-mobile-frame kids-ui${circadian?.active ? ' circadian-night' : ''}`} style={{height:'100%',maxHeight:'100%',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
       {/* AMBIENT FLOATING DECORATIONS */}
       <div className="kids-bubble-decor" style={{width:140,height:140,top:'6%',left:'-40px',animationDelay:'0s'}} />
@@ -18012,6 +18116,13 @@ function KidsHomePage({ kid, onNavigate }) {
   const totalGamesPlayed = Object.values(kid?.gameStats||{}).reduce((s,g)=>s+(g.played||0),0);
   const totalGamesCorrect = Object.values(kid?.gameStats||{}).reduce((s,g)=>s+(g.correct||0),0);
 
+  // Saran #4: Granular Child Module Whitelist & Usia Filter
+  const hasModuleFilter = Array.isArray(kid?.allowedModules) && kid.allowedModules.length > 0;
+  const isModuleAllowed = (moduleId) => {
+    if (!hasModuleFilter) return true;
+    return kid.allowedModules.includes(moduleId);
+  };
+
   return (
     <div style={{padding:'20px 20px'}}>
       {/* 3D HERO BANNER - MODE ANAK */}
@@ -18104,6 +18215,7 @@ function KidsHomePage({ kid, onNavigate }) {
         <span>Mau ngapain hari ini?</span>
       </h3>
       <div className="kid-grid" style={{marginBottom: 16}}>
+        {isModuleAllowed('stories') && (
         <div className="kid-card lilac shimmer-container" onClick={()=>onNavigate('stories')}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18113,6 +18225,8 @@ function KidsHomePage({ kid, onNavigate }) {
           <p>Kisah budi pekerti & audio book</p>
           <i className="card-arrow" style={{background:'#7c3aed',color:'#fff'}}>›</i>
         </div>
+        )}
+        {isModuleAllowed('games') && (
         <div className="kid-card sky shimmer-container" onClick={()=>onNavigate('games')}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18122,6 +18236,8 @@ function KidsHomePage({ kid, onNavigate }) {
           <p>Matematika, tebak gambar & kuis</p>
           <i className="card-arrow" style={{background:'#2563eb',color:'#fff'}}>›</i>
         </div>
+        )}
+        {isModuleAllowed('hafalan') && (
         <div className="kid-card mint shimmer-container" onClick={()=>onNavigate('hafalan')}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18131,6 +18247,8 @@ function KidsHomePage({ kid, onNavigate }) {
           <p>Setor surat pendek & doa harian</p>
           <i className="card-arrow" style={{background:'#059669',color:'#fff'}}>›</i>
         </div>
+        )}
+        {isModuleAllowed('videos') && (
         <div className="kid-card blue-soft shimmer-container" onClick={()=>onNavigate('videos')}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18140,6 +18258,8 @@ function KidsHomePage({ kid, onNavigate }) {
           <p>Kanal animasi pilihan ramah anak</p>
           <i className="card-arrow" style={{background:'#4f46e5',color:'#fff'}}>›</i>
         </div>
+        )}
+        {isModuleAllowed('coins') && (
         <div className="kid-card amber-soft shimmer-container" onClick={()=>onNavigate('coins')}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18149,6 +18269,8 @@ function KidsHomePage({ kid, onNavigate }) {
           <p>Lihat hadiah & klaim koinmu</p>
           <i className="card-arrow" style={{background:'#d97706',color:'#fff'}}>›</i>
         </div>
+        )}
+        {isModuleAllowed('photos') && (
         <div className="kid-card pink-soft shimmer-container" onClick={()=>onNavigate('photos')}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18158,10 +18280,13 @@ function KidsHomePage({ kid, onNavigate }) {
           <p>Album kenangan keluarga</p>
           <i className="card-arrow" style={{background:'#db2777',color:'#fff'}}>›</i>
         </div>
+        )}
       </div>
 
       {/* ADDITIONAL CREATIVE APPS (Mewarnai & Duel) */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+      {(isModuleAllowed('duel') || isModuleAllowed('drawing')) && (
+      <div style={{display:'grid',gridTemplateColumns:(isModuleAllowed('duel') && isModuleAllowed('drawing'))?'1fr 1fr':'1fr',gap:12}}>
+        {isModuleAllowed('duel') && (
         <div className="kids-action-tile shimmer-container" onClick={()=>onNavigate('duel')} style={{background:'linear-gradient(145deg, rgba(245,158,11,0.22), rgba(245,158,11,0.08))',borderColor:'#f59e0b66',boxShadow:'0 10px 26px rgba(245,158,11,0.2)',padding:14}}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18174,6 +18299,8 @@ function KidsHomePage({ kid, onNavigate }) {
           <div style={{fontFamily:'var(--font-display)',fontWeight:900,color:'#fff',fontSize:14}}>Duel Kuis Pintar</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,0.7)',marginTop:2}}>Tantang saudara atau AI</div>
         </div>
+        )}
+        {isModuleAllowed('drawing') && (
         <div className="kids-action-tile shimmer-container" onClick={()=>onNavigate('drawing')} style={{background:'linear-gradient(145deg, rgba(236,72,153,0.22), rgba(236,72,153,0.08))',borderColor:'#ec489966',boxShadow:'0 10px 26px rgba(236,72,153,0.2)',padding:14}}>
           <span className="glass-shine-beam" aria-hidden="true" />
           <span className="glass-glint" aria-hidden="true">✦</span>
@@ -18186,7 +18313,9 @@ function KidsHomePage({ kid, onNavigate }) {
           <div style={{fontFamily:'var(--font-display)',fontWeight:900,color:'#fff',fontSize:14}}>Studio Mewarnai</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,0.7)',marginTop:2}}>Mewarnai fabel & kanvas</div>
         </div>
+        )}
       </div>
+      )}
     </div>
   );
 }

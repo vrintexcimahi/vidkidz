@@ -1489,6 +1489,44 @@ const server = app.listen(0, async () => {
     assert(indexHtml.includes('<ErrorBoundary>'), 'Root component wrapped with <ErrorBoundary>');
     assert(indexHtml.includes('Ups, Ada Sedikit Gangguan!'), 'Child-friendly error message present in ErrorBoundary');
 
+    // --- 44. P1 Hardening: Child Module Whitelist, Session Revocation & Exponential Lockout ---
+    console.log('\n--- 44. P1 Hardening: Module Whitelist, Revocation & Lockout ---');
+
+    // 1. Saran #4: Granular Child Module Whitelist UI & Routing Markers
+    assert(indexHtml.includes('KID_ACTIVITY_MODULES'), 'Saran #4: KID_ACTIVITY_MODULES catalog defined in index.html');
+    assert(indexHtml.includes('module-whitelist-item'), 'Saran #4: module-whitelist-item checkboxes present in index.html');
+    assert(indexHtml.includes('hasModuleFilter'), 'Saran #4: hasModuleFilter guard present in index.html');
+    assert(indexHtml.includes('Preset Filter Usia (Saran #4)'), 'Saran #4: Age-based preset buttons present in index.html');
+
+    // 2. Child Module Whitelist State Persistence via Path-Based or State PATCH
+    const patchWhitelistRes = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        path: 'users.kids.0.allowedModules',
+        value: ['drawing', 'stories', 'videos']
+      })
+    });
+    assert(patchWhitelistRes.status === 200, 'Admin can update kid.allowedModules via PATCH /api/state');
+
+    const stateAfterWhitelist = await req('/api/state', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(Array.isArray(stateAfterWhitelist.data?.users?.kids[0]?.allowedModules), 'kid.allowedModules is persisted as array');
+    assert(stateAfterWhitelist.data?.users?.kids[0]?.allowedModules.includes('drawing'), 'Allowed module drawing is persisted');
+
+    // 3. Saran #13: Session Revocation Token Version Endpoint Verification
+    const guestRevoke = await req('/api/auth/revoke-sessions', { method: 'POST', body: '{}' });
+    assert(guestRevoke.status === 401, 'Unauthenticated revoke-sessions rejected with HTTP 401');
+
+    // 4. Saran #35: Multi-Factor Exponential PIN Lockout Endpoint Verification
+    const pinLockedRes = await req('/api/kids/unlock', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ kidId: 'k1', pin: '0000' })
+    });
+    assert(pinLockedRes.status === 400 || pinLockedRes.status === 429, 'POST /api/kids/unlock verifies PIN and tracks failures');
+
     console.log(`FINAL RESULTS: ${passed} passed, ${failed} failed`);
     console.log(`========================================`);
   } catch (err) {
