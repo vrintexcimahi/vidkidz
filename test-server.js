@@ -1157,6 +1157,13 @@ const server = app.listen(0, async () => {
     });
     assert(idemRes2.ok && (idemRes2.headers?.get ? idemRes2.headers.get('x-idempotency-replay') : idemRes2.headers?.['x-idempotency-replay']) === 'true', 'Second request with same Idempotency-Key returns replayed response');
 
+    const idemResConflict = await req('/api/state', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${artistFamToken}`, 'Idempotency-Key': idemKey },
+      body: JSON.stringify({ path: 'rewards', value: [{ id: 'rw_conflict' }] })
+    });
+    assert(idemResConflict.status === 422, 'Conflicting payload with same Idempotency-Key rejected with HTTP 422');
+
     // Test Multiple Failed PIN Attempts & Security Alert Tracking (Feature #7)
     for (let i = 0; i < 5; i++) {
       await req('/api/kids/unlock', {

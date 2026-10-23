@@ -633,9 +633,13 @@ function idempotencyMiddleware(req, res, next) {
   const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
   if (!idempotencyKey) return next();
 
+  const payloadHash = crypto.createHash('sha256').update(JSON.stringify(req.body || {})).digest('hex');
   const cacheKey = `${req.user?.id || 'anon'}_${req.method}_${req.path}_${idempotencyKey}`;
   const cached = idempotencyStore.get(cacheKey);
   if (cached) {
+    if (cached.payloadHash && cached.payloadHash !== payloadHash) {
+      return res.status(422).json({ error: 'Idempotency key conflict: payload berbeda dengan permintaan sebelumnya' });
+    }
     res.setHeader('X-Idempotency-Replay', 'true');
     return res.status(cached.status).json(cached.body);
   }
@@ -646,7 +650,8 @@ function idempotencyMiddleware(req, res, next) {
       idempotencyStore.set(cacheKey, {
         timestamp: Date.now(),
         status: res.statusCode,
-        body
+        body,
+        payloadHash
       });
     }
     return originalJson(body);
@@ -1379,6 +1384,8 @@ function verifyAndHealState(state) {
   if (!Array.isArray(state.parentStoryAudios)) { state.parentStoryAudios = []; healedCount++; }
   if (!Array.isArray(state.quizDuels)) { state.quizDuels = []; healedCount++; }
   if (!Array.isArray(state.curfewRequests)) { state.curfewRequests = []; healedCount++; }
+  if (!Array.isArray(state.rewards)) { state.rewards = []; healedCount++; }
+  if (!Array.isArray(state.redemptions)) { state.redemptions = []; healedCount++; }
   if (!state.systemSettings || typeof state.systemSettings !== 'object') { state.systemSettings = {}; healedCount++; }
 
   // 2. Relational integrity: kid.familyId must point to an existing family

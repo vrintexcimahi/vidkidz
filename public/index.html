@@ -14517,10 +14517,10 @@ function FamilyCoinsPanel({ myKids }) {
 
   const approveRedemption = (redId) => {
     const red = state.redemptions.find(r=>r.id===redId);
-    if (!red) return;
+    if (!red || red.status !== 'pending') return;
     updateState(s => {
       const r = s.redemptions.find(x=>x.id===redId);
-      if (r) r.status = 'approved';
+      if (r && r.status === 'pending') r.status = 'approved';
     });
     addLog(currentUser.name, `Menyetujui klaim "${red.rewardName}" oleh ${red.kidName}`, 'coin');
     showNotif(`Klaim ${red.rewardName} disetujui! 🎉`);
@@ -14528,13 +14528,15 @@ function FamilyCoinsPanel({ myKids }) {
 
   const rejectRedemption = (redId) => {
     const red = state.redemptions.find(r=>r.id===redId);
-    if (!red) return;
+    if (!red || red.status !== 'pending') return;
     updateState(s => {
       const r = s.redemptions.find(x=>x.id===redId);
-      if (r) r.status = 'rejected';
-      // refund coins
-      const k = s.users.kids.find(u=>u.id===red.kidId);
-      if (k) k.coins = (k.coins||0) + red.cost;
+      if (r && r.status === 'pending') {
+        r.status = 'rejected';
+        // refund coins
+        const k = s.users.kids.find(u=>u.id===red.kidId);
+        if (k) k.coins = (k.coins||0) + (Number(red.cost) || 0);
+      }
     });
     addLog(currentUser.name, `Menolak klaim "${red.rewardName}" oleh ${red.kidName} (koin dikembalikan)`, 'coin');
     showNotif(`Klaim ditolak, koin dikembalikan`,'warn');
